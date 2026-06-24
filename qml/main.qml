@@ -6,9 +6,8 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import QtQuick.Window 2.15
 
-Window {
+ApplicationWindow {
     id: rootWindow
     visible: true
     width: 1200
@@ -62,8 +61,8 @@ Window {
 
             ColumnLayout {
                 anchors.fill: parent
+                anchors.margins: 10
                 spacing: 10
-                padding: 10
 
                 Label {
                     text: "Calques"
@@ -128,8 +127,8 @@ Window {
 
             ColumnLayout {
                 anchors.fill: parent
+                anchors.margins: 10
                 spacing: 10
-                padding: 10
 
                 Label {
                     text: "Outils"
