@@ -2,4 +2,4 @@
 name = "OWildZimut"
 
 [tool.pyside6-project]
-files = ["main.py", "qml/main.qml"]
+files = ["main.py", "qml/LayerItem.qml", "qml/LayerRenderer.qml", "qml/MapView.qml", "qml/main.qml"]

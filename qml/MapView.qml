@@ -124,7 +124,7 @@ Item {
             color: "white"
             radius: 5
             opacity: 0.8
-            padding: 5
+            anchors.margins: 5
         }
     }
 }
