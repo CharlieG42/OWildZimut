@@ -126,9 +126,14 @@ class MapController(QObject):
         self._zoom_level = 1.0
         self._pan_x = 0
         self._pan_y = 0
+        self._app_version = "0.0.001"
     
     zoomLevelChanged = Signal()
     panChanged = Signal()
+    
+    @Property(str, constant=True)
+    def appVersion(self):
+        return self._app_version
     
     @Property(float, notify=zoomLevelChanged)
     def zoomLevel(self):

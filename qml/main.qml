@@ -45,7 +45,11 @@ ApplicationWindow {
         }
         Menu {
             title: "Aide"
-            MenuItem { text: "A propos" }
+            MenuItem { 
+                text: "A propos"
+                icon.name: "help-about"
+                onTriggered: aboutDialog.open()
+            }
         }
     }
 
@@ -217,6 +221,46 @@ ApplicationWindow {
     Shortcut {
         sequence: "Ctrl+0"
         onActivated: resetView()
+    }
+
+    Dialog {
+        id: aboutDialog
+        title: "A propos de OWildZimut"
+        standardButtons: Dialog.Ok
+        modal: true
+        width: 400
+        height: 200
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 15
+
+            Label {
+                text: "OWildZimut"
+                font.bold: true
+                font.pixelSize: 20
+                Layout.alignment: Qt.AlignHCenter
+            }
+
+            Label {
+                text: "Version: " + mapController.appVersion
+                font.pixelSize: 16
+                Layout.alignment: Qt.AlignHCenter
+            }
+
+            Label {
+                text: "Outil de création de cartes de Course d'Orientation"
+                Layout.alignment: Qt.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+
+            Label {
+                text: "Auteur: Charlie Gentil"
+                font.pixelSize: 12
+                Layout.alignment: Qt.AlignHCenter
+            }
+        }
     }
     Shortcut {
         sequence: "Del"
