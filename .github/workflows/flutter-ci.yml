@@ -7,40 +7,29 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.5'
-        channel: 'stable'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.5'
+          channel: 'stable'
 
-    - name: Get dependencies
-      run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
-    - name: Check Flutter version
-      run: flutter --version
+      - name: Check Flutter version
+        run: flutter --version
 
-    - name: Analyze code
-      run: flutter analyze
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
 
-    - name: Run tests
-      run: flutter test
+      - name: Analyze code
+        run: flutter analyze
 
-    - name: Build APK (Android)
-      run: flutter build apk --debug
-
-    - name: Build Web
-      run: flutter build web
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: flutter-builds
-        path: |
-          build/app/outputs/flutter-apk/app-debug.apk
-          build/web/
+      - name: Run tests
+        run: flutter test
