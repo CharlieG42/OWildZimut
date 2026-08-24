@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+import '../models/layer.dart';
+import '../models/symbol.dart';
+
+/// Widget pour afficher et interagir avec la carte
+class MapView extends StatefulWidget {
+  final List<Layer> layers;
+  final double zoomLevel;
+  final Offset panOffset;
+  final int? selectedLayerIndex;
+  final ValueChanged<Offset>? onPanUpdate;
+  final ValueChanged<double>? onZoomChanged;
+
+  const MapView({
+    super.key,
+    required this.layers,
+    required this.zoomLevel,
+    required this.panOffset,
+    this.selectedLayerIndex,
+    this.onPanUpdate,
+    this.onZoomChanged,
+  });
+
+  @override
+  State<MapView> createState() => _MapViewState();
+}
+
+class _MapViewState extends State<MapView> {
+  Offset _dragStart = Offset.zero;
+  Offset _lastFocalPoint = Offset.zero;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onScaleStart: (details) {
+        _lastFocalPoint = details.focalPoint;
+      },
+      onScaleUpdate: (details) {
+        // Zoom avec pincement
+        if (details.scale != 1.0) {
+          widget.onZoomChanged?.call(widget.zoomLevel * details.scale);
+        }
+        
+        // Déplacement avec deux doigts
+        if (details.pointerCount >= 2) {
+          final delta = details.focalPoint - _lastFocalPoint;
+          widget.onPanUpdate?.call(widget.panOffset + delta);
+          _lastFocalPoint = details.focalPoint;
+        }
+      },
+      onScaleEnd: (details) {
+        _lastFocalPoint = Offset.zero;
+      },
+      child: Listener(
+        onPointerDown: (details) {
+          _dragStart = details.localPosition;
+        },
+        onPointerMove: (details) {
+          if (details.buttons == kSecondaryMouseButton) {
+            // Déplacement avec clic droit
+            final delta = details.localPosition - _dragStart;
+            widget.onPanUpdate?.call(widget.panOffset + delta);
+            _dragStart = details.localPosition;
+          }
+        },
+        child: InteractiveViewer(
+          // Désactiver les gestes natifs pour utiliser les nôtres
+          panEnabled: false,
+          minScale: 0.1,
+          maxScale: 10.0,
+          scale: widget.zoomLevel,
+          onInteractionUpdate: (details) {
+            // Ne pas utiliser les gestes par défaut
+          },
+          child: Transform.translate(
+            offset: widget.panOffset,
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: _MapPainter(
+                layers: widget.layers,
+                zoomLevel: widget.zoomLevel,
+                selectedLayerIndex: widget.selectedLayerIndex,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Painter personnalisé pour dessiner la carte et les calques
+class _MapPainter extends CustomPainter {
+  final List<Layer> layers;
+  final double zoomLevel;
+  final int? selectedLayerIndex;
+
+  _MapPainter({
+    required this.layers,
+    required this.zoomLevel,
+    this.selectedLayerIndex,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Dessiner un fond clair
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = Colors.white,
+    );
+
+    // Dessiner une grille légère
+    _drawGrid(canvas, size);
+
+    // Dessiner les calques dans l'ordre
+    for (var i = 0; i < layers.length; i++) {
+      final layer = layers[i];
+      if (!layer.visible) continue;
+
+      // Appliquer l'opacité
+      final opacity = layer.opacity;
+      
+      // Dessiner le calque
+      _drawLayer(canvas, layer, i == selectedLayerIndex, opacity);
+    }
+
+    // Dessiner un repère au centre
+    _drawOriginMarker(canvas);
+  }
+
+  void _drawGrid(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey[300]!
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+
+    const gridSize = 50.0;
+    
+    // Lignes verticales
+    for (var x = -size.width; x <= size.width * 2; x += gridSize) {
+      canvas.drawLine(
+        Offset(x, -size.height),
+        Offset(x, size.height * 2),
+        paint,
+      );
+    }
+
+    // Lignes horizontales
+    for (var y = -size.height; y <= size.height * 2; y += gridSize) {
+      canvas.drawLine(
+        Offset(-size.width, y),
+        Offset(size.width * 2, y),
+        paint,
+      );
+    }
+  }
+
+  void _drawLayer(Canvas canvas, Layer layer, bool isSelected, double opacity) {
+    final paint = Paint()
+      ..color = layer.color.withOpacity(opacity)
+      ..style = PaintingStyle.fill;
+
+    // Pour l'instant, on dessine un rectangle pour représenter le calque
+    // Dans une version future, on dessinerait les symboles
+    final rect = Rect.fromLTWH(
+      100.0 * layer.zIndex,
+      100.0 * layer.zIndex,
+      200.0,
+      200.0,
+    );
+
+    // Dessiner le rectangle du calque
+    canvas.drawRect(rect, paint);
+
+    // Dessiner la bordure si sélectionné
+    if (isSelected) {
+      final borderPaint = Paint()
+        ..color = Colors.blue
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+      canvas.drawRect(rect, borderPaint);
+    }
+
+    // Dessiner le nom du calque
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: layer.name,
+        style: const TextStyle(color: Colors.black, fontSize: 14),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(rect.left + 10, rect.top + 10),
+    );
+  }
+
+  void _drawOriginMarker(Canvas canvas) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    // Croix au centre
+    canvas.drawLine(
+      const Offset(-10, 0),
+      const Offset(10, 0),
+      paint,
+    );
+    canvas.drawLine(
+      const Offset(0, -10),
+      const Offset(0, 10),
+      paint,
+    );
+
+    // Cercle
+    canvas.drawCircle(
+      const Offset(0, 0),
+      5,
+      paint..style = PaintingStyle.fill,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MapPainter oldDelegate) {
+    return oldDelegate.layers != layers ||
+        oldDelegate.zoomLevel != zoomLevel ||
+        oldDelegate.selectedLayerIndex != selectedLayerIndex;
+  }
+}

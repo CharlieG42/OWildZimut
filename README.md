@@ -1,86 +1,194 @@
-# OWildZimut
+# OWildZimut - Flutter Version
 
-> Outil de creation de cartes de Course d'Orientation avec gestion avancee de calques
+> Outil de création de cartes de Course d'Orientation avec gestion avancée de calques
+> **Réécrit en Flutter pour une compatibilité multiplateforme (Android, iOS, Windows, macOS, Linux)**
 
-[![PySide6](https://img.shields.io/badge/PySide6-6.4+-green)](https://pypi.org/project/PySide6/)
-[![Qt6](https://img.shields.io/badge/Qt-6.4+-blue)](https://www.qt.io/)
+[![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue)](https://flutter.dev/)
+[![Dart](https://img.shields.io/badge/Dart-3.0+-green)](https://dart.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## About
+## 📱 Plateformes supportées
 
-OWildZimut est un outil open-source pour creer et editer des cartes de Course d'Orientation (CO) avec une gestion avancee de calques.
+| Plateforme | Statut | Notes |
+|------------|--------|-------|
+| **Android** | ✅ | APK natif |
+| **iOS** | ✅ | IPA natif |
+| **Windows** | ✅ | EXE natif |
+| **macOS** | ✅ | APP natif |
+| **Linux** | ✅ | Binaire natif |
+| **Web** | ⚠️ | Possible avec Flutter Web (limitations graphiques) |
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.8+
-- PySide6 6.4+
-- Qt6
+### Prérequis
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) 3.0+
+- Android Studio (pour Android) ou Xcode (pour iOS)
+- Un éditeur de code (VS Code, Android Studio, etc.)
 
 ### Installation
 
+```bash
+# Cloner le dépôt
 git clone https://github.com/CharlieG42/OWildZimut.git
 cd OWildZimut
-python -m venv venv
-source venv/bin/activate
-pip install PySide6
 
-### Run
+# Se placer dans le dossier Flutter (si séparé)
+cd o_wild_zimut_flutter
 
-python main.py
+# Récupérer les dépendances
+flutter pub get
 
-### With QtCreator
+# Lancer l'application
+flutter run
+```
 
-1. Open OWildZimut.pro in QtCreator
-2. Configure Python kit
-3. Run project
+### Lancer sur une plateforme spécifique
 
----
+```bash
+# Android
+flutter run -d android
 
-## Project Structure
+# iOS
+flutter run -d ios
 
-OWildZimut/
-- main.py - Entry point
-- qml/ - QML files
-  - main.qml - Main UI
-  - LayerItem.qml - Layer list item
-  - LayerRenderer.qml - Layer renderer
-  - MapView.qml - Map view
-- README.md
-- requirements.txt
-- .gitignore
+# Windows
+flutter run -d windows
 
----
+# macOS
+flutter run -d macos
 
-## Features
-
-### Layer Management
-- Add/Remove layers
-- Reorder with Up/Down buttons
-- Toggle visibility
-- Adjust opacity
-- Lock/unlock
-
-### Symbol Types (IOF)
-- Point: Control posts (code 701)
-- Line: Paths (code 502)
-- Area: Forests (code 401)
-- Text: Legends
+# Linux
+flutter run -d linux
+```
 
 ---
 
-## License
+## 📁 Structure du projet
 
-MIT License - see LICENSE file for details.
+```
+o_wild_zimut_flutter/
+├── lib/
+│   ├── main.dart                 # Point d'entrée de l'application
+│   ├── models/
+│   │   ├── layer.dart            # Modèle de calque
+│   │   ├── symbol.dart           # Modèle de symbole IOF
+│   │   └── map_state.dart        # État global de la carte
+│   ├── widgets/
+│   │   ├── layer_item.dart       # Élément de liste pour un calque
+│   │   ├── layer_panel.dart      # Panneau de gestion des calques
+│   │   ├── map_view.dart          # Vue de la carte avec dessin
+│   │   └── tool_bar.dart          # Barre d'outils
+│   └── screens/
+│       └── about_dialog.dart     # Boîte de dialogue "À propos"
+├── pubspec.yaml                  # Dépendances Flutter
+└── README.md                     # Documentation
+```
 
 ---
 
-## Contact
+## 🎨 Fonctionnalités
 
-- Author: Charlie Gentil
-- Organization: WildZimut
-- Repository: https://github.com/CharlieG42/OWildZimut
+### Gestion des calques
+- ✅ Ajouter/Supprimer des calques
+- ✅ Réorganiser avec Monter/Descendre
+- ✅ Basculer la visibilité
+- ✅ Ajuster l'opacité (0-100%)
+- ✅ Sélection d'un calque
+
+### Vue de la carte
+- ✅ Zoom avant/arrière (molette ou pincement)
+- ✅ Déplacement (clic droit ou deux doigts)
+- ✅ Réinitialisation de la vue
+- ✅ Raccourcis clavier (Ctrl++/Ctrl+-/Ctrl+0)
+
+### Outils
+- Sélection
+- Point (postes de contrôle)
+- Ligne (chemins)
+- Polygone (zones)
+- Texte (légendes)
+
+### Menu
+- ✅ Menu "À propos" avec icône
+- ✅ Affichage de la version (0.0.001)
+
+---
+
+## 🔧 Architecture
+
+### State Management
+L'application utilise un **state local** (setState) pour la simplicité.
+Pour une version plus complexe, on pourrait migrer vers :
+- **Riverpod** (recommandé)
+- **Bloc**
+- **Provider**
+
+### Modèles de données
+- `Layer` : Représente un calque avec ses propriétés
+- `Symbol` : Représente un symbole IOF (point, ligne, zone, texte)
+- `MapState` : État global de la carte (calques, zoom, décalage)
+
+### Widgets personnalisés
+- `MapView` : Affiche la carte avec gestion du zoom/déplacement
+- `LayerPanel` : Panneau de gestion des calques
+- `ToolBar` : Barre d'outils
+- `AboutDialog` : Boîte de dialogue "À propos"
+
+---
+
+## 🎯 Roadmap
+
+### V1.0 (Actuelle - 0.0.001)
+- [x] Structure de base Flutter
+- [x] Gestion des calques
+- [x] Vue de la carte avec zoom/déplacement
+- [x] Barre d'outils
+- [x] Menu "À propos"
+
+### V1.1
+- [ ] Dessin des symboles IOF (points, lignes, polygones)
+- [ ] Sauvegarde/Chargement de projets
+- [ ] Export en JSON
+- [ ] Personnalisation des couleurs
+
+### V1.2
+- [ ] Grille magnétique
+- [ ] Alignement des symboles
+- [ ] Annuler/Rétablir
+- [ ] Import de fond de carte
+
+### V2.0
+- [ ] Migration vers Riverpod pour le state management
+- [ ] Support des styles IOF officiels
+- [ ] Export en PDF/PNG
+- [ ] Collaboration en temps réel
+
+---
+
+## 📜 License
+
+MIT License - voir le fichier [LICENSE](../LICENSE) pour plus de détails.
+
+---
+
+## 📞 Contact
+
+- **Auteur** : Charlie Gentil
+- **Organisation** : WildZimut
+- **Dépôt** : [CharlieG42/OWildZimut](https://github.com/CharlieG42/OWildZimut)
+
+---
+
+## 🔄 Migration depuis PySide6/QML
+
+La version Flutter remplace l'ancienne version Python/PySide6 pour :
+- Une meilleure compatibilité multiplateforme (surtout Android)
+- Un déploiement simplifié
+- Une maintenance plus facile
+- Des performances graphiques optimisées
+
+La branche `backup/qml-version` contient l'ancienne version pour référence.

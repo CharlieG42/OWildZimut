@@ -1,2 +1,0 @@
-# Dependances pour OWildZimut
-PySide6>=6.4.0
