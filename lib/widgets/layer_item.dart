@@ -33,28 +33,35 @@ class LayerItem extends StatelessWidget {
           : Theme.of(context).colorScheme.surface,
       elevation: isSelected ? 4 : 2,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(4.0),
         child: Row(
           children: [
             IconButton(
               icon: Icon(
                 layer.visible ? Icons.visibility : Icons.visibility_off,
                 color: layer.visible ? Colors.green : Colors.grey,
+                size: 18,
               ),
               onPressed: () => onVisibilityChanged?.call(!layer.visible),
               tooltip: layer.visible ? 'Masquer' : 'Afficher',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, maxWidth: 32),
             ),
             Expanded(
-              child: Text(
-                layer.name,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  layer.name,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
             ),
             SizedBox(
-              width: 100,
+              width: 80,
               child: Slider(
                 value: layer.opacity,
                 onChanged: onOpacityChanged,
@@ -64,19 +71,25 @@ class LayerItem extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.arrow_upward, size: 18),
+              icon: const Icon(Icons.arrow_upward, size: 16),
               onPressed: onMoveUp,
               tooltip: 'Monter',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, maxWidth: 28),
             ),
             IconButton(
-              icon: const Icon(Icons.arrow_downward, size: 18),
+              icon: const Icon(Icons.arrow_downward, size: 16),
               onPressed: onMoveDown,
               tooltip: 'Descendre',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, maxWidth: 28),
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+              icon: const Icon(Icons.delete, color: Colors.red, size: 16),
               onPressed: onRemove,
               tooltip: 'Supprimer',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, maxWidth: 28),
             ),
           ],
         ),
