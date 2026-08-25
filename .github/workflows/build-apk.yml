@@ -98,8 +98,8 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: les-baroudeurs-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: owildzimut-apk
+          path: build/app/outputs/flutter-apk/owildzimut.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -107,5 +107,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
+          files: build/app/outputs/flutter-apk/owildzimut.apk
           generate_release_notes: true
