@@ -1,0 +1,40 @@
+buildscript {
+    ext.kotlin_version = '1.9.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.allprojects.forEach { project ->
+    project.plugins.with {
+        def plugin = it
+        if (plugin.name == 'com.android.application' || plugin.name == 'com.android.library') {
+            project.android {
+                compileSdk 34
+            }
+        }
+    }
+}
+
+rootProject.buildDirName = 'build'
+subprojects {
+    project.buildDirName = "../build/${project.name}"
+    project.evaluationDependsOn(':app')
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
