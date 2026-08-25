@@ -92,6 +92,13 @@ jobs:
           } > android/key.properties
           echo "Keystore release configure."
 
+     
+      - name: Clean
+        run: flutter clean
+
+      - name: Clean gradlew
+        run: cd android && ./gradlew clean
+
       - name: Build release APK
         run: flutter build apk --release
 
