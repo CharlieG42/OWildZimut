@@ -19,12 +19,9 @@ allprojects {
 }
 
 rootProject.allprojects.forEach { project ->
-    project.plugins.with {
-        def plugin = it
-        if (plugin.name == 'com.android.application' || plugin.name == 'com.android.library') {
-            project.android {
-                compileSdk 34
-            }
+    if (project.plugins.hasPlugin('com.android.application') || project.plugins.hasPlugin('com.android.library')) {
+        project.android {
+            compileSdk 34
         }
     }
 }
