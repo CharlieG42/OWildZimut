@@ -3,12 +3,14 @@ import 'layer_item.dart';
 import '../models/layer.dart';
 
 /// Panneau de gestion des calques
+typedef LayerOpacityCallback = void Function(String layerId, double opacity);
+
 class LayerPanel extends StatelessWidget {
   final List<Layer> layers;
   final int? selectedLayerIndex;
   final ValueChanged<int> onLayerSelected;
-  final ValueChanged<String> onLayerVisibilityChanged;
-  final ValueChanged<String, double> onLayerOpacityChanged;
+  final ValueChanged<bool> onLayerVisibilityChanged;
+  final LayerOpacityCallback onLayerOpacityChanged;
   final VoidCallback onAddLayer;
   final ValueChanged<String> onLayerRemoved;
   final ValueChanged<String> onLayerMoveUp;
@@ -61,7 +63,7 @@ class LayerPanel extends StatelessWidget {
                 isSelected: selectedLayerIndex == index,
                 onTap: () => onLayerSelected(index),
                 onVisibilityChanged: (visible) =>
-                    onLayerVisibilityChanged(layer.id),
+                    onLayerVisibilityChanged(visible),
                 onOpacityChanged: (opacity) =>
                     onLayerOpacityChanged(layer.id, opacity),
                 onMoveUp: () => onLayerMoveUp(layer.id),
@@ -83,5 +85,3 @@ class LayerPanel extends StatelessWidget {
     );
   }
 }
-
-typedef void LayerOpacityCallback(String layerId, double opacity);

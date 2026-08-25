@@ -35,7 +35,7 @@ class ToolBar extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                ..._buildToolButtons(),
+                ..._buildToolButtons(context),
               ],
             ),
           ),
@@ -79,12 +79,12 @@ class ToolBar extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildToolButtons() {
+  List<Widget> _buildToolButtons(BuildContext context) {
     final tools = [
-      {'name': 'Selection', 'icon': Icons.select, 'value': 'select'},
+      {'name': 'Selection', 'icon': Icons.select_all, 'value': 'select'},
       {'name': 'Point', 'icon': Icons.circle, 'value': 'point'},
       {'name': 'Ligne', 'icon': Icons.polyline, 'value': 'line'},
-      {'name': 'Polygone', 'icon': Icons.polygon, 'value': 'polygon'},
+      {'name': 'Polygone', 'icon': Icons.check, 'value': 'polygon'},
       {'name': 'Texte', 'icon': Icons.text_fields, 'value': 'text'},
     ];
 

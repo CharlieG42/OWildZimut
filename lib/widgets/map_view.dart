@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/layer.dart';
-import '../models/symbol.dart';
 
 /// Widget pour afficher et interagir avec la carte
 class MapView extends StatefulWidget {
@@ -54,7 +53,8 @@ class _MapViewState extends State<MapView> {
           _dragStart = details.localPosition;
         },
         onPointerMove: (details) {
-          if (details.buttons == kSecondaryMouseButton) {
+          if (details.kind == PointerDeviceKind.mouse &&
+              details.buttons == kSecondaryMouseButton) {
             final delta = details.localPosition - _dragStart;
             widget.onPanUpdate?.call(widget.panOffset + delta);
             _dragStart = details.localPosition;
@@ -64,16 +64,17 @@ class _MapViewState extends State<MapView> {
           panEnabled: false,
           minScale: 0.1,
           maxScale: 10.0,
-          scale: widget.zoomLevel,
-          onInteractionUpdate: (details) {},
           child: Transform.translate(
             offset: widget.panOffset,
-            child: CustomPaint(
-              size: Size.infinite,
-              painter: _MapPainter(
-                layers: widget.layers,
-                zoomLevel: widget.zoomLevel,
-                selectedLayerIndex: widget.selectedLayerIndex,
+            child: Transform.scale(
+              scale: widget.zoomLevel,
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: _MapPainter(
+                  layers: widget.layers,
+                  zoomLevel: widget.zoomLevel,
+                  selectedLayerIndex: widget.selectedLayerIndex,
+                ),
               ),
             ),
           ),
