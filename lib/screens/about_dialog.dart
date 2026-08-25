@@ -15,15 +15,12 @@ class AboutDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Logo/Icône (à remplacer par une vraie icône plus tard)
             const Icon(
               Icons.map,
               size: 64,
               color: Colors.blue,
             ),
             const SizedBox(height: 16),
-            
-            // Nom de l'application
             const Text(
               'OWildZimut',
               style: TextStyle(
@@ -32,8 +29,6 @@ class AboutDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            
-            // Version
             Text(
               'Version: $appVersion',
               style: const TextStyle(
@@ -41,8 +36,6 @@ class AboutDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Description
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -52,8 +45,6 @@ class AboutDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Auteur
             const Text(
               'Auteur: Charlie Gentil',
               style: TextStyle(

@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 
 /// Types de symboles IOF (International Orienteering Federation)
 enum SymbolType {
-  point,   // Code 701 - Postes de contrôle
-  line,    // Code 502 - Chemins
-  area,    // Code 401 - Forêts
-  text,    // Légendes
+  point,
+  line,
+  area,
+  text,
 }
 
 /// Modèle de données pour un symbole sur la carte
 class Symbol {
   final String id;
   final SymbolType type;
-  String code; // Code IOF (ex: "701", "502")
-  Offset position; // Position sur la carte
+  String code;
+  Offset position;
   String description;
   Color color;
   double size;
-  double rotation; // En degrés
-  List<Offset> points; // Pour les lignes et polygones
+  double rotation;
+  List<Offset> points;
 
   Symbol({
     required this.id,

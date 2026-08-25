@@ -22,7 +22,6 @@ class ToolBar extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Sélecteur d'outil
         Card(
           margin: const EdgeInsets.all(8),
           child: Padding(
@@ -41,8 +40,6 @@ class ToolBar extends StatelessWidget {
             ),
           ),
         ),
-        
-        // Contrôles de zoom
         Card(
           margin: const EdgeInsets.all(8),
           child: Padding(

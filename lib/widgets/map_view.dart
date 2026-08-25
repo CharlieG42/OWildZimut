@@ -36,12 +36,10 @@ class _MapViewState extends State<MapView> {
         _lastFocalPoint = details.focalPoint;
       },
       onScaleUpdate: (details) {
-        // Zoom avec pincement
         if (details.scale != 1.0) {
           widget.onZoomChanged?.call(widget.zoomLevel * details.scale);
         }
-        
-        // Déplacement avec deux doigts
+
         if (details.pointerCount >= 2) {
           final delta = details.focalPoint - _lastFocalPoint;
           widget.onPanUpdate?.call(widget.panOffset + delta);
@@ -57,21 +55,17 @@ class _MapViewState extends State<MapView> {
         },
         onPointerMove: (details) {
           if (details.buttons == kSecondaryMouseButton) {
-            // Déplacement avec clic droit
             final delta = details.localPosition - _dragStart;
             widget.onPanUpdate?.call(widget.panOffset + delta);
             _dragStart = details.localPosition;
           }
         },
         child: InteractiveViewer(
-          // Désactiver les gestes natifs pour utiliser les nôtres
           panEnabled: false,
           minScale: 0.1,
           maxScale: 10.0,
           scale: widget.zoomLevel,
-          onInteractionUpdate: (details) {
-            // Ne pas utiliser les gestes par défaut
-          },
+          onInteractionUpdate: (details) {},
           child: Transform.translate(
             offset: widget.panOffset,
             child: CustomPaint(
@@ -103,28 +97,21 @@ class _MapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Dessiner un fond clair
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
       Paint()..color = Colors.white,
     );
 
-    // Dessiner une grille légère
     _drawGrid(canvas, size);
 
-    // Dessiner les calques dans l'ordre
     for (var i = 0; i < layers.length; i++) {
       final layer = layers[i];
       if (!layer.visible) continue;
 
-      // Appliquer l'opacité
       final opacity = layer.opacity;
-      
-      // Dessiner le calque
       _drawLayer(canvas, layer, i == selectedLayerIndex, opacity);
     }
 
-    // Dessiner un repère au centre
     _drawOriginMarker(canvas);
   }
 
@@ -135,8 +122,7 @@ class _MapPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     const gridSize = 50.0;
-    
-    // Lignes verticales
+
     for (var x = -size.width; x <= size.width * 2; x += gridSize) {
       canvas.drawLine(
         Offset(x, -size.height),
@@ -145,7 +131,6 @@ class _MapPainter extends CustomPainter {
       );
     }
 
-    // Lignes horizontales
     for (var y = -size.height; y <= size.height * 2; y += gridSize) {
       canvas.drawLine(
         Offset(-size.width, y),
@@ -160,8 +145,6 @@ class _MapPainter extends CustomPainter {
       ..color = layer.color.withOpacity(opacity)
       ..style = PaintingStyle.fill;
 
-    // Pour l'instant, on dessine un rectangle pour représenter le calque
-    // Dans une version future, on dessinerait les symboles
     final rect = Rect.fromLTWH(
       100.0 * layer.zIndex,
       100.0 * layer.zIndex,
@@ -169,10 +152,8 @@ class _MapPainter extends CustomPainter {
       200.0,
     );
 
-    // Dessiner le rectangle du calque
     canvas.drawRect(rect, paint);
 
-    // Dessiner la bordure si sélectionné
     if (isSelected) {
       final borderPaint = Paint()
         ..color = Colors.blue
@@ -181,7 +162,6 @@ class _MapPainter extends CustomPainter {
       canvas.drawRect(rect, borderPaint);
     }
 
-    // Dessiner le nom du calque
     final textPainter = TextPainter(
       text: TextSpan(
         text: layer.name,
@@ -202,7 +182,6 @@ class _MapPainter extends CustomPainter {
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
-    // Croix au centre
     canvas.drawLine(
       const Offset(-10, 0),
       const Offset(10, 0),
@@ -214,7 +193,6 @@ class _MapPainter extends CustomPainter {
       paint,
     );
 
-    // Cercle
     canvas.drawCircle(
       const Offset(0, 0),
       5,

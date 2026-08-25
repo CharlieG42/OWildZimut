@@ -192,7 +192,7 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
               onLayerMoveDown: _moveLayerDown,
             ),
           ),
-          
+
           // Vue de la carte (centre)
           Expanded(
             child: MapView(
@@ -204,7 +204,7 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
               onZoomChanged: _setZoomLevel,
             ),
           ),
-          
+
           // Barre d'outils (droite)
           SizedBox(
             width: 200,
@@ -220,11 +220,11 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
       ),
       // Barre de raccourcis clavier
       shortcuts: {
-        const SingleActivator(LogicalKeyboardKey.keyPlus, control: true): 
+        const SingleActivator(LogicalKeyboardKey.keyPlus, control: true):
             const ZoomInIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyMinus, control: true): 
+        const SingleActivator(LogicalKeyboardKey.keyMinus, control: true):
             const ZoomOutIntent(),
-        const SingleActivator(LogicalKeyboardKey.digit0, control: true): 
+        const SingleActivator(LogicalKeyboardKey.digit0, control: true):
             const ResetViewIntent(),
       },
       actions: {
@@ -238,5 +238,7 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
 
 // Intents pour les raccourcis clavier
 class ZoomInIntent extends Intent {}
+
 class ZoomOutIntent extends Intent {}
+
 class ResetViewIntent extends Intent {}

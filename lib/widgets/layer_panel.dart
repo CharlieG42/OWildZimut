@@ -31,7 +31,6 @@ class LayerPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // En-tête du panneau
         Padding(
           padding: const EdgeInsets.all(8),
           child: Row(
@@ -52,8 +51,6 @@ class LayerPanel extends StatelessWidget {
             ],
           ),
         ),
-        
-        // Liste des calques
         Expanded(
           child: ListView.builder(
             itemCount: layers.length,
@@ -63,9 +60,9 @@ class LayerPanel extends StatelessWidget {
                 layer: layer,
                 isSelected: selectedLayerIndex == index,
                 onTap: () => onLayerSelected(index),
-                onVisibilityChanged: (visible) => 
+                onVisibilityChanged: (visible) =>
                     onLayerVisibilityChanged(layer.id),
-                onOpacityChanged: (opacity) => 
+                onOpacityChanged: (opacity) =>
                     onLayerOpacityChanged(layer.id, opacity),
                 onMoveUp: () => onLayerMoveUp(layer.id),
                 onMoveDown: () => onLayerMoveDown(layer.id),
@@ -74,8 +71,6 @@ class LayerPanel extends StatelessWidget {
             },
           ),
         ),
-        
-        // Info sur le calque sélectionné
         if (selectedLayerIndex != null && layers.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8),
@@ -89,5 +84,4 @@ class LayerPanel extends StatelessWidget {
   }
 }
 
-// Helper pour les callbacks avec deux paramètres
 typedef void LayerOpacityCallback(String layerId, double opacity);

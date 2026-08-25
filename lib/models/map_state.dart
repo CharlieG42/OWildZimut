@@ -34,7 +34,7 @@ class MapState {
   /// Supprime un calque par ID
   MapState removeLayer(String layerId) {
     final newLayers = layers.where((layer) => layer.id != layerId).toList();
-    
+
     // Recalculer les zIndex
     final reorderedLayers = newLayers.asMap().entries.map((entry) {
       return entry.value.copyWith(zIndex: entry.key + 1);
@@ -84,10 +84,10 @@ class MapState {
       }
       return layer;
     }).toList();
-    
+
     // Re-trier par zIndex
     newLayers.sort((a, b) => a.zIndex.compareTo(b.zIndex));
-    
+
     return copyWith(layers: newLayers);
   }
 
