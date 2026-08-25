@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'models/layer.dart';
 import 'models/map_state.dart';
 import 'widgets/layer_panel.dart';
@@ -169,7 +168,7 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
               layers: _mapState.layers,
               selectedLayerIndex: _mapState.selectedLayerIndex,
               onLayerSelected: _selectLayer,
-              onLayerVisibilityChanged: _setLayerVisibility,
+              onLayerVisibilityChanged: (visible) => _setLayerVisibility(_mapState.layers[_mapState.selectedLayerIndex!].id, visible),
               onLayerOpacityChanged: _setLayerOpacity,
               onAddLayer: _addLayer,
               onLayerRemoved: _removeLayer,

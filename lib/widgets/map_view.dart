@@ -53,8 +53,8 @@ class _MapViewState extends State<MapView> {
           _dragStart = details.localPosition;
         },
         onPointerMove: (details) {
-          if (details.kind == PointerDeviceKind.mouse &&
-              details.buttons == kSecondaryMouseButton) {
+          if (
+              details.buttons == 2) {
             final delta = details.localPosition - _dragStart;
             widget.onPanUpdate?.call(widget.panOffset + delta);
             _dragStart = details.localPosition;
