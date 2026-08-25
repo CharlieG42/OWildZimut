@@ -26,9 +26,9 @@ rootProject.allprojects.forEach { project ->
     }
 }
 
-rootProject.buildDirName = 'build'
+rootProject.buildDir = file('build')
 subprojects {
-    project.buildDirName = "../build/${project.name}"
+    project.buildDir = file("../build/${project.name}")
     project.evaluationDependsOn(':app')
 }
 
