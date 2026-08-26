@@ -26,12 +26,6 @@ rootProject.allprojects.forEach { project ->
     }
 }
 
-rootProject.buildDir = file('build')
-subprojects {
-    project.buildDir = file("../build/${project.name}")
-    project.evaluationDependsOn(':app')
-}
-
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
