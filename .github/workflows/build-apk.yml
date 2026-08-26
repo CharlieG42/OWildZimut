@@ -82,7 +82,7 @@ jobs:
               -alias upload \
               -storepass password \
               -keypass password \
-              -dname "CN=Baroudeur Studio CI, OU=Dev, O=Baroudeur, L=Paris, S=Paris, C=FR"
+              -dname "CN=OWildZimut CI, OU=Dev, O=OWildZimut, L=Paris, S=Paris, C=FR"
             STORE_PASS="password"
             KEY_ALIAS="upload"
             KEY_PASS="password"
@@ -95,12 +95,33 @@ jobs:
           } > android/key.properties
           echo "Keystore release configure."
 
-     
+      - name: Build release APK (with full logs)
+        id: build
+        run: |
+          mkdir -p build_logs
+          flutter build apk --release --verbose > build_logs/build.log 2>&1 || true
+          # Capture exit code for later check
+          echo "BUILD_EXIT_CODE=$?" >> $GITHUB_ENV
+          # Display last 100 lines of log for immediate feedback
+          tail -n 100 build_logs/build.log
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Check build result
+        run: |
+          if [ "$BUILD_EXIT_CODE" != "0" ]; then
+            echo "::error::Build failed! Check build_logs/build.log for details."
+            exit 1
+          fi
+
+      - name: Upload build log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build_logs/
+          retention-days: 7
 
       - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: owildzimut-apk
@@ -109,7 +130,7 @@ jobs:
           retention-days: 30
 
       - name: Attach APK to release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') && success()
         uses: softprops/action-gh-release@v2
         with:
           files: build/app/outputs/flutter-apk/owildzimut.apk
