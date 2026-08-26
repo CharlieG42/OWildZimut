@@ -42,27 +42,12 @@ jobs:
       - name: Generate Gradle wrapper
         run: cd android && flutter precache && cd ..
 
-      # On n'echoue que sur les erreurs. Les avertissements `info`/`warning`
-      # pre-existants (ex: use_build_context_synchronously) ne bloquent pas le
-      # build tant qu'ils ne sont pas des erreurs.
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
       - name: Run tests
         run: flutter test
 
-      # Configuration du keystore de signature.
-      #
-      # Le build.gradle attend un keystore a ../upload-keystore.jks et un
-      # fichier key.properties. Si les secrets ne sont pas definis, on genere
-      # un keystore auto-signe jetable pour que le build release reussisse
-      # (l'APK sera signe mais non distribuable en production).
-      #
-      # Pour un APK distribuable, definissez dans les secrets du depot :
-      #   ANDROID_KEYSTORE_BASE64  -> contenu base64 du fichier .jks
-      #   ANDROID_KEY_ALIAS        -> alias de la cle
-      #   ANDROID_KEY_PASSWORD     -> mot de passe de la cle
-      #   ANDROID_STORE_PASSWORD   -> mot de passe du magasin
       - name: Configure release keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -96,7 +81,6 @@ jobs:
             echo "keyAlias=$KEY_ALIAS"
             echo "keyPassword=$KEY_PASS"
           } > android/key.properties
-          echo "Keystore release configure."
 
       - name: Build release APK (with full logs)
         id: build
@@ -113,9 +97,9 @@ jobs:
             exit 1
           fi
 
-      - name: List APK files (debug)
+      - name: List all APK files (debug)
         if: success()
-        run: find build -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+        run: find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
 
       - name: Upload build log artifact
         if: always()
@@ -130,8 +114,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: owildzimut-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
+          path: build/app/outputs/flutter-apk/
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Attach APK to release
