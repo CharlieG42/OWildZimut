@@ -1,5 +1,5 @@
 name: o_wild_zimut
-description: "A new Flutter project."
+description: "Outil de création de cartes de Course d'Orientation avec gestion avancée de calques. Développé par Charlie Gentil pour WildZimut."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 0.0.001+1
 
 environment:
   sdk: ^3.12.2
@@ -86,4 +86,4 @@ flutter:
   #         weight: 700
   #
   # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+  # see https://dart.dev/to/font-from-package
