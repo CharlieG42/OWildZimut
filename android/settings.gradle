@@ -1,0 +1,23 @@
+pluginManagement {
+    def flutterSdkPath = System.getenv('FLUTTER_ROOT') ?: '.flutter'
+    includeBuild("${flutterSdkPath}/packages/flutter_tools/gradle")
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'o_wild_zimut'
+include ':app'
