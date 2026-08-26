@@ -92,13 +92,22 @@ jobs:
         run: |
           mkdir -p build_logs
           flutter build apk --release --verbose > build_logs/build.log 2>&1
-          echo "BUILD_EXIT_CODE=$?" >> $GITHUB_ENV
+          BUILD_EXIT_CODE=$?
+          echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_ENV
           tail -n 100 build_logs/build.log
+          # Commit build.log on failure for debugging
+          if [ "$BUILD_EXIT_CODE" != "0" ]; then
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git add build_logs/build.log
+            git commit -m "CI: Auto-commit build log for debugging [skip ci]" || true
+            git push origin main || true
+          fi
 
       - name: Check build result
         run: |
           if [ "$BUILD_EXIT_CODE" != "0" ]; then
-            echo "::error::Build failed with exit code $BUILD_EXIT_CODE! Check build_logs/build.log artifact for details."
+            echo "::error::Build failed with exit code $BUILD_EXIT_CODE! Check build_logs/build.log in the repo or artifact for details."
             exit $BUILD_EXIT_CODE
           fi
 
