@@ -1,202 +1,121 @@
 import 'package:flutter/material.dart';
-import 'models/layer.dart';
-import 'models/map_state.dart';
-import 'widgets/layer_panel.dart';
-import 'widgets/map_view.dart';
-import 'widgets/tool_bar.dart';
-import 'screens/about_dialog.dart' as app_about;
 
 void main() {
-  runApp(const OWildZimutApp());
+  runApp(const MyApp());
 }
 
-/// Application principale
-class OWildZimutApp extends StatelessWidget {
-  const OWildZimutApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'OWildZimut',
+      title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
+        // This is the theme of your application.
+        //
+        // TRY THIS: Try running your application with "flutter run". You'll see
+        // the application has a purple toolbar. Then, without quitting the app,
+        // try changing the seedColor in the colorScheme below to Colors.green
+        // and then invoke "hot reload" (save your changes or press the "hot
+        // reload" button in a Flutter-supported IDE, or press "r" if you used
+        // the command line to start the app).
+        //
+        // Notice that the counter didn't reset back to zero; the application
+        // state is not lost during the reload. To reset the state, use hot
+        // restart instead.
+        //
+        // This works for code too, not just values: Most code changes can be
+        // tested with just a hot reload.
+        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      themeMode: ThemeMode.system,
-      home: const MapEditorScreen(),
-      debugShowCheckedModeBanner: false,
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-/// Écran principal de l'éditeur de cartes
-class MapEditorScreen extends StatefulWidget {
-  const MapEditorScreen({super.key});
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  // This widget is the home page of your application. It is stateful, meaning
+  // that it has a State object (defined below) that contains fields that affect
+  // how it looks.
+
+  // This class is the configuration for the state. It holds the values (in this
+  // case the title) provided by the parent (in this case the App widget) and
+  // used by the build method of the State. Fields in a Widget subclass are
+  // always marked "final".
+
+  final String title;
 
   @override
-  State<MapEditorScreen> createState() => _MapEditorScreenState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MapEditorScreenState extends State<MapEditorScreen> {
-  late MapState _mapState;
-  String _currentTool = 'select';
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _mapState = MapState(appVersion: '0.0.001')
-        .addLayer('Végétation', LayerType.vector)
-        .addLayer('Chemins', LayerType.vector)
-        .addLayer('Contrôles', LayerType.vector);
-  }
-
-  void _addLayer() {
+  void _incrementCounter() {
     setState(() {
-      _mapState = _mapState.addLayer('Nouveau Calque', LayerType.vector);
+      // This call to setState tells the Flutter framework that something has
+      // changed in this State, which causes it to rerun the build method below
+      // so that the display can reflect the updated values. If we changed
+      // _counter without calling setState(), then the build method would not be
+      // called again, and so nothing would appear to happen.
+      _counter++;
     });
-  }
-
-  void _removeLayer(String layerId) {
-    setState(() {
-      _mapState = _mapState.removeLayer(layerId);
-    });
-  }
-
-  void _setLayerVisibility(String layerId, bool visible) {
-    setState(() {
-      _mapState = _mapState.setLayerVisibility(layerId, visible);
-    });
-  }
-
-  void _setLayerOpacity(String layerId, double opacity) {
-    setState(() {
-      _mapState = _mapState.setLayerOpacity(layerId, opacity);
-    });
-  }
-
-  void _moveLayerUp(String layerId) {
-    final layer = _mapState.layers.firstWhere((l) => l.id == layerId);
-    setState(() {
-      _mapState = _mapState.setLayerZIndex(layerId, layer.zIndex + 1);
-    });
-  }
-
-  void _moveLayerDown(String layerId) {
-    final layer = _mapState.layers.firstWhere((l) => l.id == layerId);
-    setState(() {
-      _mapState = _mapState.setLayerZIndex(layerId, layer.zIndex - 1);
-    });
-  }
-
-  void _selectLayer(int index) {
-    setState(() {
-      _mapState = _mapState.selectLayer(index);
-    });
-  }
-
-  void _setZoomLevel(double zoom) {
-    setState(() {
-      _mapState = _mapState.setZoomLevel(zoom);
-    });
-  }
-
-  void _setPanOffset(Offset offset) {
-    setState(() {
-      _mapState = _mapState.setPanOffset(offset);
-    });
-  }
-
-  void _zoomIn() {
-    setState(() {
-      _mapState = _mapState.setZoomLevel(_mapState.zoomLevel * 1.2);
-    });
-  }
-
-  void _zoomOut() {
-    setState(() {
-      _mapState = _mapState.setZoomLevel(_mapState.zoomLevel / 1.2);
-    });
-  }
-
-  void _resetView() {
-    setState(() {
-      _mapState = _mapState.resetView();
-    });
-  }
-
-  void _setTool(String tool) {
-    setState(() {
-      _currentTool = tool;
-    });
-  }
-
-  void _showAboutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => app_about.AboutDialog(appVersion: _mapState.appVersion),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // This method is rerun every time setState is called, for instance as done
+    // by the _incrementCounter method above.
+    //
+    // The Flutter framework has been optimized to make rerunning build methods
+    // fast, so that you can just rebuild anything that needs updating rather
+    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OWildZimut'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: _showAboutDialog,
-            tooltip: 'À propos',
-          ),
-        ],
+        // TRY THIS: Try changing the color here to a specific color (to
+        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+        // change color while the other colors stay the same.
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(widget.title),
       ),
-      body: Row(
-        children: [
-          SizedBox(
-            width: 300,
-            child: LayerPanel(
-              layers: _mapState.layers,
-              selectedLayerIndex: _mapState.selectedLayerIndex,
-              onLayerSelected: _selectLayer,
-              onLayerVisibilityChanged: (visible) => _setLayerVisibility(_mapState.layers[_mapState.selectedLayerIndex!].id, visible),
-              onLayerOpacityChanged: _setLayerOpacity,
-              onAddLayer: _addLayer,
-              onLayerRemoved: _removeLayer,
-              onLayerMoveUp: _moveLayerUp,
-              onLayerMoveDown: _moveLayerDown,
+      body: Center(
+        // Center is a layout widget. It takes a single child and positions it
+        // in the middle of the parent.
+        child: Column(
+          // Column is also a layout widget. It takes a list of children and
+          // arranges them vertically. By default, it sizes itself to fit its
+          // children horizontally, and tries to be as tall as its parent.
+          //
+          // Column has various properties to control how it sizes itself and
+          // how it positions its children. Here we use mainAxisAlignment to
+          // center the children vertically; the main axis here is the vertical
+          // axis because Columns are vertical (the cross axis would be
+          // horizontal).
+          //
+          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+          // action in the IDE, or press "p" in the console), to see the
+          // wireframe for each widget.
+          mainAxisAlignment: .center,
+          children: [
+            const Text('You have pushed the button this many times:'),
+            Text(
+              '$_counter',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
-          ),
-          Expanded(
-            child: MapView(
-              layers: _mapState.layers,
-              zoomLevel: _mapState.zoomLevel,
-              panOffset: _mapState.panOffset,
-              selectedLayerIndex: _mapState.selectedLayerIndex,
-              onPanUpdate: _setPanOffset,
-              onZoomChanged: _setZoomLevel,
-            ),
-          ),
-          SizedBox(
-            width: 200,
-            child: ToolBar(
-              currentTool: _currentTool,
-              onToolChanged: _setTool,
-              onZoomIn: _zoomIn,
-              onZoomOut: _zoomOut,
-              onResetView: _resetView,
-            ),
-          ),
-        ],
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
       ),
     );
   }

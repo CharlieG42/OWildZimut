@@ -1,6 +1,9 @@
 // This is a basic Flutter widget test.
-// To learn more about Flutter widget testing, visit:
-// https://docs.flutter.dev/cookbook/testing/widget/introduction
+//
+// To perform an interaction with a widget in your test, use the WidgetTester
+// utility in the flutter_test package. For example, you can send tap and scroll
+// gestures. You can also use WidgetTester to find child widgets in the widget
+// tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,33 +11,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:o_wild_zimut/main.dart';
 
 void main() {
-  testWidgets('OWildZimut app loads correctly', (WidgetTester tester) async {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MaterialApp(home: OWildZimutApp()));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(const MyApp());
 
-    // Verify that the app bar title is present
-    expect(find.text('OWildZimut'), findsOneWidget);
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
 
-    // Verify that the app loads without errors
-    expect(find.byType(Scaffold), findsOneWidget);
-  });
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
 
-  testWidgets('About dialog shows correct version', (WidgetTester tester) async {
-    // Build our app
-    await tester.pumpWidget(const MaterialApp(home: OWildZimutApp()));
-    await tester.pumpAndSettle();
-
-    // Tap the help button
-    await tester.tap(find.byIcon(Icons.help_outline));
-    await tester.pumpAndSettle();
-
-    // Verify the dialog appears
-    expect(find.text('À propos de OWildZimut'), findsOneWidget);
-    expect(find.text('Version: 0.0.001'), findsOneWidget);
-
-    // Close the dialog
-    await tester.tap(find.text('Fermer'));
-    await tester.pumpAndSettle();
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
   });
 }
