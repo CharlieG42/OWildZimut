@@ -39,6 +39,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate Gradle wrapper
+        run: cd android && flutter precache && cd ..
+
       # On n'echoue que sur les erreurs. Les avertissements `info`/`warning`
       # pre-existants (ex: use_build_context_synchronously) ne bloquent pas le
       # build tant qu'ils ne sont pas des erreurs.
@@ -50,7 +53,7 @@ jobs:
 
       # Configuration du keystore de signature.
       #
-      # Le build.gradle.kts attend un keystore a ../upload-keystore.jks et un
+      # Le build.gradle attend un keystore a ../upload-keystore.jks et un
       # fichier key.properties. Si les secrets ne sont pas definis, on genere
       # un keystore auto-signe jetable pour que le build release reussisse
       # (l'APK sera signe mais non distribuable en production).
@@ -100,15 +103,13 @@ jobs:
         run: |
           mkdir -p build_logs
           flutter build apk --release --verbose > build_logs/build.log 2>&1 || true
-          # Capture exit code for later check
           echo "BUILD_EXIT_CODE=$?" >> $GITHUB_ENV
-          # Display last 100 lines of log for immediate feedback
           tail -n 100 build_logs/build.log
 
       - name: Check build result
         run: |
           if [ "$BUILD_EXIT_CODE" != "0" ]; then
-            echo "::error::Build failed! Check build_logs/build.log for details."
+            echo "::error::Build failed! Check build_logs/build.log artifact for details."
             exit 1
           fi
 
