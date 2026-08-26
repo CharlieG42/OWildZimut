@@ -143,7 +143,7 @@ class _MapPainter extends CustomPainter {
 
   void _drawLayer(Canvas canvas, Layer layer, bool isSelected, double opacity) {
     final paint = Paint()
-      ..color = layer.color.withOpacity(opacity)
+      ..color = layer.color.withValues(alpha: (opacity * 255).round())
       ..style = PaintingStyle.fill;
 
     final rect = Rect.fromLTWH(

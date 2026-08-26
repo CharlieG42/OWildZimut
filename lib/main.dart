@@ -4,7 +4,7 @@ import 'models/layer.dart';
 import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
-import 'screens/about_dialog.dart';
+import 'screens/about_dialog.dart' as app_about;
 
 void main() {
   runApp(const OWildZimutApp());
@@ -29,9 +29,9 @@ class OWildZimutApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: CardTheme(
+        cardTheme: const CardTheme(
           elevation: 2,
-          margin: const EdgeInsets.all(4),
+          margin: EdgeInsets.all(4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -181,7 +181,7 @@ class _MainScreenState extends State<MainScreen> {
   void _showAboutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AboutDialog(appVersion: _mapState.appVersion),
+      builder: (context) => app_about.AboutDialog(appVersion: _mapState.appVersion),
     );
   }
 
