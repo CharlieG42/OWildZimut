@@ -39,6 +39,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Clean Gradle cache
+        run: |
+          rm -rf ~/.gradle/caches/
+          rm -rf android/.gradle/
+
       - name: Generate Gradle wrapper
         run: cd android && flutter precache && cd ..
 
@@ -86,15 +91,15 @@ jobs:
         id: build
         run: |
           mkdir -p build_logs
-          flutter build apk --release --verbose > build_logs/build.log 2>&1 || true
+          flutter build apk --release --verbose > build_logs/build.log 2>&1
           echo "BUILD_EXIT_CODE=$?" >> $GITHUB_ENV
           tail -n 100 build_logs/build.log
 
       - name: Check build result
         run: |
           if [ "$BUILD_EXIT_CODE" != "0" ]; then
-            echo "::error::Build failed! Check build_logs/build.log artifact for details."
-            exit 1
+            echo "::error::Build failed with exit code $BUILD_EXIT_CODE! Check build_logs/build.log artifact for details."
+            exit $BUILD_EXIT_CODE
           fi
 
       - name: List all APK files (debug)
