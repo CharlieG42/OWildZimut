@@ -29,9 +29,9 @@ class OWildZimutApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: const CardThemeData(
+        cardTheme: CardThemeData(
           elevation: 2,
-          margin: EdgeInsets.all(4),
+          margin: const EdgeInsets.all(4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -45,7 +45,7 @@ class OWildZimutApp extends StatelessWidget {
         useMaterial3: true,
       ),
       themeMode: ThemeMode.system,
-      home: const MainScreen(),
+      home: MainScreen(),
     );
   }
 }
