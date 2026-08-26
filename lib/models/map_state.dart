@@ -147,7 +147,7 @@ class MapState {
         'opacity': layer.opacity,
         'z_index': layer.zIndex,
         'locked': layer.locked,
-        'color': layer.color.value.toRadixString(16),
+        'color': layer.color.toARGB32().toRadixString(16),
       }).toList(),
       'view': {
         'zoom': zoomLevel,
