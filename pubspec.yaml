@@ -34,7 +34,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # File picker for loading OCAD/OOMAP files
-  file_picker: ^8.0.2
+  file_picker: ^9.0.0
 
 dev_dependencies:
   flutter_test:

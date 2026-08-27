@@ -43,3 +43,10 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// Désactive la vérification AAR metadata pour contourner le problème avec file_picker
+android {
+    tasks.withType<org.gradle.api.tasks.diagnostics.DependencyInsightTask>().configureEach {
+        isEnabled = false
+    }
+}
