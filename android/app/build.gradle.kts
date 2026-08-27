@@ -43,12 +43,3 @@ kotlin {
 flutter {
     source = "../.."
 }
-
-// Force compileSdk=36 pour TOUTES les dépendances (y compris file_picker)
-// Résout l'erreur AAR metadata de flutter_plugin_android_lifecycle
-configurations.all {
-    resolutionStrategy {
-        force 'androidx.lifecycle:lifecycle-common:2.8.0'
-        force 'androidx.lifecycle:lifecycle-runtime:2.8.0'
-    }
-}
