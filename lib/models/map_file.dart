@@ -295,7 +295,7 @@ class MapFileData {
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
-    this.rawData,
+    this.rawData = null,
   });
 
   factory MapFileData.fromBytes(Uint8List bytes) {
