@@ -291,7 +291,7 @@ class MapFileData {
 
   MapFileData({
     this.fileType = MapFileType.unknown,
-    this.header = MapFileHeader(),
+    required this.header,
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
