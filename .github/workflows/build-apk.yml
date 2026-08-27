@@ -39,10 +39,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Clean Gradle cache
+      - name: Force clean build
         run: |
+          flutter clean
           rm -rf ~/.gradle/caches/
           rm -rf android/.gradle/
+          rm -rf android/app/build/
+          rm -rf pubspec.lock
 
       - name: Generate Gradle wrapper
         run: cd android && flutter precache && cd ..
