@@ -20,15 +20,26 @@ class MapState {
   /// Ajoute un nouveau calque
   MapState addLayer(String name, LayerType type) {
     final newLayer = Layer(
-      id: 'layer_${layers.length + 1}',
+      id: 'layer_${DateTime.now().millisecondsSinceEpoch}_${layers.length + 1}',
       name: name,
       type: type,
       zIndex: layers.length + 1,
+      color: _getDefaultColorForLayerType(type),
     );
     return copyWith(
       layers: [...layers, newLayer],
       selectedLayerIndex: layers.length,
     );
+  }
+
+  /// Couleur par défaut selon le type de calque
+  Color _getDefaultColorForLayerType(LayerType type) {
+    switch (type) {
+      case LayerType.vector:
+        return Colors.blue.withOpacity(0.3);
+      case LayerType.raster:
+        return Colors.grey.withOpacity(0.5);
+    }
   }
 
   /// Supprime un calque par ID
@@ -114,6 +125,18 @@ class MapState {
     );
   }
 
+  /// Ajoute un symbole au calque sélectionné
+  MapState addSymbolToSelectedLayer(Symbol symbol) {
+    if (selectedLayerIndex == null || selectedLayerIndex! >= layers.length) {
+      return this;
+    }
+
+    final newLayers = List<Layer>.from(layers);
+    newLayers[selectedLayerIndex!] = newLayers[selectedLayerIndex!].addSymbol(symbol);
+
+    return copyWith(layers: newLayers);
+  }
+
   /// Crée une copie avec des modifications
   MapState copyWith({
     List<Layer>? layers,
@@ -148,6 +171,17 @@ class MapState {
         'z_index': layer.zIndex,
         'locked': layer.locked,
         'color': layer.color.toARGB32().toRadixString(16),
+        'symbols': layer.symbols.map((symbol) => {
+          'id': symbol.id,
+          'type': symbol.type.name,
+          'code': symbol.code,
+          'position': {'x': symbol.position.dx, 'y': symbol.position.dy},
+          'description': symbol.description,
+          'color': symbol.color.toARGB32().toRadixString(16),
+          'size': symbol.size,
+          'rotation': symbol.rotation,
+          'points': symbol.points.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
+        }).toList(),
       }).toList(),
       'view': {
         'zoom': zoomLevel,
@@ -161,6 +195,32 @@ class MapState {
   static MapState fromJson(Map<String, dynamic> json) {
     final layersData = json['layers'] as List? ?? [];
     final layers = layersData.map((data) {
+      final symbolsData = data['symbols'] as List? ?? [];
+      final symbols = symbolsData.map((symbolData) {
+        final pointsData = symbolData['points'] as List? ?? [];
+        final points = pointsData.map((p) => 
+          Offset((p['x'] as num?)?.toDouble() ?? 0.0, (p['y'] as num?)?.toDouble() ?? 0.0)
+        ).toList();
+
+        return Symbol(
+          id: symbolData['id'] as String? ?? '',
+          type: SymbolType.values.firstWhere(
+            (e) => e.name == symbolData['type'],
+            orElse: () => SymbolType.point,
+          ),
+          code: symbolData['code'] as String? ?? '',
+          position: Offset(
+            (symbolData['position']?['x'] as num?)?.toDouble() ?? 0.0,
+            (symbolData['position']?['y'] as num?)?.toDouble() ?? 0.0,
+          ),
+          description: symbolData['description'] as String? ?? '',
+          color: Color(int.parse(symbolData['color'] as String? ?? '0xFF0000FF')),
+          size: (symbolData['size'] as num?)?.toDouble() ?? 1.0,
+          rotation: (symbolData['rotation'] as num?)?.toDouble() ?? 0.0,
+          points: points,
+        );
+      }).toList();
+
       return Layer(
         id: data['id'] as String? ?? '',
         name: data['name'] as String? ?? 'Unnamed',
@@ -173,6 +233,7 @@ class MapState {
         zIndex: data['z_index'] as int? ?? 1,
         locked: data['locked'] as bool? ?? false,
         color: Color(int.parse(data['color'] as String? ?? '0xFF0000FF')),
+        symbols: symbols,
       );
     }).toList();
 

@@ -56,8 +56,45 @@ class Layer {
     );
   }
 
+  /// Ajoute un symbole au calque
+  Layer addSymbol(Symbol symbol) {
+    return copyWith(
+      symbols: [...symbols, symbol],
+    );
+  }
+
+  /// Supprime un symbole du calque
+  Layer removeSymbol(String symbolId) {
+    return copyWith(
+      symbols: symbols.where((s) => s.id != symbolId).toList(),
+    );
+  }
+
+  /// Met à jour un symbole existant
+  Layer updateSymbol(Symbol updatedSymbol) {
+    final newSymbols = symbols.map((s) {
+      if (s.id == updatedSymbol.id) {
+        return updatedSymbol;
+      }
+      return s;
+    }).toList();
+    return copyWith(symbols: newSymbols);
+  }
+
+  /// Récupère un symbole par son ID
+  Symbol? getSymbolById(String symbolId) {
+    try {
+      return symbols.firstWhere((s) => s.id == symbolId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Nombre de symboles dans le calque
+  int get symbolCount => symbols.length;
+
   @override
   String toString() {
-    return 'Layer(id: $id, name: $name, type: $type, visible: $visible, opacity: $opacity)';
+    return 'Layer(id: $id, name: $name, type: $type, visible: $visible, opacity: $opacity, symbols: $symbolCount)';
   }
 }

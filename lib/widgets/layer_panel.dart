@@ -5,7 +5,7 @@ import '../models/layer.dart';
 /// Panneau de gestion des calques
 typedef LayerOpacityCallback = void Function(String layerId, double opacity);
 
-class LayerPanel extends StatelessWidget {
+class LayerPanel extends StatefulWidget {
   final List<Layer> layers;
   final int? selectedLayerIndex;
   final ValueChanged<int> onLayerSelected;
@@ -30,55 +30,130 @@ class LayerPanel extends StatelessWidget {
   });
 
   @override
+  State<LayerPanel> createState() => _LayerPanelState();
+}
+
+class _LayerPanelState extends State<LayerPanel> {
+  bool _isExpanded = true;
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isExpanded) {
+      return _buildCollapsedPanel(context);
+    }
+    return _buildExpandedPanel(context);
+  }
+
+  Widget _buildCollapsedPanel(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Row(
-            children: [
-              const Text(
-                'Calques',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+        IconButton(
+          icon: const Icon(Icons.chevron_left),
+          onPressed: () => setState(() => _isExpanded = true),
+          tooltip: 'Développer le panneau des calques',
+        ),
+        const SizedBox(height: 4),
+        if (widget.selectedLayerIndex != null && widget.layers.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              widget.layers[widget.selectedLayerIndex!].name,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildExpandedPanel(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Card(
+          margin: const EdgeInsets.all(4),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Row(
+              children: [
+                const Text(
+                  'Calques',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: onAddLayer,
-                tooltip: 'Ajouter un calque',
-              ),
-            ],
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 18),
+                  onPressed: widget.onAddLayer,
+                  tooltip: 'Ajouter un calque',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    maxWidth: 28,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, size: 18),
+                  onPressed: () => setState(() => _isExpanded = false),
+                  tooltip: 'Réduire le panneau',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    maxWidth: 28,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: layers.length,
-            itemBuilder: (context, index) {
-              final layer = layers[index];
-              return LayerItem(
-                layer: layer,
-                isSelected: selectedLayerIndex == index,
-                onTap: () => onLayerSelected(index),
-                onVisibilityChanged: (visible) =>
-                    onLayerVisibilityChanged(visible),
-                onOpacityChanged: (opacity) =>
-                    onLayerOpacityChanged(layer.id, opacity),
-                onMoveUp: () => onLayerMoveUp(layer.id),
-                onMoveDown: () => onLayerMoveDown(layer.id),
-                onRemove: () => onLayerRemoved(layer.id),
-              );
-            },
+          child: Card(
+            margin: const EdgeInsets.all(4),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: ListView.builder(
+                itemCount: widget.layers.length,
+                itemBuilder: (context, index) {
+                  final layer = widget.layers[index];
+                  return LayerItem(
+                    layer: layer,
+                    isSelected: widget.selectedLayerIndex == index,
+                    onTap: () => widget.onLayerSelected(index),
+                    onVisibilityChanged: (visible) =>
+                        widget.onLayerVisibilityChanged(visible),
+                    onOpacityChanged: (opacity) =>
+                        widget.onLayerOpacityChanged(layer.id, opacity),
+                    onMoveUp: () => widget.onLayerMoveUp(layer.id),
+                    onMoveDown: () => widget.onLayerMoveDown(layer.id),
+                    onRemove: () => widget.onLayerRemoved(layer.id),
+                  );
+                },
+              ),
+            ),
           ),
         ),
-        if (selectedLayerIndex != null && layers.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Text(
-              'Sélectionné: ${layers[selectedLayerIndex!].name}',
-              style: const TextStyle(fontStyle: FontStyle.italic),
+        if (widget.selectedLayerIndex != null && widget.layers.isNotEmpty)
+          Card(
+            margin: const EdgeInsets.all(4),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Text(
+                'Sélectionné: ${widget.layers[widget.selectedLayerIndex!].name}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ),
           ),
       ],
