@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import '../models/map_file.dart';
@@ -122,7 +121,6 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
     });
 
     try {
-      // Utiliser file_picker pour sélectionner un fichier
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['ocd', 'oomap', 'OCD', 'OOMAP'],
