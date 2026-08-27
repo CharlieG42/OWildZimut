@@ -121,7 +121,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
     });
 
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+// FilePicker désactivé.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['ocd', 'oomap', 'OCD', 'OOMAP'],
         dialogTitle: 'Sélectionner un fichier OMap ou OOMAP',
