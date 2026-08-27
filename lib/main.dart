@@ -7,6 +7,8 @@ import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
 import 'widgets/symbol_selector.dart';
+import 'widgets/file_loader.dart';
+import 'widgets/file_loader.dart';
 import 'screens/about_dialog.dart' as app_about;
 
 void main() {
@@ -213,6 +215,21 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  /// Ouvre le sélecteur de fichiers
+  void _openFileLoader() {
+    showDialog(
+      context: context,
+      builder: (context) => MapFileLoaderWidget(
+        onFileLoaded: (newState) {
+          setState(() {
+            _mapState = newState;
+          });
+          Navigator.of(context).pop();
+        },
+      ),
+    );
+  }
+
   /// Toggle l'expansion de la barre d'outils
   void _toggleToolBar() {
     setState(() {
@@ -226,6 +243,12 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: const Text('OWildZimut'),
         actions: [
+          // Bouton pour ouvrir un fichier
+          IconButton(
+            icon: const Icon(Icons.folder_open),
+            onPressed: _openFileLoader,
+            tooltip: 'Ouvrir un fichier OCAD/OOMAP',
+          ),
           // Bouton pour ouvrir le sélecteur de symboles
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
