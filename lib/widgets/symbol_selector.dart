@@ -19,10 +19,10 @@ class SymbolSelector extends StatefulWidget {
     this.detailLevel = SymbolDetailLevel.standard,
     this.showSearch = true,
     this.showCategories = true,
-  }).toList();
+  });
 
   @override
-  State<SymbolSelector> createState() => _SymbolSelectorState().toList();
+  State<SymbolSelector> createState() => _SymbolSelectorState();
 }
 
 class _SymbolSelectorState extends State<SymbolSelector> {
@@ -34,13 +34,13 @@ class _SymbolSelectorState extends State<SymbolSelector> {
 
   @override
   void initState() {
-    super.initState().toList();
+    super.initState();
     _selectedColor = widget.selectedColor ?? Colors.black;
     _selectedSize = widget.selectedSize ?? 1.0;
   }
 
   List<IOFSymbolDefinition> _getFilteredSymbols() {
-    var symbols = iofSymbolLibrary.getSymbolsByDetailLevel(widget.detailLevel).toList();
+    var symbols = iofSymbolLibrary.getSymbolsByDetailLevel(widget.detailLevel);
     
     if (_selectedCategory != null) {
       symbols = symbols.where((s) => s.category == _selectedCategory).toList();
@@ -145,11 +145,11 @@ class _SymbolSelectorState extends State<SymbolSelector> {
       onSelected: (selected) {
         setState(() {
           _selectedCategory = selected ? category : null;
-        }).toList();
+        });
       },
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
-    ).toList();
+    );
   }
 
   Widget _buildSymbolPreview(IOFSymbolDefinition symbolDef) {
@@ -166,7 +166,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
             shape: BoxShape.circle,
             border: Border.all(color: Colors.black, width: 0.5),
           ),
-        ).toList();
+        );
       case symbol_model.MapSymbolType.line:
         return Container(
           width: double.infinity,
@@ -175,7 +175,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
             color: color,
             border: Border.all(color: Colors.black, width: 0.5),
           ),
-        ).toList();
+        );
       case symbol_model.MapSymbolType.area:
         return Container(
           width: double.infinity,
@@ -184,7 +184,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
             color: color.withValues(alpha: 0.5),
             border: Border.all(color: color, width: 0.5),
           ),
-        ).toList();
+        );
       case symbol_model.MapSymbolType.text:
         return Center(
           child: Text(
@@ -195,7 +195,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
               fontWeight: FontWeight.bold,
             ),
           ),
-        ).toList();
+        );
     }
   }
 
@@ -241,12 +241,12 @@ class _SymbolSelectorState extends State<SymbolSelector> {
           ),
         ),
       ),
-    ).toList();
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final symbols = _getFilteredSymbols().toList();
+    final symbols = _getFilteredSymbols();
     
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -329,12 +329,12 @@ class _SymbolSelectorState extends State<SymbolSelector> {
             itemCount: symbols.length,
             itemBuilder: (context, index) {
               final symbolDef = symbols[index];
-              return _buildSymbolItem(symbolDef).toList();
+              return _buildSymbolItem(symbolDef);
             },
           ),
         ),
       ],
-    ).toList();
+    );
   }
 
   void _createAndSelectMapSymbol() {
@@ -343,13 +343,13 @@ class _SymbolSelectorState extends State<SymbolSelector> {
     final symbol = _selectedSymbolDef!.createMapSymbol(
       color: _selectedColor,
       size: _selectedSize,
-    ).toList();
+    );
     
-    widget.onSymbolSelected(symbol).toList();
+    widget.onSymbolSelected(symbol);
     
     setState(() {
       _selectedSymbolDef = null;
-    }).toList();
+    });
   }
 }
 
@@ -360,7 +360,7 @@ class SymbolSelectorDialog extends StatelessWidget {
   const SymbolSelectorDialog({
     super.key,
     this.detailLevel = SymbolDetailLevel.standard,
-  }).toList();
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -385,7 +385,7 @@ class SymbolSelectorDialog extends StatelessWidget {
             Expanded(
               child: SymbolSelector(
                 onSymbolSelected: (symbol) {
-                  Navigator.of(context).pop(symbol).toList();
+                  Navigator.of(context).pop(symbol);
                 },
                 detailLevel: detailLevel,
               ),
@@ -400,6 +400,6 @@ class SymbolSelectorDialog extends StatelessWidget {
           ],
         ),
       ),
-    ).toList();
+    );
   }
 }
