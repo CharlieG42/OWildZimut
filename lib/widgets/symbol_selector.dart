@@ -7,7 +7,7 @@ class SymbolSelector extends StatefulWidget {
   final ValueChanged<symbol_model.MapSymbol> onSymbolSelected;
   final Color? selectedColor;
   final double? selectedSize;
-  final symbol_model.SymbolDetailLevel detailLevel;
+  final SymbolDetailLevel detailLevel;
   final bool showSearch;
   final bool showCategories;
 
@@ -16,7 +16,7 @@ class SymbolSelector extends StatefulWidget {
     required this.onSymbolSelected,
     this.selectedColor,
     this.selectedSize,
-    this.detailLevel = symbol_model.SymbolDetailLevel.standard,
+    this.detailLevel = SymbolDetailLevel.standard,
     this.showSearch = true,
     this.showCategories = true,
   });
@@ -43,7 +43,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
     var symbols = iofSymbolLibrary.getSymbolsByDetailLevel(widget.detailLevel);
     
     if (_selectedCategory != null) {
-      symbols = symbols.where((s) => s.category == _selectedCategory).toList();
+      symbols = symbols.where((s) => s.category == _selectedCategory);
     }
     
     if (_searchQuery.isNotEmpty) {
@@ -51,7 +51,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
         s.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
         s.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
         s.code.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
+      );
     }
     
     return symbols;
@@ -282,7 +282,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
                         const SizedBox(width: 4),
                         ...IOFSymbolCategory.values.map((category) => 
                           _buildCategoryChip(category, _getCategoryLabel(category))
-                        ).toList(),
+                        ),
                       ],
                     ),
                   ),
@@ -355,11 +355,11 @@ class _SymbolSelectorState extends State<SymbolSelector> {
 
 /// Dialogue pour sélectionner un symbole
 class SymbolSelectorDialog extends StatelessWidget {
-  final symbol_model.SymbolDetailLevel detailLevel;
+  final SymbolDetailLevel detailLevel;
 
   const SymbolSelectorDialog({
     super.key,
-    this.detailLevel = symbol_model.SymbolDetailLevel.standard,
+    this.detailLevel = SymbolDetailLevel.standard,
   });
 
   @override

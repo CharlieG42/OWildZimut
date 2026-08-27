@@ -296,6 +296,7 @@ class MapFileData {
     this.symbols = const [],
     this.layers = const [],
     this.rawData,
+    
   });
 
   factory MapFileData.fromBytes(Uint8List bytes) {
