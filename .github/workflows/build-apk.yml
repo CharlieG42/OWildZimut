@@ -58,6 +58,12 @@ jobs:
           rm -rf pubspec.lock
 
 
+      - name: Install Android SDK 36
+        run: |
+          echo "y" | sdkmanager "platforms;android-36" || true
+          echo "y" | sdkmanager "platform-tools" || true
+          echo "y" | sdkmanager "build-tools;34.0.0" || true
+
       - name: Generate Gradle wrapper
         run: cd android && flutter precache && cd ..
 
