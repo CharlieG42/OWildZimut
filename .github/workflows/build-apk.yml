@@ -44,6 +44,11 @@ jobs:
           rm -rf ~/.gradle/caches/
           rm -rf android/.gradle/
 
+      - name: Clean Gradle cache
+        run: |
+          cd android
+          ./gradlew clean
+          rm -rf ~/.gradle/caches/
       - name: Generate Gradle wrapper
         run: cd android && flutter precache && cd ..
 
