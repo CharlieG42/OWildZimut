@@ -108,7 +108,7 @@ jobs:
       - name: Build release APK (with full logs)
         id: build
         run: |
-          flutter build apk --release --verbose > build.log 2>&1
+          flutter build apk --release --no-aar-check --verbose > build.log 2>&1 || flutter build apk --release --verbose > build.log 2>&1
           BUILD_EXIT_CODE=$?
           echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_ENV
           tail -n 100 build.log
