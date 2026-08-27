@@ -295,7 +295,6 @@ class MapFileData {
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
-    this.rawData,
     
   });
 
