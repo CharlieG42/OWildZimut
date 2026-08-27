@@ -79,7 +79,7 @@ class OCADHeader {
   factory OCADHeader.fromBytes(Uint8List bytes) {
     // Parseur simplifié pour l'en-tête OCAD
     // À compléter avec une implémentation complète
-    final header = const OCADHeader();
+    final header = OCADHeader();
     
     // Lire la signature du fichier
     final signature = String.fromCharCodes(bytes.sublist(0, 4));
@@ -294,7 +294,7 @@ class OCADFile {
 
   OCADFile({
     this.fileType = OCADFileType.unknown,
-    this.header = const OCADHeader(),
+    this.header = OCADHeader(),
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
