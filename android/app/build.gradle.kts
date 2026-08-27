@@ -32,6 +32,14 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+    configurations.all {
+        resolutionStrategy {
+            // Force versions compatibles avec compileSdk=36
+            force("androidx.lifecycle:lifecycle-common:2.8.0")
+            force("androidx.lifecycle:lifecycle-runtime:2.8.0")
+            force("androidx.lifecycle:lifecycle-process:2.8.0")
+        }
+    }
 }
 
 kotlin {
