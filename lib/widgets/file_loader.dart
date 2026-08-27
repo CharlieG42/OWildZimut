@@ -145,7 +145,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
 
         if (bytes != null) {
           // Vérifier que c'est un fichier OMap/OOMAP valide
-          if (MapFileLoader.isValidMapFileData(bytes)) {
+          if (MapFileLoader.isValidMapFile(bytes)) {
             // Charger le fichier
             final ocadFile = MapFileLoader.loadFromBytes(bytes);
             

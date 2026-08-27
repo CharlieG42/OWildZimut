@@ -32,7 +32,7 @@ class OWildZimutApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: const CardThemeData(
+        cardTheme: CardThemeData(
           elevation: 2,
           margin: EdgeInsets.all(4),
           shape: RoundedRectangleBorder(
