@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'layer.dart';
+import 'symbol.dart' as symbol_model;
 
 /// État global de la carte (géré par un StateNotifier ou Riverpod)
 class MapState {
@@ -36,9 +37,9 @@ class MapState {
   Color _getDefaultColorForLayerType(LayerType type) {
     switch (type) {
       case LayerType.vector:
-        return Colors.blue.withOpacity(0.3);
+        return Colors.blue.withValues(alpha: 0.3);
       case LayerType.raster:
-        return Colors.grey.withOpacity(0.5);
+        return Colors.grey.withValues(alpha: 0.5);
     }
   }
 
@@ -126,7 +127,7 @@ class MapState {
   }
 
   /// Ajoute un symbole au calque sélectionné
-  MapState addSymbolToSelectedLayer(Symbol symbol) {
+  MapState addSymbolToSelectedLayer(symbol_model.MapSymbol symbol) {
     if (selectedLayerIndex == null || selectedLayerIndex! >= layers.length) {
       return this;
     }
@@ -202,11 +203,11 @@ class MapState {
           Offset((p['x'] as num?)?.toDouble() ?? 0.0, (p['y'] as num?)?.toDouble() ?? 0.0)
         ).toList();
 
-        return Symbol(
+        return symbol_model.MapSymbol(
           id: symbolData['id'] as String? ?? '',
-          type: SymbolType.values.firstWhere(
+          type: symbol_model.MapSymbolType.values.firstWhere(
             (e) => e.name == symbolData['type'],
-            orElse: () => SymbolType.point,
+            orElse: () => symbol_model.MapSymbolType.point,
           ),
           code: symbolData['code'] as String? ?? '',
           position: Offset(

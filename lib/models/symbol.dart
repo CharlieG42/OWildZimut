@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Types de symboles IOF (International Orienteering Federation)
-enum SymbolType {
+enum MapSymbolType {
   point,
   line,
   area,
@@ -9,9 +9,9 @@ enum SymbolType {
 }
 
 /// Modèle de données pour un symbole sur la carte
-class Symbol {
+class MapSymbol {
   final String id;
-  final SymbolType type;
+  final MapSymbolType type;
   String code;
   Offset position;
   String description;
@@ -20,7 +20,7 @@ class Symbol {
   double rotation;
   List<Offset> points;
 
-  Symbol({
+  MapSymbol({
     required this.id,
     required this.type,
     this.code = '',
@@ -33,9 +33,9 @@ class Symbol {
   });
 
   /// Crée une copie du symbole avec des modifications
-  Symbol copyWith({
+  MapSymbol copyWith({
     String? id,
-    SymbolType? type,
+    MapSymbolType? type,
     String? code,
     Offset? position,
     String? description,
@@ -44,7 +44,7 @@ class Symbol {
     double? rotation,
     List<Offset>? points,
   }) {
-    return Symbol(
+    return MapSymbol(
       id: id ?? this.id,
       type: type ?? this.type,
       code: code ?? this.code,
@@ -59,6 +59,10 @@ class Symbol {
 
   @override
   String toString() {
-    return 'Symbol(id: $id, type: $type, code: $code, position: $position)';
+    return 'MapSymbol(id: $id, type: $type, code: $code, position: $position)';
   }
 }
+
+// Alias pour la compatibilité ascendante
+typedef Symbol = MapSymbol;
+typedef SymbolType = MapSymbolType;

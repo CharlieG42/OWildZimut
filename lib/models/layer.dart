@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'symbol.dart';
+import 'symbol.dart' as symbol_model;
 
 /// Types de calques possibles
 enum LayerType {
@@ -16,7 +16,7 @@ class Layer {
   double opacity;
   int zIndex;
   bool locked;
-  List<Symbol> symbols;
+  List<symbol_model.MapSymbol> symbols;
   Color color;
 
   Layer({
@@ -40,7 +40,7 @@ class Layer {
     double? opacity,
     int? zIndex,
     bool? locked,
-    List<Symbol>? symbols,
+    List<symbol_model.MapSymbol>? symbols,
     Color? color,
   }) {
     return Layer(
@@ -57,7 +57,7 @@ class Layer {
   }
 
   /// Ajoute un symbole au calque
-  Layer addSymbol(Symbol symbol) {
+  Layer addSymbol(symbol_model.MapSymbol symbol) {
     return copyWith(
       symbols: [...symbols, symbol],
     );
@@ -71,7 +71,7 @@ class Layer {
   }
 
   /// Met à jour un symbole existant
-  Layer updateSymbol(Symbol updatedSymbol) {
+  Layer updateSymbol(symbol_model.MapSymbol updatedSymbol) {
     final newSymbols = symbols.map((s) {
       if (s.id == updatedSymbol.id) {
         return updatedSymbol;
@@ -82,7 +82,7 @@ class Layer {
   }
 
   /// Récupère un symbole par son ID
-  Symbol? getSymbolById(String symbolId) {
+  symbol_model.MapSymbol? getSymbolById(String symbolId) {
     try {
       return symbols.firstWhere((s) => s.id == symbolId);
     } catch (e) {

@@ -2,8 +2,9 @@ import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'layer.dart';
-import 'symbol.dart';
+import 'symbol.dart' as symbol_model;
 import 'iof_symbols.dart';
+import 'map_state.dart';
 
 /// Type de fichier OCAD/OOMAP
 enum OCADFileType {
@@ -57,7 +58,7 @@ class OCADHeader {
   final int numberOfColors;
   final int numberOfSymbols;
 
-  OCADHeader({
+  const OCADHeader({
     this.version = OCADVersion.unknown,
     this.coordinateSystem = CoordinateSystem.unknown,
     this.unit = Unit.unknown,
@@ -78,17 +79,54 @@ class OCADHeader {
   factory OCADHeader.fromBytes(Uint8List bytes) {
     // Parseur simplifié pour l'en-tête OCAD
     // À compléter avec une implémentation complète
-    final header = OCADHeader();
+    final header = const OCADHeader();
     
     // Lire la signature du fichier
     final signature = String.fromCharCodes(bytes.sublist(0, 4));
     if (signature == 'OCAD') {
-      header.version = OCADVersion.v8; // Version par défaut
+      return header.copyWith(version: OCADVersion.v8); // Version par défaut
     } else if (signature == 'OOMAP') {
       // Format OOMAP
+      return header;
     }
 
     return header;
+  }
+
+  OCADHeader copyWith({
+    OCADVersion? version,
+    CoordinateSystem? coordinateSystem,
+    Unit? unit,
+    double? scale,
+    String? mapName,
+    String? mapAuthor,
+    String? mapOrganization,
+    DateTime? creationDate,
+    DateTime? modificationDate,
+    double? minX,
+    double? maxX,
+    double? minY,
+    double? maxY,
+    int? numberOfColors,
+    int? numberOfSymbols,
+  }) {
+    return OCADHeader(
+      version: version ?? this.version,
+      coordinateSystem: coordinateSystem ?? this.coordinateSystem,
+      unit: unit ?? this.unit,
+      scale: scale ?? this.scale,
+      mapName: mapName ?? this.mapName,
+      mapAuthor: mapAuthor ?? this.mapAuthor,
+      mapOrganization: mapOrganization ?? this.mapOrganization,
+      creationDate: creationDate ?? this.creationDate,
+      modificationDate: modificationDate ?? this.modificationDate,
+      minX: minX ?? this.minX,
+      maxX: maxX ?? this.maxX,
+      minY: minY ?? this.minY,
+      maxY: maxY ?? this.maxY,
+      numberOfColors: numberOfColors ?? this.numberOfColors,
+      numberOfSymbols: numberOfSymbols ?? this.numberOfSymbols,
+    );
   }
 }
 
@@ -125,7 +163,7 @@ class OCADSymbol {
   final String name;
   final String description;
   final int colorNumber;
-  final SymbolType type;
+  final symbol_model.MapSymbolType type;
   final List<Uint8List> elements;
 
   OCADSymbol({
@@ -133,7 +171,7 @@ class OCADSymbol {
     this.name = '',
     this.description = '',
     this.colorNumber = 0,
-    this.type = SymbolType.point,
+    this.type = symbol_model.MapSymbolType.point,
     this.elements = const [],
   });
 
@@ -144,7 +182,7 @@ class OCADSymbol {
   }
 
   /// Convertit en symbole IOF
-  Symbol toIOFSymbol({
+  symbol_model.MapSymbol toIOFSymbol({
     String? id,
     Offset? position,
     double scale = 1.0,
@@ -152,7 +190,7 @@ class OCADSymbol {
     // Trouver la correspondance avec les symboles IOF
     final iofSymbol = iofSymbolLibrary.getSymbolByCode(number.toString());
     
-    return Symbol(
+    return symbol_model.MapSymbol(
       id: id ?? 'symbol_${DateTime.now().millisecondsSinceEpoch}',
       type: type,
       code: iofSymbol?.code ?? number.toString(),
@@ -171,7 +209,7 @@ class OCADElement {
   final double rotation;
   final double scale;
   final List<Offset> points;
-  final SymbolType type;
+  final symbol_model.MapSymbolType type;
 
   OCADElement({
     required this.symbolNumber,
@@ -179,7 +217,7 @@ class OCADElement {
     this.rotation = 0.0,
     this.scale = 1.0,
     this.points = const [],
-    this.type = SymbolType.point,
+    this.type = symbol_model.MapSymbolType.point,
   });
 
   factory OCADElement.fromBytes(Uint8List bytes, int offset) {
@@ -189,8 +227,8 @@ class OCADElement {
   }
 
   /// Convertit en symbole
-  Symbol toSymbol({String? id}) {
-    return Symbol(
+  symbol_model.MapSymbol toSymbol({String? id}) {
+    return symbol_model.MapSymbol(
       id: id ?? 'symbol_${DateTime.now().millisecondsSinceEpoch}',
       type: type,
       code: symbolNumber.toString(),

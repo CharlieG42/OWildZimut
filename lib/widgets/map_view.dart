@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/layer.dart';
-import '../models/symbol.dart';
+import '../models/symbol.dart' as symbol_model;
 
 /// Widget pour afficher et interagir avec la carte
 class MapView extends StatefulWidget {
@@ -11,7 +11,7 @@ class MapView extends StatefulWidget {
   final String currentTool;
   final ValueChanged<Offset>? onPanUpdate;
   final ValueChanged<double>? onZoomChanged;
-  final Function(Symbol)? onSymbolAdded;
+  final Function(symbol_model.MapSymbol)? onSymbolAdded;
 
   const MapView({
     super.key,
@@ -165,9 +165,9 @@ class _MapViewState extends State<MapView> {
   }
 
   void _handlePointTap(Offset position) {
-    final symbol = Symbol(
+    final symbol = symbol_model.MapSymbol(
       id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
-      type: SymbolType.point,
+      type: symbol_model.MapSymbolType.point,
       code: 'point',
       position: position,
       description: 'Point',
@@ -178,9 +178,9 @@ class _MapViewState extends State<MapView> {
   }
 
   void _handleTextTap(Offset position) {
-    final symbol = Symbol(
+    final symbol = symbol_model.MapSymbol(
       id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
-      type: SymbolType.text,
+      type: symbol_model.MapSymbolType.text,
       code: 'text',
       position: position,
       description: 'Nouveau texte',
@@ -193,9 +193,9 @@ class _MapViewState extends State<MapView> {
   void _finalizeDrawing() {
     if (_currentPoints.isEmpty || widget.selectedLayerIndex == null) return;
 
-    final symbol = Symbol(
+    final symbol = symbol_model.MapSymbol(
       id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
-      type: widget.currentTool == 'line' ? SymbolType.line : SymbolType.area,
+      type: widget.currentTool == 'line' ? symbol_model.MapSymbolType.line : symbol_model.MapSymbolType.area,
       code: widget.currentTool,
       position: _currentPoints.first,
       description: widget.currentTool == 'line' ? 'Ligne' : 'Polygone',
@@ -260,7 +260,7 @@ class _MapPainter extends CustomPainter {
       if (!layer.visible) continue;
 
       for (final symbol in layer.symbols) {
-        _drawSymbol(canvas, symbol, layer.opacity);
+        _drawMapSymbol(canvas, symbol, layer.opacity);
       }
     }
   }
@@ -301,7 +301,7 @@ class _MapPainter extends CustomPainter {
     // Pour l'instant, on dessine un rectangle pour représenter le calque
     // À terme, ce sera remplacé par le rendu des symboles
     final paint = Paint()
-      ..color = layer.color.withOpacity(opacity * 0.3)
+      ..color = layer.color.withValues(alpha: opacity * 0.3)
       ..style = PaintingStyle.fill;
 
     final rect = Rect.fromLTWH(
@@ -315,7 +315,7 @@ class _MapPainter extends CustomPainter {
 
     if (isSelected) {
       final borderPaint = Paint()
-        ..color = Colors.blue.withOpacity(opacity)
+        ..color = Colors.blue.withValues(alpha: opacity)
         ..strokeWidth = 2.0 / zoomLevel
         ..style = PaintingStyle.stroke;
       canvas.drawRect(rect, borderPaint);
@@ -325,7 +325,7 @@ class _MapPainter extends CustomPainter {
       text: TextSpan(
         text: layer.name,
         style: TextStyle(
-          color: Colors.black.withOpacity(opacity),
+          color: Colors.black.withValues(alpha: opacity),
           fontSize: 14 / zoomLevel,
         ),
       ),
@@ -338,20 +338,20 @@ class _MapPainter extends CustomPainter {
     );
   }
 
-  void _drawSymbol(Canvas canvas, Symbol symbol, double layerOpacity) {
-    final effectiveOpacity = symbol.color.opacity * layerOpacity;
+  void _drawMapSymbol(Canvas canvas, symbol_model.MapSymbol symbol, double layerOpacity) {
+    final effectiveOpacity = symbol.color.a * layerOpacity;
     final paint = Paint()
-      ..color = symbol.color.withOpacity(effectiveOpacity)
+      ..color = symbol.color.withValues(alpha: effectiveOpacity)
       ..strokeWidth = symbol.size / zoomLevel
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()
-      ..color = Colors.black.withOpacity(effectiveOpacity)
+      ..color = Colors.black.withValues(alpha: effectiveOpacity)
       ..strokeWidth = symbol.size / zoomLevel / 2
       ..style = PaintingStyle.stroke;
 
     switch (symbol.type) {
-      case SymbolType.point:
+      case symbol_model.MapSymbolType.point:
         canvas.drawCircle(
           symbol.position,
           symbol.size / zoomLevel,
@@ -363,7 +363,7 @@ class _MapPainter extends CustomPainter {
           borderPaint,
         );
         break;
-      case SymbolType.line:
+      case symbol_model.MapSymbolType.line:
         if (symbol.points.length > 1) {
           final path = Path();
           path.moveTo(symbol.points[0].dx, symbol.points[0].dy);
@@ -373,7 +373,7 @@ class _MapPainter extends CustomPainter {
           canvas.drawPath(path, paint..style = PaintingStyle.stroke);
         }
         break;
-      case SymbolType.area:
+      case symbol_model.MapSymbolType.area:
         if (symbol.points.length > 2) {
           final path = Path();
           path.moveTo(symbol.points[0].dx, symbol.points[0].dy);
@@ -385,12 +385,12 @@ class _MapPainter extends CustomPainter {
           canvas.drawPath(path, borderPaint);
         }
         break;
-      case SymbolType.text:
+      case symbol_model.MapSymbolType.text:
         final textPainter = TextPainter(
           text: TextSpan(
             text: symbol.description,
             style: TextStyle(
-              color: symbol.color.withOpacity(effectiveOpacity),
+              color: symbol.color.withValues(alpha: effectiveOpacity),
               fontSize: symbol.size / zoomLevel,
             ),
           ),
@@ -457,7 +457,7 @@ class _DrawingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.2)
+      ..color = Colors.blue.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
 
     if (tool == 'line') {

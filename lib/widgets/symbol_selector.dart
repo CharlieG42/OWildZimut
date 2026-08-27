@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/iof_symbols.dart';
-import '../models/symbol.dart';
+import '../models/symbol.dart' as symbol_model;
 
 /// Widget pour sélectionner un symbole IOF
 class SymbolSelector extends StatefulWidget {
-  final ValueChanged<Symbol> onSymbolSelected;
+  final ValueChanged<symbol_model.MapSymbol> onSymbolSelected;
   final Color? selectedColor;
   final double? selectedSize;
   final SymbolDetailLevel detailLevel;
@@ -28,7 +28,7 @@ class SymbolSelector extends StatefulWidget {
 class _SymbolSelectorState extends State<SymbolSelector> {
   IOFSymbolCategory? _selectedCategory;
   String _searchQuery = '';
-  IOFSymbolDefinition? _selectedSymbolDef;
+  symbol_model.MapSymbol? _selectedSymbolDef;
   Color _selectedColor = Colors.black;
   double _selectedSize = 1.0;
 
@@ -76,7 +76,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
                       children: [
                         _buildCategoryChip(null, 'Tous'),
                         const SizedBox(width: 4),
-                        ...IOFSymbolCategory.values.map((category) => 
+                        ...IOFSymbolCategory.toARGB32()s.map((category) => 
                           _buildCategoryChip(category, _getCategoryLabel(category))
                         ).toList(),
                       ],
@@ -247,7 +247,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
   }
 
   Widget _buildColorOption(Color color) {
-    final isSelected = _selectedColor.value == color.value;
+    final isSelected = _selectedColor.toARGB32() == color.toARGB32();
     
     return GestureDetector(
       onTap: () => setState(() => _selectedColor = color),
@@ -264,7 +264,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
           ),
           boxShadow: isSelected 
               ? [BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 )]
@@ -313,7 +313,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
                 _truncateName(symbolDef.name, 10),
                 style: TextStyle(
                   fontSize: 7,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -331,7 +331,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
     final size = symbolDef.defaultSize * 2;
     
     switch (symbolDef.type) {
-      case SymbolType.point:
+      case MapSymbolType.point:
         return Container(
           width: size * 2,
           height: size * 2,
@@ -341,7 +341,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
             border: Border.all(color: Colors.black, width: 0.5),
           ),
         );
-      case SymbolType.line:
+      case MapSymbolType.line:
         return Container(
           width: double.infinity,
           height: size,
@@ -350,16 +350,16 @@ class _SymbolSelectorState extends State<SymbolSelector> {
             border: Border.all(color: Colors.black, width: 0.5),
           ),
         );
-      case SymbolType.area:
+      case MapSymbolType.area:
         return Container(
           width: double.infinity,
           height: double.infinity,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.5),
+            color: color.withValues(alpha: 0.5),
             border: Border.all(color: color, width: 0.5),
           ),
         );
-      case SymbolType.text:
+      case MapSymbolType.text:
         return Center(
           child: Text(
             'T',
@@ -457,10 +457,10 @@ class _SymbolSelectorState extends State<SymbolSelector> {
     }
   }
 
-  void _createAndSelectSymbol() {
+  void _createAndSelectMapSymbol() {
     if (_selectedSymbolDef == null) return;
     
-    final symbol = _selectedSymbolDef!.createSymbol(
+    final symbol = _selectedSymbolDef!.createMapSymbol(
       color: _selectedColor,
       size: _selectedSize,
     );

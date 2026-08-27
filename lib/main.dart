@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/map_state.dart';
 import 'models/layer.dart';
-import 'models/symbol.dart';
+import 'models/symbol.dart' as symbol_model;
 import 'models/iof_symbols.dart';
 import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
@@ -32,9 +32,9 @@ class OWildZimutApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: const CardTheme(
+        cardTheme: CardTheme(
           elevation: 2,
-          margin: EdgeInsets.all(4),
+          margin: const EdgeInsets.all(4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -48,14 +48,14 @@ class OWildZimutApp extends StatelessWidget {
         useMaterial3: true,
       ),
       themeMode: ThemeMode.system,
-      home: const MainScreen(),
+      home: MainScreen(),
     );
   }
 }
 
 /// Écran principal de l'application
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -66,7 +66,6 @@ class _MainScreenState extends State<MainScreen> {
   String _currentTool = 'select';
   bool _toolBarExpanded = true;
   bool _layerPanelExpanded = true;
-  bool _symbolSelectorVisible = false;
 
   @override
   void initState() {
@@ -184,7 +183,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   /// Ajoute un symbole au calque sélectionné
-  void _addSymbol(Symbol symbol) {
+  void _addSymbol(symbol_model.MapSymbol symbol) {
     if (_mapState.selectedLayerIndex == null) return;
 
     setState(() {
@@ -196,7 +195,7 @@ class _MainScreenState extends State<MainScreen> {
   void _openSymbolSelector() {
     showDialog(
       context: context,
-      builder: (context) => SymbolSelectorDialog(
+      builder: (context) => const SymbolSelectorDialog(
         detailLevel: SymbolDetailLevel.standard,
       ),
     ).then((selectedSymbol) {
@@ -218,13 +217,6 @@ class _MainScreenState extends State<MainScreen> {
   void _toggleToolBar() {
     setState(() {
       _toolBarExpanded = !_toolBarExpanded;
-    });
-  }
-
-  /// Toggle l'expansion du panneau des calques
-  void _toggleLayerPanel() {
-    setState(() {
-      _layerPanelExpanded = !_layerPanelExpanded;
     });
   }
 
