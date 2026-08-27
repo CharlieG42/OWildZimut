@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'models/map_state.dart';
 import 'models/layer.dart';
+import 'models/symbol.dart';
+import 'models/iof_symbols.dart';
 import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
+import 'widgets/symbol_selector.dart';
 import 'screens/about_dialog.dart' as app_about;
 
 void main() {
@@ -29,9 +32,9 @@ class OWildZimutApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: CardThemeData(
+        cardTheme: const CardTheme(
           elevation: 2,
-          margin: const EdgeInsets.all(4),
+          margin: EdgeInsets.all(4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -45,7 +48,7 @@ class OWildZimutApp extends StatelessWidget {
         useMaterial3: true,
       ),
       themeMode: ThemeMode.system,
-      home: MainScreen(),
+      home: const MainScreen(),
     );
   }
 }
@@ -61,13 +64,16 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   late MapState _mapState;
   String _currentTool = 'select';
+  bool _toolBarExpanded = true;
+  bool _layerPanelExpanded = true;
+  bool _symbolSelectorVisible = false;
 
   @override
   void initState() {
     super.initState();
     // Initialisation avec quelques calques par défaut
     _mapState = MapState(
-      appVersion: '0.0.001',
+      appVersion: '0.0.002',
     );
     // Ajout de calques par défaut
     _mapState = _mapState.addLayer('Carte de base', LayerType.vector);
@@ -177,6 +183,29 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  /// Ajoute un symbole au calque sélectionné
+  void _addSymbol(Symbol symbol) {
+    if (_mapState.selectedLayerIndex == null) return;
+
+    setState(() {
+      _mapState = _mapState.addSymbolToSelectedLayer(symbol);
+    });
+  }
+
+  /// Ouvre le sélecteur de symboles
+  void _openSymbolSelector() {
+    showDialog(
+      context: context,
+      builder: (context) => SymbolSelectorDialog(
+        detailLevel: SymbolDetailLevel.standard,
+      ),
+    ).then((selectedSymbol) {
+      if (selectedSymbol != null) {
+        _addSymbol(selectedSymbol);
+      }
+    });
+  }
+
   /// Affiche le dialogue "À propos"
   void _showAboutDialog() {
     showDialog(
@@ -185,12 +214,32 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  /// Toggle l'expansion de la barre d'outils
+  void _toggleToolBar() {
+    setState(() {
+      _toolBarExpanded = !_toolBarExpanded;
+    });
+  }
+
+  /// Toggle l'expansion du panneau des calques
+  void _toggleLayerPanel() {
+    setState(() {
+      _layerPanelExpanded = !_layerPanelExpanded;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('OWildZimut'),
         actions: [
+          // Bouton pour ouvrir le sélecteur de symboles
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: _openSymbolSelector,
+            tooltip: 'Ajouter un symbole IOF',
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: _showAboutDialog,
@@ -202,13 +251,15 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           // Barre d'outils à gauche
           SizedBox(
-            width: 200,
+            width: _toolBarExpanded ? 200 : 40,
             child: ToolBar(
               currentTool: _currentTool,
               onToolChanged: _setCurrentTool,
               onZoomIn: _zoomIn,
               onZoomOut: _zoomOut,
               onResetView: _resetView,
+              isExpanded: _toolBarExpanded,
+              onToggleExpand: _toggleToolBar,
             ),
           ),
           // Zone de carte centrale
@@ -218,13 +269,15 @@ class _MainScreenState extends State<MainScreen> {
               zoomLevel: _mapState.zoomLevel,
               panOffset: _mapState.panOffset,
               selectedLayerIndex: _mapState.selectedLayerIndex,
+              currentTool: _currentTool,
               onPanUpdate: _setPanOffset,
               onZoomChanged: _setZoomLevel,
+              onSymbolAdded: _addSymbol,
             ),
           ),
           // Panneau des calques à droite
           SizedBox(
-            width: 300,
+            width: _layerPanelExpanded ? 280 : 40,
             child: LayerPanel(
               layers: _mapState.layers,
               selectedLayerIndex: _mapState.selectedLayerIndex,

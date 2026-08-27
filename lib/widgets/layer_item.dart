@@ -27,71 +27,76 @@ class LayerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       color: isSelected
           ? Theme.of(context).colorScheme.primaryContainer
           : Theme.of(context).colorScheme.surface,
-      elevation: isSelected ? 4 : 2,
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                layer.visible ? Icons.visibility : Icons.visibility_off,
-                color: layer.visible ? Colors.green : Colors.grey,
-                size: 18,
+      elevation: isSelected ? 3 : 1,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  layer.visible ? Icons.visibility : Icons.visibility_off,
+                  color: layer.visible ? Colors.green : Colors.grey,
+                  size: 16,
+                ),
+                onPressed: () => onVisibilityChanged?.call(!layer.visible),
+                tooltip: layer.visible ? 'Masquer' : 'Afficher',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 24, maxWidth: 24),
               ),
-              onPressed: () => onVisibilityChanged?.call(!layer.visible),
-              tooltip: layer.visible ? 'Masquer' : 'Afficher',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, maxWidth: 32),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  layer.name,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    layer.name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
                 ),
               ),
-            ),
-            SizedBox(
-              width: 80,
-              child: Slider(
-                value: layer.opacity,
-                onChanged: onOpacityChanged,
-                min: 0,
-                max: 1,
-                label: '${(layer.opacity * 100).round()}%',
+              SizedBox(
+                width: 60,
+                child: Slider(
+                  value: layer.opacity,
+                  onChanged: onOpacityChanged,
+                  min: 0,
+                  max: 1,
+                  label: '${(layer.opacity * 100).round()}%',
+                ),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.arrow_upward, size: 16),
-              onPressed: onMoveUp,
-              tooltip: 'Monter',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 28, maxWidth: 28),
-            ),
-            IconButton(
-              icon: const Icon(Icons.arrow_downward, size: 16),
-              onPressed: onMoveDown,
-              tooltip: 'Descendre',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 28, maxWidth: 28),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 16),
-              onPressed: onRemove,
-              tooltip: 'Supprimer',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 28, maxWidth: 28),
-            ),
-          ],
+              IconButton(
+                icon: const Icon(Icons.arrow_upward, size: 14),
+                onPressed: onMoveUp,
+                tooltip: 'Monter',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 20, maxWidth: 20),
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_downward, size: 14),
+                onPressed: onMoveDown,
+                tooltip: 'Descendre',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 20, maxWidth: 20),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red, size: 14),
+                onPressed: onRemove,
+                tooltip: 'Supprimer',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 20, maxWidth: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
