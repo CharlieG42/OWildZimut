@@ -287,7 +287,7 @@ class MapFileData {
   final List<MapFileColor> colors;
   final List<MapFileMapSymbol> symbols;
   final List<MapFileMapLayer> layers;
-  final Uint8List? rawData = null;
+  final Uint8List? rawData;
 
   MapFileData({
     this.fileType = MapFileType.unknown,
@@ -295,6 +295,7 @@ class MapFileData {
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
+    this.rawData,
   });
 
   factory MapFileData.fromBytes(Uint8List bytes) {
