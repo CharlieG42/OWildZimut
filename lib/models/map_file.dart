@@ -287,7 +287,7 @@ class MapFileData {
   final List<MapFileColor> colors;
   final List<MapFileMapSymbol> symbols;
   final List<MapFileMapLayer> layers;
-  final Uint8List? rawData;
+  final Uint8List? rawData = null;
 
   MapFileData({
     this.fileType = MapFileType.unknown,
