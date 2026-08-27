@@ -7,14 +7,14 @@ import 'iof_symbols.dart';
 import 'map_state.dart';
 
 /// Type de fichier OCAD/OOMAP
-enum OCADFileType {
+enum MapFileType {
   ocad,
   oomap,
   unknown,
 }
 
 /// Version du format OCAD
-enum OCADVersion {
+enum MapFileVersion {
   v6,
   v7,
   v8,
@@ -34,17 +34,17 @@ enum CoordinateSystem {
 }
 
 /// Unité de mesure
-enum Unit {
+enum MapUnit {
   meters,
   millimeters,
   unknown,
 }
 
 /// En-tête du fichier OCAD
-class OCADHeader {
-  final OCADVersion version;
+class MapFileHeader {
+  final MapFileVersion version;
   final CoordinateSystem coordinateSystem;
-  final Unit unit;
+  final MapUnit unit;
   final double scale;
   final String mapName;
   final String mapAuthor;
@@ -58,10 +58,10 @@ class OCADHeader {
   final int numberOfColors;
   final int numberOfSymbols;
 
-  const OCADHeader({
-    this.version = OCADVersion.unknown,
+  MapFileHeader({
+    this.version = MapFileVersion.unknown,
     this.coordinateSystem = CoordinateSystem.unknown,
-    this.unit = Unit.unknown,
+    this.unit = MapUnit.unknown,
     this.scale = 1.0,
     this.mapName = '',
     this.mapAuthor = '',
@@ -76,27 +76,25 @@ class OCADHeader {
     this.numberOfSymbols = 0,
   });
 
-  factory OCADHeader.fromBytes(Uint8List bytes) {
+  factory MapFileHeader.fromBytes(Uint8List bytes) {
     // Parseur simplifié pour l'en-tête OCAD
     // À compléter avec une implémentation complète
-    final header = OCADHeader();
-    
     // Lire la signature du fichier
     final signature = String.fromCharCodes(bytes.sublist(0, 4));
     if (signature == 'OCAD') {
-      return header.copyWith(version: OCADVersion.v8); // Version par défaut
+      return MapFileHeader(version: MapFileVersion.v8); // Version par défaut
     } else if (signature == 'OOMAP') {
       // Format OOMAP
-      return header;
+      return MapFileHeader();
     }
 
-    return header;
+    return MapFileHeader();
   }
 
-  OCADHeader copyWith({
-    OCADVersion? version,
+  MapFileHeader copyWith({
+    MapFileVersion? version,
     CoordinateSystem? coordinateSystem,
-    Unit? unit,
+    MapUnit? unit,
     double? scale,
     String? mapName,
     String? mapAuthor,
@@ -110,7 +108,7 @@ class OCADHeader {
     int? numberOfColors,
     int? numberOfSymbols,
   }) {
-    return OCADHeader(
+    return MapFileHeader(
       version: version ?? this.version,
       coordinateSystem: coordinateSystem ?? this.coordinateSystem,
       unit: unit ?? this.unit,
@@ -131,7 +129,7 @@ class OCADHeader {
 }
 
 /// Couleur OCAD
-class OCADColor {
+class MapFileColor {
   final int number;
   final String name;
   final Color color;
@@ -140,7 +138,7 @@ class OCADColor {
   final double angle;
   final double frequency;
 
-  OCADColor({
+  MapFileColor({
     required this.number,
     this.name = '',
     this.color = Colors.black,
@@ -150,15 +148,15 @@ class OCADColor {
     this.frequency = 0.0,
   });
 
-  factory OCADColor.fromBytes(Uint8List bytes, int offset) {
+  factory MapFileColor.fromBytes(Uint8List bytes, int offset) {
     // Parseur de couleur OCAD
     // À compléter
-    return OCADColor(number: 0);
+    return MapFileColor(number: 0);
   }
 }
 
 /// Symbole OCAD
-class OCADSymbol {
+class MapFileMapSymbol {
   final int number;
   final String name;
   final String description;
@@ -166,7 +164,7 @@ class OCADSymbol {
   final symbol_model.MapSymbolType type;
   final List<Uint8List> elements;
 
-  OCADSymbol({
+  MapFileMapSymbol({
     required this.number,
     this.name = '',
     this.description = '',
@@ -175,10 +173,10 @@ class OCADSymbol {
     this.elements = const [],
   });
 
-  factory OCADSymbol.fromBytes(Uint8List bytes, int offset) {
+  factory MapFileMapSymbol.fromBytes(Uint8List bytes, int offset) {
     // Parseur de symbole OCAD
     // À compléter
-    return OCADSymbol(number: 0);
+    return MapFileMapSymbol(number: 0);
   }
 
   /// Convertit en symbole IOF
@@ -203,7 +201,7 @@ class OCADSymbol {
 }
 
 /// Élément de dessin OCAD
-class OCADElement {
+class MapFileMapElement {
   final int symbolNumber;
   final Offset position;
   final double rotation;
@@ -211,7 +209,7 @@ class OCADElement {
   final List<Offset> points;
   final symbol_model.MapSymbolType type;
 
-  OCADElement({
+  MapFileMapElement({
     required this.symbolNumber,
     this.position = Offset.zero,
     this.rotation = 0.0,
@@ -220,14 +218,14 @@ class OCADElement {
     this.type = symbol_model.MapSymbolType.point,
   });
 
-  factory OCADElement.fromBytes(Uint8List bytes, int offset) {
+  factory MapFileMapElement.fromBytes(Uint8List bytes, int offset) {
     // Parseur d'élément OCAD
     // À compléter
-    return OCADElement(symbolNumber: 0);
+    return MapFileMapElement(symbolNumber: 0);
   }
 
   /// Convertit en symbole
-  symbol_model.MapSymbol toSymbol({String? id}) {
+  symbol_model.MapSymbol toMapSymbol({String? id}) {
     return symbol_model.MapSymbol(
       id: id ?? 'symbol_${DateTime.now().millisecondsSinceEpoch}',
       type: type,
@@ -243,15 +241,15 @@ class OCADElement {
 }
 
 /// Calque OCAD
-class OCADLayer {
+class MapFileMapLayer {
   final int number;
   final String name;
   final bool visible;
   final bool locked;
   final double opacity;
-  final List<OCADElement> elements;
+  final List<MapFileMapElement> elements;
 
-  OCADLayer({
+  MapFileMapLayer({
     required this.number,
     this.name = '',
     this.visible = true,
@@ -260,15 +258,15 @@ class OCADLayer {
     this.elements = const [],
   });
 
-  factory OCADLayer.fromBytes(Uint8List bytes, int offset) {
+  factory MapFileMapLayer.fromBytes(Uint8List bytes, int offset) {
     // Parseur de calque OCAD
     // À compléter
-    return OCADLayer(number: 0);
+    return MapFileMapLayer(number: 0);
   }
 
   /// Convertit en Layer OWildZimut
   Layer toOWildZimutLayer() {
-    final symbols = elements.map((element) => element.toSymbol()).toList();
+    final symbols = elements.map((element) => element.toMapSymbol()).toList();
     
     return Layer(
       id: 'layer_${number}_${DateTime.now().millisecondsSinceEpoch}',
@@ -284,37 +282,37 @@ class OCADLayer {
 }
 
 /// Fichier OCAD complet
-class OCADFile {
-  final OCADFileType fileType;
-  final OCADHeader header;
-  final List<OCADColor> colors;
-  final List<OCADSymbol> symbols;
-  final List<OCADLayer> layers;
+class MapFileData {
+  final MapFileType fileType;
+  final MapFileHeader header;
+  final List<MapFileColor> colors;
+  final List<MapFileMapSymbol> symbols;
+  final List<MapFileMapLayer> layers;
   final Uint8List? rawData;
 
-  OCADFile({
-    this.fileType = OCADFileType.unknown,
-    this.header = OCADHeader(),
+  MapFileData({
+    this.fileType = MapFileType.unknown,
+    this.header = MapFileHeader(),
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
     this.rawData,
   });
 
-  factory OCADFile.fromBytes(Uint8List bytes) {
+  factory MapFileData.fromBytes(Uint8List bytes) {
     // Détection du type de fichier
     final signature = String.fromCharCodes(bytes.sublist(0, 4));
     final fileType = signature == 'OCAD' 
-        ? OCADFileType.ocad 
+        ? MapFileType.ocad 
         : signature == 'OOMAP' 
-            ? OCADFileType.oomap 
-            : OCADFileType.unknown;
+            ? MapFileType.oomap 
+            : MapFileType.unknown;
 
-    final header = OCADHeader.fromBytes(bytes);
+    final header = MapFileHeader.fromBytes(bytes);
 
     // Pour l'instant, on retourne un fichier avec les données brutes
     // Le parsing complet sera implémenté ultérieurement
-    return OCADFile(
+    return MapFileData(
       fileType: fileType,
       header: header,
       rawData: bytes,
@@ -363,9 +361,9 @@ class OCADFile {
 }
 
 /// Gestionnaire de chargement de fichiers OCAD/OOMAP
-class OCADFileLoader {
+class MapFileLoader {
   /// Charge un fichier OCAD/OOMAP à partir de son chemin
-  static Future<OCADFile?> loadFromPath(String filePath) async {
+  static Future<MapFileData?> loadFromPath(String filePath) async {
     try {
       // Lecture du fichier
       // Note: Dans Flutter, l'accès au système de fichiers nécessite des permissions
@@ -374,7 +372,7 @@ class OCADFileLoader {
       
       // final file = File(filePath);
       // final bytes = await file.readAsBytes();
-      // return OCADFile.fromBytes(bytes);
+      // return MapFileData.fromBytes(bytes);
       
       return null; // À implémenter avec l'accès aux fichiers
     } catch (e) {
@@ -384,9 +382,9 @@ class OCADFileLoader {
   }
 
   /// Charge un fichier OCAD/OOMAP à partir de bytes
-  static OCADFile? loadFromBytes(Uint8List bytes) {
+  static MapFileData? loadFromBytes(Uint8List bytes) {
     try {
-      return OCADFile.fromBytes(bytes);
+      return MapFileData.fromBytes(bytes);
     } catch (e) {
       debugPrint('Erreur de parsing du fichier OCAD: $e');
       return null;
@@ -394,18 +392,18 @@ class OCADFileLoader {
   }
 
   /// Détecte le type de fichier
-  static OCADFileType detectFileType(Uint8List bytes) {
-    if (bytes.length < 4) return OCADFileType.unknown;
+  static MapFileType detectFileType(Uint8List bytes) {
+    if (bytes.length < 4) return MapFileType.unknown;
     
     final signature = String.fromCharCodes(bytes.sublist(0, 4));
-    if (signature == 'OCAD') return OCADFileType.ocad;
-    if (signature == 'OOMAP') return OCADFileType.oomap;
+    if (signature == 'OCAD') return MapFileType.ocad;
+    if (signature == 'OOMAP') return MapFileType.oomap;
     
-    return OCADFileType.unknown;
+    return MapFileType.unknown;
   }
 
   /// Valide que les bytes correspondent à un fichier OCAD/OOMAP
-  static bool isValidOCADFile(Uint8List bytes) {
+  static bool isValidMapFile(Uint8List bytes) {
     if (bytes.length < 4) return false;
     
     final signature = String.fromCharCodes(bytes.sublist(0, 4));
@@ -414,20 +412,20 @@ class OCADFileLoader {
 }
 
 /// Exceptions personnalisées
-class OCADParseException implements Exception {
+class MapFileParseException implements Exception {
   final String message;
   
-  OCADParseException(this.message);
+  MapFileParseException(this.message);
   
   @override
-  String toString() => 'OCADParseException: $message';
+  String toString() => 'MapFileParseException: $message';
 }
 
-class UnsupportedOCADVersionException implements Exception {
-  final OCADVersion version;
+class UnsupportedMapFileVersionException implements Exception {
+  final MapFileVersion version;
   
-  UnsupportedOCADVersionException(this.version);
+  UnsupportedMapFileVersionException(this.version);
   
   @override
-  String toString() => 'UnsupportedOCADVersionException: Version ${version.name} non supportée';
+  String toString() => 'UnsupportedMapFileVersionException: Version ${version.name} non supportée';
 }

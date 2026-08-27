@@ -2,28 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
-import '../models/ocad_file.dart';
+import '../models/map_file.dart';
 import '../models/map_state.dart';
 
-/// Widget pour charger des fichiers OCAD/OOMAP
-class OCADFileLoaderWidget extends StatefulWidget {
+/// Widget pour charger des fichiers OMap/OOMAP
+class MapFileLoaderWidget extends StatefulWidget {
   final ValueChanged<MapState> onFileLoaded;
   final bool showPreview;
 
-  const OCADFileLoaderWidget({
+  const MapFileLoaderWidget({
     super.key,
     required this.onFileLoaded,
     this.showPreview = true,
   });
 
   @override
-  State<OCADFileLoaderWidget> createState() => _OCADFileLoaderWidgetState();
+  State<MapFileLoaderWidget> createState() => _MapFileLoaderWidgetState();
 }
 
-class _OCADFileLoaderWidgetState extends State<OCADFileLoaderWidget> {
+class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
   bool _isLoading = false;
   String? _errorMessage;
-  OCADFile? _loadedFile;
+  MapFileData? _loadedFile;
   MapState? _previewState;
 
   @override
@@ -36,7 +36,7 @@ class _OCADFileLoaderWidgetState extends State<OCADFileLoaderWidget> {
         FilledButton.icon(
           onPressed: _loadFile,
           icon: const Icon(Icons.folder_open),
-          label: const Text('Charger OCAD/OOMAP'),
+          label: const Text('Charger OMap/OOMAP'),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
@@ -126,7 +126,7 @@ class _OCADFileLoaderWidgetState extends State<OCADFileLoaderWidget> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['ocd', 'oomap', 'OCD', 'OOMAP'],
-        dialogTitle: 'Sélectionner un fichier OCAD ou OOMAP',
+        dialogTitle: 'Sélectionner un fichier OMap ou OOMAP',
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -144,10 +144,10 @@ class _OCADFileLoaderWidgetState extends State<OCADFileLoaderWidget> {
         }
 
         if (bytes != null) {
-          // Vérifier que c'est un fichier OCAD/OOMAP valide
-          if (OCADFileLoader.isValidOCADFile(bytes)) {
+          // Vérifier que c'est un fichier OMap/OOMAP valide
+          if (MapFileDataLoader.isValidMapFileData(bytes)) {
             // Charger le fichier
-            final ocadFile = OCADFileLoader.loadFromBytes(bytes);
+            final ocadFile = MapFileDataLoader.loadFromBytes(bytes);
             
             if (ocadFile != null) {
               setState(() {
@@ -163,7 +163,7 @@ class _OCADFileLoaderWidgetState extends State<OCADFileLoaderWidget> {
             }
           } else {
             setState(() {
-              _errorMessage = 'Le fichier sélectionné n\'est pas un fichier OCAD/OOMAP valide.';
+              _errorMessage = 'Le fichier sélectionné n\'est pas un fichier OMap/OOMAP valide.';
               _isLoading = false;
             });
           }
@@ -206,11 +206,11 @@ class _OCADFileLoaderWidgetState extends State<OCADFileLoaderWidget> {
   }
 }
 
-/// Dialogue pour charger un fichier OCAD/OOMAP
-class OCADFileLoaderDialog extends StatelessWidget {
+/// Dialogue pour charger un fichier OMap/OOMAP
+class MapFileLoaderDialog extends StatelessWidget {
   final ValueChanged<MapState> onFileLoaded;
 
-  const OCADFileLoaderDialog({
+  const MapFileLoaderDialog({
     super.key,
     required this.onFileLoaded,
   });
@@ -218,10 +218,10 @@ class OCADFileLoaderDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Charger une carte OCAD/OOMAP'),
+      title: const Text('Charger une carte OMap/OOMAP'),
       content: SizedBox(
         width: double.maxFinite,
-        child: OCADFileLoaderWidget(
+        child: MapFileLoaderWidget(
           onFileLoaded: (mapState) {
             Navigator.of(context).pop();
             onFileLoaded(mapState);
@@ -239,17 +239,17 @@ class OCADFileLoaderDialog extends StatelessWidget {
   }
 }
 
-/// Bouton pour charger un fichier OCAD/OOMAP
-class OCADLoadButton extends StatelessWidget {
+/// Bouton pour charger un fichier OMap/OOMAP
+class MapFileLoadButton extends StatelessWidget {
   final ValueChanged<MapState> onFileLoaded;
   final String? tooltip;
   final IconData? icon;
   final String? label;
 
-  const OCADLoadButton({
+  const MapFileLoadButton({
     super.key,
     required this.onFileLoaded,
-    this.tooltip = 'Charger un fichier OCAD/OOMAP',
+    this.tooltip = 'Charger un fichier OMap/OOMAP',
     this.icon = Icons.folder_open,
     this.label,
   });
@@ -261,7 +261,7 @@ class OCADLoadButton extends StatelessWidget {
       onPressed: () {
         showDialog(
           context: context,
-          builder: (context) => OCADFileLoaderDialog(
+          builder: (context) => MapFileLoaderDialog(
             onFileLoaded: onFileLoaded,
           ),
         );
