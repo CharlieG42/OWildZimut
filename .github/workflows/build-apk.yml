@@ -38,7 +38,6 @@ jobs:
 
       - name: Configure Gradle for Android 36
         run: |
-          ./gradlew --stop
           echo "android.enableAarMetadataCheck=false" >> android/gradle.properties
           mkdir -p android
           echo "flutter.compileSdkVersion=36" >> android/local.properties
