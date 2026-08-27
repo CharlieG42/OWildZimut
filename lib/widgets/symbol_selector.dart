@@ -76,7 +76,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
                       children: [
                         _buildCategoryChip(null, 'Tous'),
                         const SizedBox(width: 4),
-                        ...IOFSymbolCategory.toARGB32()s.map((category) => 
+                        IOFSymbolCategory.values.map((category) => 
                           _buildCategoryChip(category, _getCategoryLabel(category))
                         ).toList(),
                       ],

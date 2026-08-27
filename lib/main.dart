@@ -32,9 +32,9 @@ class OWildZimutApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: CardTheme(
+        cardTheme: const CardThemeData(
           elevation: 2,
-          margin: const EdgeInsets.all(4),
+          margin: EdgeInsets.all(4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -55,7 +55,7 @@ class OWildZimutApp extends StatelessWidget {
 
 /// Écran principal de l'application
 class MainScreen extends StatefulWidget {
-  MainScreen({super.key});
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -65,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
   late MapState _mapState;
   String _currentTool = 'select';
   bool _toolBarExpanded = true;
-  bool _layerPanelExpanded = true;
+  final bool _layerPanelExpanded = true;
 
   @override
   void initState() {

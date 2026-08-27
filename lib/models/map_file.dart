@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'layer.dart';
 import 'symbol.dart' as symbol_model;
@@ -296,7 +295,7 @@ class MapFileData {
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
-    this.rawData,
+    this.rawData = null,
   });
 
   factory MapFileData.fromBytes(Uint8List bytes) {
