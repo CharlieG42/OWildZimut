@@ -24,10 +24,3 @@ plugins {
 }
 
 include(":app")
-
-// Désactive la vérification AAR metadata pour contourner le problème avec file_picker
-// AGP 9.0+ ignore android.enableAarMetadataCheck dans gradle.properties
-// pour les dépendances transitives comme flutter_plugin_android_lifecycle
-rootProject.tasks.withType<org.gradle.api.tasks.diagnostics.DependencyInsightTask>().configureEach {
-    isEnabled = false
-}
