@@ -45,11 +45,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       });
 
       // Configuration du filtre pour les fichiers OCAD/OOMAP
-      final fileType = FileType.any(
-        extensions: _supportedExtensions,
-      );
-
-      // Ouvre le dialogue de sélection
+      final fileType = XTypeGroup(label: "OCAD/OOMAP", extensions: _supportedExtensions);
       final result = await openFile(
         acceptedTypeGroups: [fileType],
       );
