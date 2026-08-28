@@ -29,7 +29,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
 
   /// Extensions de fichiers supportées (avec le point, pour path.extension)
   static final List<String> _supportedExtensions = [
-    '.oomap' // OOMAP
+    '.omap' // OOMAP
   ];
 
   /// Mêmes extensions sans le point, requis par file_selector (XTypeGroup)
@@ -47,7 +47,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
 
       // Configuration du filtre pour les fichiers OCAD/OOMAP
       final typeGroup = XTypeGroup(
-        label: 'Cartes OCAD/OOMAP',
+        label: 'Cartes OMAP',
         extensions: _supportedExtensionsNoDot,
       );
 
