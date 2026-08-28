@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import '../models/map_file.dart';
 import '../models/map_state.dart';
+import '../models/layer.dart';
 
 /// Widget pour charger des fichiers OMap/OOMAP
 class MapFileLoaderWidget extends StatefulWidget {
@@ -27,7 +28,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
   bool _isLoading = false;
 
   /// Extensions de fichiers supportées
-  static const List<String> _supportedExtensions = [
+  static final List<String> _supportedExtensions = [
     '.ocd',  // OCAD
     '.oomap', // OOMAP
     '.ocd8', // OCAD 8/9
@@ -44,7 +45,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       });
 
       // Configuration du filtre pour les fichiers OCAD/OOMAP
-      const fileType = FileType.any(
+      final fileType = FileType.any(
         extensions: _supportedExtensions,
       );
 
@@ -337,8 +338,8 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
           ),
 
         // Liste des extensions supportées
-        const Padding(
-          padding: EdgeInsets.only(top: 8, left: 8, right: 8),
+        Padding(
+          padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
           child: Text(
             'Formats supportés: ${_supportedExtensions.join(", ")}',
             style: TextStyle(
