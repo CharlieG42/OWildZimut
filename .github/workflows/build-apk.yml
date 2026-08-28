@@ -113,13 +113,16 @@ jobs:
           echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_ENV
           tail -n 100 build.log
 
-      - name: Commit build.log on failure
-        if: failure()
+      - name: Copy build.log to repo root
+        run: |
+          cp build.log ./latest-build.log || true
+
+      - name: Commit build logs to repo root
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add build.log
-          git commit -m "CI: Auto-commit build.log for debugging [skip ci]" --allow-empty || true
+          git add build.log latest-build.log
+          git commit -m "CI: Auto-commit build logs [skip ci]" --allow-empty || true
           git push origin main || true
 
       - name: Display build.log content on failure
