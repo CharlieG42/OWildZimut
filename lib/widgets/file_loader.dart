@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as path;
 import 'dart:io';
 import 'dart:typed_data';
@@ -27,14 +27,15 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
   String? _errorMessage;
   bool _isLoading = false;
 
-  /// Extensions de fichiers supportées
+  /// Extensions de fichiers supportées (avec le point, pour path.extension)
   static final List<String> _supportedExtensions = [
-    '.ocd',  // OCAD
-    '.oomap', // OOMAP
-    '.ocd8', // OCAD 8/9
-    '.ocd10', // OCAD 10/11
-    '.ocd12', // OCAD 12
+    '.oomap' // OOMAP
   ];
+
+  /// Mêmes extensions sans le point, requis par file_selector (XTypeGroup)
+  static final List<String> _supportedExtensionsNoDot = _supportedExtensions
+      .map((ext) => ext.startsWith('.') ? ext.substring(1) : ext)
+      .toList();
 
   /// Ouvre le sélecteur de fichiers
   Future<void> _pickFile() async {
@@ -45,13 +46,15 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       });
 
       // Configuration du filtre pour les fichiers OCAD/OOMAP
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: _supportedExtensions,
+      final typeGroup = XTypeGroup(
+        label: 'Cartes OCAD/OOMAP',
+        extensions: _supportedExtensionsNoDot,
       );
 
-      if (result != null && result.files.single.path != null) {
-        await _processFile(result.files.single.path!);
+      final XFile? file = await openFile(acceptedTypeGroups: [typeGroup]);
+
+      if (file != null) {
+        await _processFile(file.path);
       }
     } on Exception catch (e) {
       setState(() {
