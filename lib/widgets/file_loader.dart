@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import '../models/map_file.dart';
 import '../models/map_state.dart';
 
-/// Widget pour charger des fichiers OMap/OOMAP/OCAD
+/// Widget pour charger des fichiers OMap/OOMAP
 class MapFileLoaderWidget extends StatefulWidget {
   final ValueChanged<MapState> onFileLoaded;
   final bool showPreview;
@@ -44,20 +44,19 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       });
 
       // Configuration du filtre pour les fichiers OCAD/OOMAP
-      final fileType = XTypeGroup(
-        label: 'Fichiers OCAD/OOMAP',
+      const fileType = FileType.any(
         extensions: _supportedExtensions,
       );
 
       // Ouvre le dialogue de sélection
-      final file = await openFile(
+      final result = await openFile(
         acceptedTypeGroups: [fileType],
       );
 
-      if (file != null) {
-        await _processFile(file.path);
+      if (result != null) {
+        await _processFile(result.path);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       setState(() {
         _errorMessage = 'Erreur lors de la sélection: ${e.toString()}';
         _isLoading = false;
@@ -168,9 +167,8 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
 
     // Pour l'instant, on crée un MapFileData basique avec les infos du header
     return MapFileData(
-      filePath: filePath,
       fileType: MapFileType.ocad,
-      version: header.version,
+      filePath: filePath,
       header: header,
       layers: [], // À implémenter
       symbols: [], // À implémenter
@@ -179,7 +177,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
   }
 
   /// Lit le header d'un fichier OCAD
-  OcadHeader? _readOcadHeader(Uint8List bytes) {
+  MapFileHeader? _readOcadHeader(Uint8List bytes) {
     if (bytes.length < 32) {
       return null;
     }
@@ -191,20 +189,47 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
     if (magic == 'OCAD') {
       // OCAD 8/9
       final versionByte = bytes[4];
-      return OcadHeader(
-        fileType: MapFileType.ocad,
-        version: versionByte == 8 ? '8' : '9',
-        mapScale: 1.0,
-        mapOrigin: const Offset(0, 0),
+      return MapFileHeader(
+        version: versionByte == 8 ? MapFileVersion.v8 : MapFileVersion.v9,
+        versionString: versionByte == 8 ? '8' : '9',
+        coordinateSystem: CoordinateSystem.local,
+        unit: MapUnit.millimeters,
+        scale: 1.0,
+        mapName: '',
+        mapAuthor: '',
+        mapOrganization: '',
+        creationDate: null,
+        modificationDate: null,
+        minX: 0.0,
+        maxX: 0.0,
+        minY: 0.0,
+        maxY: 0.0,
+        numberOfColors: 0,
+        numberOfSymbols: 0,
       );
     } else if (bytes.length > 16 && bytes[16] == 0x0A && bytes[17] == 0x0D) {
       // OCAD 10/11/12
       final version = bytes[20];
-      return OcadHeader(
-        fileType: MapFileType.ocad,
-        version: version == 10 ? '10' : version == 11 ? '11' : '12',
-        mapScale: 1.0,
-        mapOrigin: const Offset(0, 0),
+      final versionString = version == 10 ? '10' : version == 11 ? '11' : '12';
+      final mapVersion = version == 10 ? MapFileVersion.v10 : version == 11 ? MapFileVersion.v11 : MapFileVersion.v12;
+      
+      return MapFileHeader(
+        version: mapVersion,
+        versionString: versionString,
+        coordinateSystem: CoordinateSystem.local,
+        unit: MapUnit.millimeters,
+        scale: 1.0,
+        mapName: '',
+        mapAuthor: '',
+        mapOrganization: '',
+        creationDate: null,
+        modificationDate: null,
+        minX: 0.0,
+        maxX: 0.0,
+        minY: 0.0,
+        maxY: 0.0,
+        numberOfColors: 0,
+        numberOfSymbols: 0,
       );
     }
 
@@ -219,14 +244,25 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       // OOMAP est un format basé XML
       // Pour l'instant, on détecte juste le type
       return MapFileData(
-        filePath: filePath,
         fileType: MapFileType.oomap,
-        version: '1.0',
-        header: OcadHeader(
-          fileType: MapFileType.oomap,
-          version: '1.0',
-          mapScale: 1.0,
-          mapOrigin: const Offset(0, 0),
+        filePath: filePath,
+        header: MapFileHeader(
+          version: MapFileVersion.unknown,
+          versionString: '1.0',
+          coordinateSystem: CoordinateSystem.local,
+          unit: MapUnit.meters,
+          scale: 1.0,
+          mapName: '',
+          mapAuthor: '',
+          mapOrganization: '',
+          creationDate: null,
+          modificationDate: null,
+          minX: 0.0,
+          maxX: 0.0,
+          minY: 0.0,
+          maxY: 0.0,
+          numberOfColors: 0,
+          numberOfSymbols: 0,
         ),
         layers: [],
         symbols: [],

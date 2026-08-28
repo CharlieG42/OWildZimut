@@ -42,6 +42,7 @@ enum MapUnit {
 /// En-tête du fichier OCAD
 class MapFileHeader {
   final MapFileVersion version;
+  final String versionString;
   final CoordinateSystem coordinateSystem;
   final MapUnit unit;
   final double scale;
@@ -59,6 +60,7 @@ class MapFileHeader {
 
   MapFileHeader({
     this.version = MapFileVersion.unknown,
+    this.versionString = '',
     this.coordinateSystem = CoordinateSystem.unknown,
     this.unit = MapUnit.unknown,
     this.scale = 1.0,
@@ -92,6 +94,7 @@ class MapFileHeader {
 
   MapFileHeader copyWith({
     MapFileVersion? version,
+    String? versionString,
     CoordinateSystem? coordinateSystem,
     MapUnit? unit,
     double? scale,
@@ -109,6 +112,7 @@ class MapFileHeader {
   }) {
     return MapFileHeader(
       version: version ?? this.version,
+      versionString: versionString ?? this.versionString,
       coordinateSystem: coordinateSystem ?? this.coordinateSystem,
       unit: unit ?? this.unit,
       scale: scale ?? this.scale,
@@ -283,18 +287,22 @@ class MapFileMapLayer {
 /// Fichier OCAD complet
 class MapFileData {
   final MapFileType fileType;
+  final String filePath;
   final MapFileHeader header;
   final List<MapFileColor> colors;
   final List<MapFileMapSymbol> symbols;
   final List<MapFileMapLayer> layers;
+  final List<MapFileMapElement> objects;
   final Uint8List? rawData;
 
   MapFileData({
     this.fileType = MapFileType.unknown,
+    this.filePath = '',
     required this.header,
     this.colors = const [],
     this.symbols = const [],
     this.layers = const [],
+    this.objects = const [],
     this.rawData,
   });
 

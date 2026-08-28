@@ -9,6 +9,8 @@ class MapState {
   final double zoomLevel;
   final Offset panOffset;
   final String appVersion;
+  final String? currentFile;
+  final String? fileName;
 
   const MapState({
     this.layers = const [],
@@ -16,6 +18,8 @@ class MapState {
     this.zoomLevel = 1.0,
     this.panOffset = Offset.zero,
     this.appVersion = '0.0.001',
+    this.currentFile,
+    this.fileName,
   });
 
   /// Ajoute un nouveau calque
@@ -145,6 +149,8 @@ class MapState {
     double? zoomLevel,
     Offset? panOffset,
     String? appVersion,
+    String? currentFile,
+    String? fileName,
   }) {
     return MapState(
       layers: layers ?? this.layers,
@@ -152,6 +158,8 @@ class MapState {
       zoomLevel: zoomLevel ?? this.zoomLevel,
       panOffset: panOffset ?? this.panOffset,
       appVersion: appVersion ?? this.appVersion,
+      currentFile: currentFile ?? this.currentFile,
+      fileName: fileName ?? this.fileName,
     );
   }
 
