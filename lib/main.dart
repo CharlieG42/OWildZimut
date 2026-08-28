@@ -7,8 +7,6 @@ import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
 import 'widgets/symbol_selector.dart';
-import 'widgets/file_loader.dart';
-import 'widgets/file_loader.dart';
 import 'screens/about_dialog.dart' as app_about;
 
 void main() {

@@ -53,7 +53,6 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       if (result != null) {
         await _processFile(result.path);
       }
-    } on Exception catch (e) {
       setState(() {
         _errorMessage = 'Erreur lors de la sélection: ${e.toString()}';
         _isLoading = false;
@@ -121,7 +120,6 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
           _isLoading = false;
         });
       }
-    } catch (e) {
       setState(() {
         _errorMessage = 'Erreur lors du chargement: ${e.toString()}';
         _isLoading = false;
@@ -145,7 +143,6 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       }
 
       return null;
-    } catch (e) {
       debugPrint('Erreur de chargement du fichier: $e');
       return null;
     }
@@ -236,7 +233,6 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
   /// Parse un fichier OOMAP (format XML)
   MapFileData _parseOomapFile(Uint8List bytes, String filePath) {
     try {
-      final content = String.fromCharCodes(bytes);
       
       // OOMAP est un format basé XML
       // Pour l'instant, on détecte juste le type
@@ -265,7 +261,6 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
         symbols: [],
         objects: [],
       );
-    } catch (e) {
       throw FormatException('Erreur de parsing OOMAP: $e');
     }
   }
