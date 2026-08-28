@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 import 'dart:io';
 import 'dart:typed_data';
@@ -45,18 +45,13 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
       });
 
       // Configuration du filtre pour les fichiers OCAD/OOMAP
-      final fileType = XTypeGroup(
-        label: 'OCAD/OOMAP',
-        extensions: _supportedExtensions,
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: _supportedExtensions,
       );
 
-      // Ouvre le dialogue de sélection
-      final result = await openFile(
-        acceptedTypeGroups: [fileType],
-      );
-
-      if (result != null) {
-        await _processFile(result.path);
+      if (result != null && result.files.single.path != null) {
+        await _processFile(result.files.single.path!);
       }
     } on Exception catch (e) {
       setState(() {
