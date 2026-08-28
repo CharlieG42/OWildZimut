@@ -29,11 +29,7 @@ class _MapFileLoaderWidgetState extends State<MapFileLoaderWidget> {
 
   /// Extensions de fichiers supportées (avec le point, pour path.extension)
   static final List<String> _supportedExtensions = [
-    '.ocd',  // OCAD
-    '.oomap', // OOMAP
-    '.ocd8', // OCAD 8/9
-    '.ocd10', // OCAD 10/11
-    '.ocd12', // OCAD 12
+    '.oomap' // OOMAP
   ];
 
   /// Mêmes extensions sans le point, requis par file_selector (XTypeGroup)
