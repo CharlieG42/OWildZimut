@@ -123,6 +123,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git add build.log latest-build.log
           git commit -m "CI: Auto-commit build logs [skip ci]" --allow-empty || true
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/CharlieG42/OWildZimut.git
           git push origin main || true
 
       - name: Display build.log content on failure
