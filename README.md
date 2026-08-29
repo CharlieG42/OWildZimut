@@ -21,8 +21,7 @@
 - ✅ **Panneaux repliables** : Barre d'outils et panneau des calques peuvent être réduits pour plus d'espace
 
 #### Fonctionnalités en développement
-- 🔄 **Chargement OCAD/OOMAP** : Import de fichiers OCAD et OOMAP existants (architecture prête, parsing à compléter)
-- 🔄 **Export OCAD** : Export des cartes au format OCAD
+- 🔄 **Chargement OCAD/OOMAP** : Import de fichiers OMAP existants (architecture prête, parsing à compléter)
 - 🔄 **Gestion des symboles personnalisés** : Création et modification de symboles personnalisés
 - 🔄 **Calibrage de la carte** : Alignement avec des images satellite ou des cartes existantes
 
@@ -35,23 +34,20 @@
 - [x] Vue de la carte avec zoom et panoramique
 - [x] Barre d'outils de dessin
 - [x] Panneau de gestion des calques
-- [x] Sélection et placement de symboles IOF
 
 ### Phase 2: Import/Export (Version 0.0.003 - 0.0.004)
-- [ ] **Chargement OCAD/OOMAP** (Priorité Haute)
-  - [x] Architecture de parsing des fichiers OCAD
-  - [x] Modèle de données pour les fichiers OCAD/OOMAP
+- [ ] **Chargement OMAP** (Priorité Haute)
+  - [ ] Sélection et placement de symboles IOF
+  - [ ] Modèle de données pour les fichiers OMAP
   - [ ] Implémentation complète du parseur binaire
-  - [ ] Support des versions OCAD 6-12
-  - [ ] Support du format OOMAP
-  - [ ] Conversion des symboles OCAD vers IOF
+  - [ ] Support du format OMAP
   - [ ] Interface utilisateur pour le chargement
-- [ ] **Export OCAD** (Priorité Moyenne)
-  - [ ] Génération de fichiers OCAD
+- [ ] **Export OMAP** (Priorité Moyenne)
+  - [ ] Génération de fichiers OMAP
   - [ ] Export des calques et symboles
   - [ ] Options d'export (version, échelle, etc.)
 - [ ] **Sauvegarde/Chargement JSON** (Priorité Moyenne)
-  - [x] Export JSON de base
+  - [ ] Export JSON de base
   - [ ] Import JSON avec validation
   - [ ] Gestion des versions de fichiers
   - [ ] Compression des fichiers volumineux
