@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:path/path.dart' as path;
 
 /// Chargeur de fichiers pour OWildZimut
 ///
@@ -12,20 +14,16 @@ class FileLoader {
   /// Retourne le contenu du fichier sous forme de chaîne, ou null si annulé.
   static Future<String?> loadOmapFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['omap', 'xml'],
-        dialogTitle: 'Ouvrir un fichier OMAP',
+      const typeGroup = XTypeGroup(
+        label: 'Fichiers OMAP',
+        extensions: ['omap', 'xml'],
       );
       
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        final filePath = file.path;
-        
-        if (filePath != null) {
-          final fileContent = await File(filePath).readAsString();
-          return fileContent;
-        }
+      final xfile = await openFile(acceptedTypeGroups: [typeGroup]);
+      
+      if (xfile != null) {
+        final fileContent = await File(xfile.path).readAsString();
+        return fileContent;
       }
       return null;
     } catch (e) {
@@ -40,18 +38,14 @@ class FileLoader {
   /// Retourne le chemin du fichier sauvegardé, ou null si annulé.
   static Future<String?> saveOmapFile(String omapXml) async {
     try {
-      String? filePath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Enregistrer la carte OMAP',
-        fileName: 'carte_${DateTime.now().millisecondsSinceEpoch}.omap',
-        allowedExtensions: ['omap'],
-      );
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = 'carte_${DateTime.now().millisecondsSinceEpoch}.omap';
+      final filePath = path.join(directory.path, fileName);
       
-      if (filePath != null) {
-        final file = File(filePath);
-        await file.writeAsString(omapXml);
-        return filePath;
-      }
-      return null;
+      final file = File(filePath);
+      await file.writeAsString(omapXml);
+      
+      return filePath;
     } catch (e) {
       debugPrint('Erreur lors de la sauvegarde du fichier OMAP: $e');
       return null;
@@ -63,14 +57,15 @@ class FileLoader {
   /// Retourne le chemin du fichier, ou null si annulé.
   static Future<String?> loadImageFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        dialogTitle: 'Ouvrir une image',
-        allowedExtensions: ['jpg', 'jpeg', 'png'],
+      const typeGroup = XTypeGroup(
+        label: 'Images',
+        extensions: ['jpg', 'jpeg', 'png'],
       );
       
-      if (result != null && result.files.isNotEmpty) {
-        return result.files.first.path;
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+      
+      if (file != null) {
+        return file.path;
       }
       return null;
     } catch (e) {
@@ -84,12 +79,10 @@ class FileLoader {
   /// Retourne le chemin du fichier, ou null si annulé.
   static Future<String?> loadAnyFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Ouvrir un fichier',
-      );
+      final file = await openFile();
       
-      if (result != null && result.files.isNotEmpty) {
-        return result.files.first.path;
+      if (file != null) {
+        return file.path;
       }
       return null;
     } catch (e) {

@@ -179,7 +179,7 @@ class MapSymbol {
       description: description ?? '',
       position: points.isNotEmpty ? points.first : Offset.zero,
       points: points,
-      color: fillColor ?? Colors.blue.withOpacity(0.3),
+      color: fillColor ?? const Color.fromRGBO(0, 0, 255, 0.3),
       fillColor: fillColor,
       strokeColor: strokeColor ?? Colors.blue,
       strokeWidth: strokeWidth ?? 1.0,
@@ -346,10 +346,12 @@ class MapSymbol {
     final lineLength = (p2 - p1).distance;
     if (lineLength == 0) return false;
     
-    final t = ((point - p1).dot(p2 - p1)) / (lineLength * lineLength);
+    final diff = point - p1;
+    final lineDir = p2 - p1;
+    final t = (diff.dx * lineDir.dx + diff.dy * lineDir.dy) / (lineLength * lineLength);
     
     // Projeter le point sur la ligne
-    final projection = p1 + (p2 - p1) * t.clamp(0, 1);
+    final projection = p1 + lineDir * t.clamp(0, 1);
     
     return (point - projection).distance <= tolerance;
   }
@@ -373,6 +375,9 @@ class MapSymbol {
     }
     return inside;
   }
+
+  /// Vérifie si un point est à l'intérieur d'un polygone (méthode publique)
+  static bool pointInPolygon(Offset point, List<Offset> polygonPoints) => _pointInPolygon(point, polygonPoints);
 
   /// Exporte en JSON
   Map<String, dynamic> toJson() {

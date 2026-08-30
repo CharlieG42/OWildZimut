@@ -6,8 +6,8 @@ class LayerItem extends StatelessWidget {
   final Layer layer;
   final bool isSelected;
   final VoidCallback? onTap;
-  final ValueChanged<bool>? onVisibilityChanged;
-  final ValueChanged<double>? onOpacityChanged;
+  final void Function(bool)? onVisibilityChanged;
+  final void Function(double)? onOpacityChanged;
   final VoidCallback? onMoveUp;
   final VoidCallback? onMoveDown;
   final VoidCallback? onRemove;

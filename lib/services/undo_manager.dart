@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/map_state.dart';
+import '../models/symbol.dart' as symbol_model;
+import '../models/layer.dart';
+import 'package:flutter/material.dart' show Offset;
 
 /// Gère l'historique des états pour les opérations undo/redo
 ///
@@ -8,7 +11,7 @@ import '../models/map_state.dart';
 ///
 /// Utilisation :
 /// ```dart
-/// final undoManager = UndoManager();
+/// final undoManager = OWildUndoManager();
 /// 
 /// // Après chaque modification de l'état
 /// undoManager.pushState(newState);
@@ -19,7 +22,7 @@ import '../models/map_state.dart';
 /// // Pour rétablir
 /// final redoneState = undoManager.redo();
 /// ```
-class UndoManager with ChangeNotifier {
+class OWildUndoManager with ChangeNotifier {
   /// Historique des états
   final List<MapState> _history = [];
   
@@ -29,8 +32,8 @@ class UndoManager with ChangeNotifier {
   /// Nombre maximum d'états dans l'historique (pour limiter la mémoire)
   final int maxHistoryLength;
 
-  /// Crée un nouveau UndoManager
-  UndoManager({this.maxHistoryLength = 50});
+  /// Crée un nouveau OWildUndoManager
+  OWildUndoManager({this.maxHistoryLength = 50});
 
   /// État actuel
   MapState get currentState => 
@@ -170,7 +173,7 @@ abstract class UndoableAction {
 
 /// Gestionnaire d'actions undo/redo
 ///
-/// Alternative à UndoManager qui stocke les actions plutôt que les états.
+/// Alternative à OWildUndoManager qui stocke les actions plutôt que les états.
 /// Cela peut être plus efficace pour certaines applications.
 class ActionUndoManager with ChangeNotifier {
   final List<UndoableAction> _actions = [];

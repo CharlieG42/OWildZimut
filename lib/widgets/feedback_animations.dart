@@ -8,9 +8,9 @@ class FeedbackAnimations {
   /// Affiche une animation de rectangle de sélection
   static void showSelectionRectAnimation(
     BuildContext context,
-    Rect rect,
-    {Duration duration = const Duration(milliseconds: 500)},
-  ) {
+    Rect rect, [
+    Duration duration = const Duration(milliseconds: 500),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -27,9 +27,9 @@ class FeedbackAnimations {
   /// Affiche une animation lors de l'ajout d'un symbole
   static void showSymbolAddedAnimation(
     BuildContext context,
-    Offset position,
-    {Duration duration = const Duration(milliseconds: 300)},
-  ) {
+    Offset position, [
+    Duration duration = const Duration(milliseconds: 300),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -46,9 +46,9 @@ class FeedbackAnimations {
   /// Affiche une animation lors de la suppression d'un symbole
   static void showSymbolDeletedAnimation(
     BuildContext context,
-    Offset position,
-    {Duration duration = const Duration(milliseconds: 300)},
-  ) {
+    Offset position, [
+    Duration duration = const Duration(milliseconds: 300),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -66,9 +66,9 @@ class FeedbackAnimations {
   static void showCopyPasteAnimation(
     BuildContext context,
     Offset fromPosition,
-    Offset toPosition,
-    {Duration duration = const Duration(milliseconds: 400)},
-  ) {
+    Offset toPosition, [
+    Duration duration = const Duration(milliseconds: 400),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -86,9 +86,9 @@ class FeedbackAnimations {
   /// Affiche un message temporaire (style toast)
   static void showToast(
     BuildContext context,
-    String message,
-    {Duration duration = const Duration(seconds: 2)},
-  ) {
+    String message, [
+    Duration duration = const Duration(seconds: 2),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -136,9 +136,9 @@ class _AnimatedSelectionRectState extends State<AnimatedSelectionRect>
     );
     
     _colorAnimation = ColorTween(
-      begin: Colors.blue.withOpacity(0.5),
+      begin: const Color.fromRGBO(0, 0, 255, 0.5),
       end: Colors.transparent,
-    ).animate(_controller);
+    ).animate(_controller) as Animation<Color>;
     
     _opacityAnimation = Tween(begin: 1.0, end: 0.0).animate(_controller);
     
@@ -738,7 +738,6 @@ class _SlideInAnimationState extends State<SlideInAnimation>
         ).animate(_controller);
         break;
       case Edge.right:
-      default:
         _positionAnimation = Tween<Offset>(
           begin: const Offset(1, 0),
           end: Offset.zero,

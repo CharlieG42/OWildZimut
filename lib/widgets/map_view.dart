@@ -26,7 +26,7 @@ class MapView extends StatefulWidget {
   final ValueChanged<Offset>? onTap;
   final ValueChanged<String>? onSymbolSelected;
   final ValueChanged<Set<String>>? onSymbolsSelected;
-  final Function(MapSymbol)? onSymbolAdded;
+  final Function(symbol_model.MapSymbol)? onSymbolAdded;
   final Function(String, Offset)? onSymbolMoved;
   final Function(Set<String>, Offset)? onSymbolsMoved;
   final Function(String)? onSymbolDeleted;

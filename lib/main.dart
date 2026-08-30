@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'models/map_state.dart';
 import 'models/layer.dart';
 import 'models/symbol.dart' as symbol_model;
-import 'models/iof_symbols.dart';
 import 'models/omap_file.dart';
-import 'models/georeferencing.dart';
-import 'services/undo_manager.dart';
+import 'services/undo_manager.dart' as undo_services;
 import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
-import 'widgets/symbol_selector.dart';
 import 'widgets/file_loader.dart';
 import 'widgets/background_image_picker.dart';
 import 'screens/about_dialog.dart' as app_about;
 import 'formatters/omap_exporter.dart';
-import 'dart:io';
 
 void main() {
   runApp(const OWildZimutApp());
@@ -76,11 +71,10 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   late MapState _mapState;
   String _currentTool = 'select';
-  bool _toolBarExpanded = true;
   bool _advancedMode = false;
   
   // Gestion de l'historique
-  final UndoManager _undoManager = UndoManager(maxHistoryLength: 50);
+  final undo_services.OWildUndoManager _undoManager = undo_services.OWildUndoManager(maxHistoryLength: 50);
   
   // Clipboard pour copier/coller
   List<symbol_model.MapSymbol> _clipboard = [];
@@ -241,18 +235,6 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _zoomBy(double factor, Offset focalPoint) {
-    setState(() {
-      _mapState = _mapState.zoomBy(factor, focalPoint);
-    });
-  }
-
-  void _panBy(Offset delta) {
-    setState(() {
-      _mapState = _mapState.panBy(delta);
-    });
-  }
-
   void _resetView() {
     setState(() {
       _mapState = _mapState.resetView();
@@ -327,13 +309,17 @@ class _MainScreenState extends State<MainScreen> {
         _pushStateToHistory();
       });
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fichier OMAP chargé (${omapDocument.layers.length} calques, ${omapDocument.objectCount} objets)')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fichier OMAP chargé (${omapDocument.layers.length} calques, ${omapDocument.objectCount} objets)')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors du chargement: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors du chargement: $e')),
+        );
+      }
     }
   }
 
@@ -342,22 +328,25 @@ class _MainScreenState extends State<MainScreen> {
       final omapXml = _mapState.toOmapXml();
       final filePath = await FileLoader.saveOmapFile(omapXml);
       
-      if (filePath != null) {
+      if (filePath != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Carte exportée vers: $filePath')),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de l\'export: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de l\'export: $e')),
+        );
+      }
     }
   }
 
   Future<void> _loadImage() async {
     try {
-      final imagePath = await BackgroundImagePicker.pickImage();
-      if (imagePath == null) return;
+      final xfile = await pickBackgroundImage();
+      if (xfile == null) return;
+      final imagePath = xfile.path;
       
       setState(() {
         _mapState = _mapState.addImageBackgroundLayer(
@@ -367,9 +356,11 @@ class _MainScreenState extends State<MainScreen> {
         _pushStateToHistory();
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors du chargement de l\'image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors du chargement de l\'image: $e')),
+        );
+      }
     }
   }
 
@@ -378,9 +369,11 @@ class _MainScreenState extends State<MainScreen> {
       // Pour l'instant, on exporte en OMAP
       await _exportOmapFile();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la sauvegarde: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la sauvegarde: $e')),
+        );
+      }
     }
   }
 
@@ -440,7 +433,7 @@ class _MainScreenState extends State<MainScreen> {
               tooltip: 'Ouvrir',
             ),
             IconButton(
-              icon: const Icon(Icons.export_rounded),
+              icon: const Icon(Icons.file_download),
               onPressed: _exportOmapFile,
               tooltip: 'Exporter OMAP',
             ),
@@ -505,7 +498,7 @@ class _MainScreenState extends State<MainScreen> {
         // Barre d'outils (gauche)
         ToolBar(
           currentTool: _currentTool,
-          selectedLayerIndex: _mapState.selectedLayerIndex,
+          selectedLayerIndex: _mapState.selectedLayerIndex ?? 0,
           selectedSymbolIds: _mapState.selectedSymbolIds,
           canUndo: _undoManager.canUndo,
           canRedo: _undoManager.canRedo,
@@ -561,13 +554,13 @@ class _MainScreenState extends State<MainScreen> {
         LayerPanel(
           layers: _mapState.layers,
           selectedLayerIndex: _mapState.selectedLayerIndex,
-          onLayerAdded: _addLayer,
-          onLayerRemoved: _removeLayer,
           onLayerSelected: _selectLayer,
-          onLayerVisibilityChanged: _setLayerVisibility,
+          onLayerVisibilityChanged: (layerId, visible) => _setLayerVisibility(layerId, visible),
           onLayerOpacityChanged: _setLayerOpacity,
-          onLayerMovedUp: _moveLayerUp,
-          onLayerMovedDown: _moveLayerDown,
+          onAddLayer: _addLayer,
+          onLayerRemoved: _removeLayer,
+          onLayerMoveUp: (layerId) => _moveLayerUp(layerId),
+          onLayerMoveDown: (layerId) => _moveLayerDown(layerId),
         ),
       ],
     );

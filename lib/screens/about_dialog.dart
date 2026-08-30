@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/map_state.dart';
 
 /// Dialog "À propos" pour afficher les informations sur l'application
 class AboutDialog extends StatelessWidget {
@@ -70,4 +71,13 @@ class AboutDialog extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Affiche la boîte de dialogue "À propos"
+void showAboutDialog(BuildContext context, {MapState? mapState}) {
+  final appVersion = mapState?.appVersion ?? '0.0.007';
+  showDialog(
+    context: context,
+    builder: (context) => AboutDialog(appVersion: appVersion),
+  );
 }

@@ -3,6 +3,7 @@ import 'package:xml/xml.dart';
 import '../models/map_state.dart';
 import '../models/layer.dart';
 import '../models/symbol.dart' as symbol_model;
+import '../models/georeferencing.dart';
 
 /// Exporteur OMAP pour générer des fichiers au format OpenOrienteering Mapper XML v9
 ///
@@ -173,7 +174,7 @@ class OmapExporter {
           'm': cmjk.magenta.toStringAsFixed(2),
           'y': cmjk.yellow.toStringAsFixed(2),
           'k': cmjk.black.toStringAsFixed(2),
-          'opacity': color.opacity.toStringAsFixed(2),
+          'opacity': color.a.toStringAsFixed(2),
         }, nest: () {
           // Ajouter les spot colors (simplifié)
           builder.element('spotcolors', attributes: {
@@ -183,9 +184,9 @@ class OmapExporter {
           // Ajouter la méthode RGB
           builder.element('rgb', attributes: {
             'method': 'cmyk',
-            'r': (color.red / 255.0).toStringAsFixed(3),
-            'g': (color.green / 255.0).toStringAsFixed(3),
-            'b': (color.blue / 255.0).toStringAsFixed(3),
+            'r': color.r.toStringAsFixed(3),
+            'g': color.g.toStringAsFixed(3),
+            'b': color.b.toStringAsFixed(3),
           });
         });
         index++;
@@ -195,9 +196,9 @@ class OmapExporter {
 
   /// Convertit une couleur RVB en CMJN (0-1)
   static ({double cyan, double magenta, double yellow, double black}) _colorToCmyk(Color color) {
-    final r = color.red / 255.0;
-    final g = color.green / 255.0;
-    final b = color.blue / 255.0;
+    final r = color.r;
+    final g = color.g;
+    final b = color.b;
     
     // Calcul du noir (K)
     final k = 1 - [r, g, b].reduce((a, b) => a > b ? a : b);
@@ -229,9 +230,9 @@ class OmapExporter {
     if (color == Colors.green) return 'Green';
     if (color == Colors.yellow) return 'Yellow';
     if (color == Colors.brown) return 'Brown';
-    if (color.value == const Color(0xFF0000FF).value) return 'Pure Blue';
-    if (color.value == const Color(0xFFFF0000).value) return 'Pure Red';
-    if (color.value == const Color(0xFF00FF00).value) return 'Pure Green';
+    if (color.toARGB32() == 0xFF0000FF) return 'Pure Blue';
+    if (color.toARGB32() == 0xFFFF0000) return 'Pure Red';
+    if (color.toARGB32() == 0xFF00FF00) return 'Pure Green';
     
     // Couleur personnalisée
     return 'Custom_$index';
@@ -374,9 +375,9 @@ class OmapExporter {
     // Une implémentation complète nécessiterait de tracker les couleurs exportées
     if (color == Colors.black) return 4; // Black est à l'index 4 dans Villerest
     if (color == Colors.white) return 3; // White est à l'index 3
-    if (color.value == const Color(0xFF0000FF).value) return 8; // Blue
-    if (color.value == const Color(0xFF00FF00).value) return 27; // Green
-    if (color.value == const Color(0xFFFF0000).value) return 6; // Brown
+    if (color.toARGB32() == 0xFF0000FF) return 8; // Blue
+    if (color.toARGB32() == 0xFF00FF00) return 27; // Green
+    if (color.toARGB32() == 0xFFFF0000) return 6; // Brown
     return 4; // Noir par défaut
   }
 
@@ -455,50 +456,6 @@ extension OmapExportable on MapState {
   /// Exporte cet état de carte au format OMAP
   String toOmapXml() {
     return OmapExporter.export(this);
-  }
-}
-
-/// Classe pour gérer le géoréférencement (étendue pour l'export)
-class Georeferencing {
-  final int scaleDenominator;
-  final double? gridScaleFactor;
-  final double? auxiliaryScaleFactor;
-  final double? grivation;
-  final String? crsId;
-  final String? proj4Spec;
-  final String? crsParameter;
-  final Offset? refPoint;
-  final Offset? refPointReal;
-  final GeographicRefPoint? refPointDeg;
-  final String? geographicCrsId;
-  final String? geographicProj4Spec;
-
-  const Georeferencing({
-    this.scaleDenominator = 10000,
-    this.gridScaleFactor,
-    this.auxiliaryScaleFactor,
-    this.grivation,
-    this.crsId,
-    this.proj4Spec,
-    this.crsParameter,
-    this.refPoint,
-    this.refPointReal,
-    this.refPointDeg,
-    this.geographicCrsId,
-    this.geographicProj4Spec,
-  });
-
-  /// Crée un géoréférencement basique
-  factory Georeferencing.basic({
-    int scaleDenominator = 10000,
-    String? crsId,
-    Offset? refPoint,
-  }) {
-    return Georeferencing(
-      scaleDenominator: scaleDenominator,
-      crsId: crsId,
-      refPoint: refPoint,
-    );
   }
 }
 

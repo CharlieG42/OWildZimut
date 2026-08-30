@@ -185,7 +185,7 @@ class OmapDocument {
 
     // Parsing du géoréférencement
     final georeferencing = _parseGeoreferencing(mapElement);
-    final scaleDenominator = georeferencing.scaleDenominator;
+    var scaleDenominator = georeferencing.scaleDenominator;
 
     final colors = _parseColors(mapElement);
     final symbolsById = _parseSymbols(mapElement);
@@ -243,7 +243,7 @@ class OmapDocument {
     
     // Point de référence dans la carte
     final refPointElement = georefElement.findAllElements('ref_point').firstOrNull;
-    if (refPointElement != null && refPoint == null) {
+    if (refPointElement != null) {
       final x = double.tryParse(refPointElement.getAttribute('x') ?? '0') ?? 0;
       final y = double.tryParse(refPointElement.getAttribute('y') ?? '0') ?? 0;
       refPoint = Offset(x, y);
@@ -354,7 +354,9 @@ class OmapDocument {
     // Cas 2: <part> directement sous <map>
     for (final part in partElements) {
       // Vérifier que ce n'est pas déjà traité (enfant de <parts>)
-      if (part.parent?.name.local != 'parts') {
+      if (part.parent is XmlElement && (part.parent as XmlElement).name.local != 'parts') {
+        _processPartElement(part, result);
+      } else if (part.parent == null) {
         _processPartElement(part, result);
       }
     }

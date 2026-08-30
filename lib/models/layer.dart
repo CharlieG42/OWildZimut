@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'symbol.dart' as symbol_model;
+import 'symbol.dart' show MapSymbolType;
+
+/// Extension pour ajouter la méthode dot à Offset
+extension OffsetExtensions on Offset {
+  double dot(Offset other) {
+    return dx * other.dx + dy * other.dy;
+  }
+}
 
 /// Types de calques possibles
 enum LayerType {
@@ -410,7 +419,7 @@ extension LayerExtensions on Layer {
     if (polygonPoints.isEmpty) return double.infinity;
     
     // Vérifier si le point est à l'intérieur du polygone
-    if (symbol_model.MapSymbol._pointInPolygon(point, polygonPoints)) {
+    if (symbol_model.MapSymbol.pointInPolygon(point, polygonPoints)) {
       return 0;
     }
     
@@ -439,6 +448,6 @@ extension LayerExtensions on Layer {
       dy = point.dy - rect.bottom;
     }
     
-    return (dx * dx + dy * dy).sqrt();
+    return sqrt(dx * dx + dy * dy);
   }
 }
