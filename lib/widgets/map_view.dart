@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../models/layer.dart';
 import '../models/symbol.dart' as symbol_model;
@@ -37,6 +39,11 @@ class _MapViewState extends State<MapView> {
 
   @override
   Widget build(BuildContext context) {
+    // Calques tries du plus bas au plus haut (les images de fond ont un
+    // zIndex negatif ou nul et se retrouvent donc dessinees en premier).
+    final sortedLayers = [...widget.layers]
+      ..sort((a, b) => a.zIndex.compareTo(b.zIndex));
+
     return GestureDetector(
       onScaleStart: (details) {
         _lastFocalPoint = details.focalPoint;
@@ -56,11 +63,11 @@ class _MapViewState extends State<MapView> {
         _lastFocalPoint = Offset.zero;
       },
       onTapDown: (details) {
-        if (widget.currentTool != 'select' && 
-            widget.selectedLayerIndex != null && 
+        if (widget.currentTool != 'select' &&
+            widget.selectedLayerIndex != null &&
             widget.layers.isNotEmpty) {
           final localPosition = _getLocalPosition(details.localPosition);
-          
+
           switch (widget.currentTool) {
             case 'point':
               _handlePointTap(localPosition);
@@ -79,10 +86,10 @@ class _MapViewState extends State<MapView> {
         }
       },
       onTapUp: (details) {
-        if (_isDrawing && 
+        if (_isDrawing &&
             (widget.currentTool == 'line' || widget.currentTool == 'polygon')) {
           final localPosition = _getLocalPosition(details.localPosition);
-          
+
           if (widget.currentTool == 'line') {
             setState(() {
               _currentPoints.add(localPosition);
@@ -90,10 +97,10 @@ class _MapViewState extends State<MapView> {
           } else if (widget.currentTool == 'polygon') {
             setState(() {
               _currentPoints.add(localPosition);
-              // Fermer le polygone si on clique près du premier point
-              if (_currentPoints.length > 2 && 
+              // Fermer le polygone si on clique pres du premier point
+              if (_currentPoints.length > 2 &&
                   (localPosition - _currentPoints.first).distance < 20) {
-                _currentPoints.add(_currentPoints.first); // Fermer le polygone
+                _currentPoints.add(_currentPoints.first);
                 _finalizeDrawing();
               }
             });
@@ -127,15 +134,20 @@ class _MapViewState extends State<MapView> {
                 scale: widget.zoomLevel,
                 child: Stack(
                   children: [
+                    // Fond blanc + grille
                     CustomPaint(
                       size: Size.infinite,
-                      painter: _MapPainter(
-                        layers: widget.layers,
+                      painter: _GridPainter(zoomLevel: widget.zoomLevel),
+                    ),
+                    // Images de fond (calques raster), du plus bas au plus haut
+                    for (final layer in sortedLayers)
+                      if (layer.isImageBackground) _buildImageLayer(layer),
+                    // Symboles des calques vectoriels
+                    CustomPaint(
+                      size: Size.infinite,
+                      painter: _SymbolsPainter(
+                        layers: sortedLayers,
                         zoomLevel: widget.zoomLevel,
-                        selectedLayerIndex: widget.selectedLayerIndex,
-                        currentTool: widget.currentTool,
-                        currentPoints: _currentPoints,
-                        isDrawing: _isDrawing,
                       ),
                     ),
                     // Zone de dessin en cours
@@ -158,8 +170,41 @@ class _MapViewState extends State<MapView> {
     );
   }
 
+  /// Construit le widget d'affichage d'un calque image de fond.
+  Widget _buildImageLayer(Layer layer) {
+    return Positioned(
+      left: layer.imageOffset.dx,
+      top: layer.imageOffset.dy,
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: layer.visible ? layer.opacity : 0,
+          child: Transform.scale(
+            scale: layer.imageScale,
+            alignment: Alignment.topLeft,
+            child: Image.file(
+              File(layer.imagePath!),
+              fit: BoxFit.none,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 200,
+                height: 120,
+                color: Colors.red.withValues(alpha: 0.15),
+                alignment: Alignment.center,
+                child: const Text(
+                  'Image de fond illisible',
+                  style: TextStyle(fontSize: 10, color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Offset _getLocalPosition(Offset screenPosition) {
-    // Convertir la position écran en position dans le système de coordonnées de la carte
+    // Convertir la position ecran en position dans le systeme de
+    // coordonnees de la carte
     final offset = (screenPosition - widget.panOffset) / widget.zoomLevel;
     return offset;
   }
@@ -213,56 +258,21 @@ class _MapViewState extends State<MapView> {
   }
 }
 
-/// Painter personnalisé pour dessiner la carte et les calques
-class _MapPainter extends CustomPainter {
-  final List<Layer> layers;
+/// Painter charge du fond blanc, de la grille et du marqueur d'origine.
+class _GridPainter extends CustomPainter {
   final double zoomLevel;
-  final int? selectedLayerIndex;
-  final String currentTool;
-  final List<Offset> currentPoints;
-  final bool isDrawing;
 
-  _MapPainter({
-    required this.layers,
-    required this.zoomLevel,
-    this.selectedLayerIndex,
-    this.currentTool = 'select',
-    this.currentPoints = const [],
-    this.isDrawing = false,
-  });
+  _GridPainter({required this.zoomLevel});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Fond blanc
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
       Paint()..color = Colors.white,
     );
 
-    // Grille
     _drawGrid(canvas, size);
-
-    // Dessiner les calques
-    for (var i = 0; i < layers.length; i++) {
-      final layer = layers[i];
-      if (!layer.visible) continue;
-
-      final opacity = layer.opacity;
-      _drawLayer(canvas, layer, i == selectedLayerIndex, opacity);
-    }
-
-    // Marqueur d'origine
     _drawOriginMarker(canvas);
-
-    // Afficher les symboles des calques
-    for (var i = 0; i < layers.length; i++) {
-      final layer = layers[i];
-      if (!layer.visible) continue;
-
-      for (final symbol in layer.symbols) {
-        _drawMapSymbol(canvas, symbol, layer.opacity);
-      }
-    }
   }
 
   void _drawGrid(Canvas canvas, Size size) {
@@ -271,71 +281,59 @@ class _MapPainter extends CustomPainter {
       ..strokeWidth = 0.5 / zoomLevel
       ..style = PaintingStyle.stroke;
 
-    final gridSize = 50.0;
+    const gridSize = 50.0;
     final scaledGridSize = gridSize * zoomLevel;
 
-    // Calculer les lignes de grille visibles
     final startX = -size.width;
     final endX = size.width * 2;
     final startY = -size.height;
     final endY = size.height * 2;
 
     for (var x = startX; x <= endX; x += scaledGridSize) {
-      canvas.drawLine(
-        Offset(x, startY),
-        Offset(x, endY),
-        paint,
-      );
+      canvas.drawLine(Offset(x, startY), Offset(x, endY), paint);
     }
 
     for (var y = startY; y <= endY; y += scaledGridSize) {
-      canvas.drawLine(
-        Offset(startX, y),
-        Offset(endX, y),
-        paint,
-      );
+      canvas.drawLine(Offset(startX, y), Offset(endX, y), paint);
     }
   }
 
-  void _drawLayer(Canvas canvas, Layer layer, bool isSelected, double opacity) {
-    // Pour l'instant, on dessine un rectangle pour représenter le calque
-    // À terme, ce sera remplacé par le rendu des symboles
+  void _drawOriginMarker(Canvas canvas) {
     final paint = Paint()
-      ..color = layer.color.withValues(alpha: opacity * 0.3)
-      ..style = PaintingStyle.fill;
+      ..color = Colors.red
+      ..strokeWidth = 2.0 / zoomLevel
+      ..style = PaintingStyle.stroke;
 
-    final rect = Rect.fromLTWH(
-      100.0 * layer.zIndex,
-      100.0 * layer.zIndex,
-      200.0,
-      200.0,
+    canvas.drawLine(const Offset(-10, 0), const Offset(10, 0), paint);
+    canvas.drawLine(const Offset(0, -10), const Offset(0, 10), paint);
+
+    canvas.drawCircle(
+      const Offset(0, 0),
+      5 / zoomLevel,
+      paint..style = PaintingStyle.fill,
     );
+  }
 
-    canvas.drawRect(rect, paint);
+  @override
+  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
+      oldDelegate.zoomLevel != zoomLevel;
+}
 
-    if (isSelected) {
-      final borderPaint = Paint()
-        ..color = Colors.blue.withValues(alpha: opacity)
-        ..strokeWidth = 2.0 / zoomLevel
-        ..style = PaintingStyle.stroke;
-      canvas.drawRect(rect, borderPaint);
+/// Painter charge de dessiner les symboles des calques vectoriels.
+class _SymbolsPainter extends CustomPainter {
+  final List<Layer> layers;
+  final double zoomLevel;
+
+  _SymbolsPainter({required this.layers, required this.zoomLevel});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final layer in layers) {
+      if (!layer.visible || layer.type != LayerType.vector) continue;
+      for (final symbol in layer.symbols) {
+        _drawMapSymbol(canvas, symbol, layer.opacity);
+      }
     }
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: layer.name,
-        style: TextStyle(
-          color: Colors.black.withValues(alpha: opacity),
-          fontSize: 14 / zoomLevel,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(rect.left + 10, rect.top + 10),
-    );
   }
 
   void _drawMapSymbol(Canvas canvas, symbol_model.MapSymbol symbol, double layerOpacity) {
@@ -352,16 +350,8 @@ class _MapPainter extends CustomPainter {
 
     switch (symbol.type) {
       case symbol_model.MapSymbolType.point:
-        canvas.drawCircle(
-          symbol.position,
-          symbol.size / zoomLevel,
-          paint,
-        );
-        canvas.drawCircle(
-          symbol.position,
-          symbol.size / zoomLevel,
-          borderPaint,
-        );
+        canvas.drawCircle(symbol.position, symbol.size / zoomLevel, paint);
+        canvas.drawCircle(symbol.position, symbol.size / zoomLevel, borderPaint);
         break;
       case symbol_model.MapSymbolType.line:
         if (symbol.points.length > 1) {
@@ -402,38 +392,9 @@ class _MapPainter extends CustomPainter {
     }
   }
 
-  void _drawOriginMarker(Canvas canvas) {
-    final paint = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 2.0 / zoomLevel
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawLine(
-      const Offset(-10, 0),
-      const Offset(10, 0),
-      paint,
-    );
-    canvas.drawLine(
-      const Offset(0, -10),
-      const Offset(0, 10),
-      paint,
-    );
-
-    canvas.drawCircle(
-      const Offset(0, 0),
-      5 / zoomLevel,
-      paint..style = PaintingStyle.fill,
-    );
-  }
-
   @override
-  bool shouldRepaint(covariant _MapPainter oldDelegate) {
-    return oldDelegate.layers != layers ||
-        oldDelegate.zoomLevel != zoomLevel ||
-        oldDelegate.selectedLayerIndex != selectedLayerIndex ||
-        oldDelegate.currentTool != currentTool ||
-        oldDelegate.currentPoints != currentPoints ||
-        oldDelegate.isDrawing != isDrawing;
+  bool shouldRepaint(covariant _SymbolsPainter oldDelegate) {
+    return oldDelegate.layers != layers || oldDelegate.zoomLevel != zoomLevel;
   }
 }
 
@@ -482,7 +443,6 @@ class _DrawingPainter extends CustomPainter {
       }
     }
 
-    // Dessiner les points de contrôle
     for (final point in points) {
       canvas.drawCircle(point, 3.0, Paint()..color = Colors.red);
     }

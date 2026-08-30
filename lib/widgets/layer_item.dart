@@ -50,6 +50,11 @@ class LayerItem extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 24, maxWidth: 24),
               ),
+              Icon(
+                layer.isImageBackground ? Icons.image_outlined : Icons.layers_outlined,
+                size: 14,
+                color: Colors.grey[600],
+              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),

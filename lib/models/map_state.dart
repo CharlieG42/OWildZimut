@@ -17,7 +17,7 @@ class MapState {
     this.selectedLayerIndex,
     this.zoomLevel = 1.0,
     this.panOffset = Offset.zero,
-    this.appVersion = '0.0.001',
+    this.appVersion = '0.0.006',
     this.currentFile,
     this.fileName,
   });
@@ -31,6 +31,27 @@ class MapState {
       zIndex: layers.length + 1,
       color: _getDefaultColorForLayerType(type),
     );
+    return copyWith(
+      layers: [...layers, newLayer],
+      selectedLayerIndex: layers.length,
+    );
+  }
+
+  /// Ajoute un calque d'image de fond (fond de carte jpg/jpeg/png).
+  /// Le calque est place au bas de la pile (zIndex le plus bas) pour que
+  /// les calques vectoriels dessines par-dessus restent visibles.
+  MapState addImageBackgroundLayer(String name, String imagePath) {
+    final lowestZIndex = layers.isEmpty
+        ? 1
+        : layers.map((l) => l.zIndex).reduce((a, b) => a < b ? a : b) - 1;
+
+    final newLayer = Layer.imageBackground(
+      id: 'layer_${DateTime.now().millisecondsSinceEpoch}_${layers.length + 1}',
+      name: name,
+      imagePath: imagePath,
+      zIndex: lowestZIndex,
+    );
+
     return copyWith(
       layers: [...layers, newLayer],
       selectedLayerIndex: layers.length,
@@ -180,6 +201,9 @@ class MapState {
         'z_index': layer.zIndex,
         'locked': layer.locked,
         'color': layer.color.toARGB32().toRadixString(16),
+        'image_path': layer.imagePath,
+        'image_offset': {'x': layer.imageOffset.dx, 'y': layer.imageOffset.dy},
+        'image_scale': layer.imageScale,
         'symbols': layer.symbols.map((symbol) => {
           'id': symbol.id,
           'type': symbol.type.name,
@@ -242,6 +266,12 @@ class MapState {
         zIndex: data['z_index'] as int? ?? 1,
         locked: data['locked'] as bool? ?? false,
         color: Color(int.parse(data['color'] as String? ?? '0xFF0000FF')),
+        imagePath: data['image_path'] as String?,
+        imageOffset: Offset(
+          (data['image_offset']?['x'] as num?)?.toDouble() ?? 0.0,
+          (data['image_offset']?['y'] as num?)?.toDouble() ?? 0.0,
+        ),
+        imageScale: (data['image_scale'] as num?)?.toDouble() ?? 1.0,
         symbols: symbols,
       );
     }).toList();
@@ -253,7 +283,7 @@ class MapState {
         (json['view']?['pan_x'] as num?)?.toDouble() ?? 0.0,
         (json['view']?['pan_y'] as num?)?.toDouble() ?? 0.0,
       ),
-      appVersion: json['metadata']?['version'] as String? ?? '0.0.001',
+      appVersion: json['metadata']?['version'] as String? ?? '0.0.006',
     );
   }
 }

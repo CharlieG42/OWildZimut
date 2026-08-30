@@ -3,11 +3,15 @@ import 'symbol.dart' as symbol_model;
 
 /// Types de calques possibles
 enum LayerType {
+  /// Calque vectoriel : contient des symboles IOF (points, lignes, surfaces, textes)
   vector,
+
+  /// Calque raster : image de fond importee (jpg, jpeg, png) servant de support
+  /// pour tracer la carte par-dessus (photo aerienne, scan de carte existante, ...)
   raster,
 }
 
-/// Modèle de données pour un calque
+/// Modele de donnees pour un calque
 class Layer {
   final String id;
   String name;
@@ -19,6 +23,17 @@ class Layer {
   List<symbol_model.MapSymbol> symbols;
   Color color;
 
+  /// Chemin local de l'image de fond (uniquement pour les calques de type [LayerType.raster]).
+  String? imagePath;
+
+  /// Decalage (en pixels, dans le repere de la carte) applique a l'image de fond.
+  /// Permet un calibrage manuel simple tant que le calage sur points de controle
+  /// n'est pas implemente.
+  Offset imageOffset;
+
+  /// Facteur d'echelle applique a l'image de fond.
+  double imageScale;
+
   Layer({
     required this.id,
     required this.name,
@@ -29,9 +44,29 @@ class Layer {
     this.locked = false,
     this.symbols = const [],
     this.color = Colors.blue,
+    this.imagePath,
+    this.imageOffset = Offset.zero,
+    this.imageScale = 1.0,
   });
 
-  /// Crée une copie du calque avec des modifications
+  /// Cree un calque raster (image de fond) a partir d'un fichier local
+  factory Layer.imageBackground({
+    required String id,
+    required String name,
+    required String imagePath,
+    int zIndex = 0,
+  }) {
+    return Layer(
+      id: id,
+      name: name,
+      type: LayerType.raster,
+      zIndex: zIndex,
+      color: Colors.grey,
+      imagePath: imagePath,
+    );
+  }
+
+  /// Cree une copie du calque avec des modifications
   Layer copyWith({
     String? id,
     String? name,
@@ -42,6 +77,9 @@ class Layer {
     bool? locked,
     List<symbol_model.MapSymbol>? symbols,
     Color? color,
+    String? imagePath,
+    Offset? imageOffset,
+    double? imageScale,
   }) {
     return Layer(
       id: id ?? this.id,
@@ -53,6 +91,9 @@ class Layer {
       locked: locked ?? this.locked,
       symbols: symbols ?? this.symbols,
       color: color ?? this.color,
+      imagePath: imagePath ?? this.imagePath,
+      imageOffset: imageOffset ?? this.imageOffset,
+      imageScale: imageScale ?? this.imageScale,
     );
   }
 
@@ -70,7 +111,7 @@ class Layer {
     );
   }
 
-  /// Met à jour un symbole existant
+  /// Met a jour un symbole existant
   Layer updateSymbol(symbol_model.MapSymbol updatedSymbol) {
     final newSymbols = symbols.map((s) {
       if (s.id == updatedSymbol.id) {
@@ -81,7 +122,7 @@ class Layer {
     return copyWith(symbols: newSymbols);
   }
 
-  /// Récupère un symbole par son ID
+  /// Recupere un symbole par son ID
   symbol_model.MapSymbol? getSymbolById(String symbolId) {
     try {
       return symbols.firstWhere((s) => s.id == symbolId);
@@ -92,6 +133,9 @@ class Layer {
 
   /// Nombre de symboles dans le calque
   int get symbolCount => symbols.length;
+
+  /// Vrai si ce calque est une image de fond
+  bool get isImageBackground => type == LayerType.raster && imagePath != null;
 
   @override
   String toString() {
