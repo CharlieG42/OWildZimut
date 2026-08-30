@@ -8,18 +8,18 @@ import '../models/map_state.dart';
 ///
 /// Utilisation :
 /// ```dart
-/// final undoManager = UndoManager();
+/// final mapUndoManager = MapUndoManager();
 /// 
 /// // Après chaque modification de l'état
-/// undoManager.pushState(newState);
+/// mapUndoManager.pushState(newState);
 /// 
 /// // Pour annuler
-/// final undoneState = undoManager.undo();
+/// final undoneState = mapUndoManager.undo();
 /// 
 /// // Pour rétablir
-/// final redoneState = undoManager.redo();
+/// final redoneState = mapUndoManager.redo();
 /// ```
-class UndoManager with ChangeNotifier {
+class MapUndoManager with ChangeNotifier {
   /// Historique des états
   final List<MapState> _history = [];
   
@@ -170,9 +170,9 @@ abstract class UndoableAction {
 
 /// Gestionnaire d'actions undo/redo
 ///
-/// Alternative à UndoManager qui stocke les actions plutôt que les états.
+/// Alternative à MapUndoManager qui stocke les actions plutôt que les états.
 /// Cela peut être plus efficace pour certaines applications.
-class ActionUndoManager with ChangeNotifier {
+class MapActionUndoManager with ChangeNotifier {
   final List<UndoableAction> _actions = [];
   final List<UndoableAction> _undoneActions = [];
   final int maxActions;

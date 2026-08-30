@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'layer.dart';
 import 'symbol.dart' as symbol_model;
-import 'georeferencing.dart';
+import 'georeferencing.dart' as geo;
 
 /// État global de la carte (géré par un StateNotifier ou Riverpod)
 /// 
@@ -16,7 +16,7 @@ class MapState {
   final String? currentFile;
   final String? fileName;
   final Set<String> selectedSymbolIds;
-  final Georeferencing? georeferencing;
+  final geo.Georeferencing? georeferencing;
 
   const MapState({
     this.layers = const [],
@@ -59,7 +59,7 @@ class MapState {
     String? currentFile,
     String? fileName,
     Set<String>? selectedSymbolIds,
-    Georeferencing? georeferencing,
+    geo.Georeferencing? georeferencing,
   }) {
     return MapState(
       layers: layers ?? this.layers,
@@ -490,7 +490,7 @@ class MapState {
   // ============================================================================
 
   /// Met à jour le géoréférencement
-  MapState setGeoreferencing(Georeferencing? georef) {
+  MapState setGeoreferencing(geo.Georeferencing? georef) {
     return copyWith(georeferencing: georef);
   }
 
@@ -522,9 +522,9 @@ class MapState {
     final layersData = json['layers'] as List? ?? [];
     final layers = layersData.map((data) => Layer.fromJson(data)).toList();
     
-    Georeferencing? georeferencing;
+    geo.Georeferencing? georeferencing;
     if (json['georeferencing'] != null) {
-      georeferencing = Georeferencing.fromJson(json['georeferencing'] as Map<String, dynamic>);
+      georeferencing = geo.Georeferencing.fromJson(json['georeferencing'] as Map<String, dynamic>);
     }
 
     return MapState(

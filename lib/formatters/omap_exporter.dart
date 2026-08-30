@@ -3,6 +3,7 @@ import 'package:xml/xml.dart';
 import '../models/map_state.dart';
 import '../models/layer.dart';
 import '../models/symbol.dart' as symbol_model;
+import '../models/georeferencing.dart' as geo;
 
 /// Exporteur OMAP pour générer des fichiers au format OpenOrienteering Mapper XML v9
 ///
@@ -54,7 +55,7 @@ class OmapExporter {
   }
 
   /// Exporte les informations de géoréférencement
-  static void _exportGeoreferencing(XmlBuilder builder, Georeferencing georef) {
+  static void _exportGeoreferencing(XmlBuilder builder, geo.Georeferencing georef) {
     builder.element('georeferencing', attributes: {
       'scale': georef.scaleDenominator.toString(),
       if (georef.gridScaleFactor != null) 
@@ -173,7 +174,7 @@ class OmapExporter {
           'm': cmjk.magenta.toStringAsFixed(2),
           'y': cmjk.yellow.toStringAsFixed(2),
           'k': cmjk.black.toStringAsFixed(2),
-          'opacity': color.opacity.toStringAsFixed(2),
+          'opacity': '1.0',
         }, nest: () {
           // Ajouter les spot colors (simplifié)
           builder.element('spotcolors', attributes: {
@@ -372,8 +373,8 @@ class OmapExporter {
   static int _findColorIndex(Color color) {
     // Pour l'instant, on retourne 0 (noir) par défaut
     // Une implémentation complète nécessiterait de tracker les couleurs exportées
-    if (color == Colors.black) return 4; // Black est à l'index 4 dans Villerest
-    if (color == Colors.white) return 3; // White est à l'index 3
+    if (color.value == Colors.black.value) return 4; // Black est à l'index 4 dans Villerest
+    if (color.value == Colors.white.value) return 3; // White est à l'index 3
     if (color.value == const Color(0xFF0000FF).value) return 8; // Blue
     if (color.value == const Color(0xFF00FF00).value) return 27; // Green
     if (color.value == const Color(0xFFFF0000).value) return 6; // Brown
@@ -456,56 +457,4 @@ extension OmapExportable on MapState {
   String toOmapXml() {
     return OmapExporter.export(this);
   }
-}
-
-/// Classe pour gérer le géoréférencement (étendue pour l'export)
-class Georeferencing {
-  final int scaleDenominator;
-  final double? gridScaleFactor;
-  final double? auxiliaryScaleFactor;
-  final double? grivation;
-  final String? crsId;
-  final String? proj4Spec;
-  final String? crsParameter;
-  final Offset? refPoint;
-  final Offset? refPointReal;
-  final GeographicRefPoint? refPointDeg;
-  final String? geographicCrsId;
-  final String? geographicProj4Spec;
-
-  const Georeferencing({
-    this.scaleDenominator = 10000,
-    this.gridScaleFactor,
-    this.auxiliaryScaleFactor,
-    this.grivation,
-    this.crsId,
-    this.proj4Spec,
-    this.crsParameter,
-    this.refPoint,
-    this.refPointReal,
-    this.refPointDeg,
-    this.geographicCrsId,
-    this.geographicProj4Spec,
-  });
-
-  /// Crée un géoréférencement basique
-  factory Georeferencing.basic({
-    int scaleDenominator = 10000,
-    String? crsId,
-    Offset? refPoint,
-  }) {
-    return Georeferencing(
-      scaleDenominator: scaleDenominator,
-      crsId: crsId,
-      refPoint: refPoint,
-    );
-  }
-}
-
-/// Point de référence géographique (latitude/longitude)
-class GeographicRefPoint {
-  final double latitude;
-  final double longitude;
-
-  const GeographicRefPoint(this.latitude, this.longitude);
 }
