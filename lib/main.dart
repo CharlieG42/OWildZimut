@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'models/map_state.dart';
 import 'models/layer.dart';
 import 'models/symbol.dart' as symbol_model;
 import 'models/iof_symbols.dart';
+import 'models/omap_file.dart';
+import 'models/georeferencing.dart';
+import 'services/undo_manager.dart';
 import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
@@ -10,14 +14,15 @@ import 'widgets/symbol_selector.dart';
 import 'widgets/file_loader.dart';
 import 'widgets/background_image_picker.dart';
 import 'screens/about_dialog.dart' as app_about;
+import 'formatters/omap_exporter.dart';
+import 'dart:io';
 
 void main() {
   runApp(const OWildZimutApp());
 }
 
 /// Largeur en dessous de laquelle l'interface bascule en mise en page mobile
-/// (une seule colonne, outils et calques dans des tiroirs), pensee pour des
-/// telephones de type S23+ (ecran ~384dp de large en mode portrait).
+/// (une seule colonne, outils et calques dans des tiroirs)
 const double kMobileBreakpoint = 700;
 
 /// Application principale OWildZimut
@@ -60,7 +65,7 @@ class OWildZimutApp extends StatelessWidget {
   }
 }
 
-/// Ecran principal de l'application
+/// Écran principal de l'application
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -72,17 +77,26 @@ class _MainScreenState extends State<MainScreen> {
   late MapState _mapState;
   String _currentTool = 'select';
   bool _toolBarExpanded = true;
-
+  bool _advancedMode = false;
+  
+  // Gestion de l'historique
+  final UndoManager _undoManager = UndoManager(maxHistoryLength: 50);
+  
+  // Clipboard pour copier/coller
+  List<symbol_model.MapSymbol> _clipboard = [];
+  
   final GlobalKey _mapViewKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _mapState = const MapState(appVersion: '0.0.006');
-    _mapState = _mapState.addLayer('Carte de base', LayerType.vector);
-    _mapState = _mapState.addLayer('Vegetation', LayerType.vector);
-    _mapState = _mapState.addLayer('Chemins', LayerType.vector);
+    _mapState = MapState.initial();
+    _undoManager.pushState(_mapState);
   }
+
+  // ============================================================================
+  // GESTION DES CALQUES
+  // ============================================================================
 
   void _addLayer() {
     setState(() {
@@ -90,52 +104,130 @@ class _MainScreenState extends State<MainScreen> {
         'Nouveau calque ${_mapState.layers.length + 1}',
         LayerType.vector,
       );
+      _pushStateToHistory();
     });
   }
 
   void _removeLayer(String layerId) {
     setState(() {
       _mapState = _mapState.removeLayer(layerId);
+      _pushStateToHistory();
+    });
+  }
+
+  void _selectLayer(int? index) {
+    setState(() {
+      _mapState = _mapState.selectLayer(index);
     });
   }
 
   void _setLayerVisibility(String layerId, bool visible) {
     setState(() {
       _mapState = _mapState.setLayerVisibility(layerId, visible);
+      _pushStateToHistory();
     });
   }
 
   void _setLayerOpacity(String layerId, double opacity) {
     setState(() {
       _mapState = _mapState.setLayerOpacity(layerId, opacity);
+      _pushStateToHistory();
     });
   }
 
   void _moveLayerUp(String layerId) {
     setState(() {
-      final layer = _mapState.layers.firstWhere((l) => l.id == layerId);
-      final currentZIndex = layer.zIndex;
-      if (currentZIndex < _mapState.layers.length) {
-        _mapState = _mapState.setLayerZIndex(layerId, currentZIndex + 1);
-      }
+      _mapState = _mapState.moveLayerUp(layerId);
+      _pushStateToHistory();
     });
   }
 
   void _moveLayerDown(String layerId) {
     setState(() {
-      final layer = _mapState.layers.firstWhere((l) => l.id == layerId);
-      final currentZIndex = layer.zIndex;
-      if (currentZIndex > 1) {
-        _mapState = _mapState.setLayerZIndex(layerId, currentZIndex - 1);
-      }
+      _mapState = _mapState.moveLayerDown(layerId);
+      _pushStateToHistory();
     });
   }
 
-  void _selectLayer(int index) {
+  // ============================================================================
+  // GESTION DES SYMBOLES
+  // ============================================================================
+
+  void _addSymbol(symbol_model.MapSymbol symbol) {
     setState(() {
-      _mapState = _mapState.selectLayer(index);
+      _mapState = _mapState.addSymbolToSelectedLayer(symbol);
+      _pushStateToHistory();
     });
   }
+
+  void _selectSymbol(String symbolId, {bool multiSelect = false}) {
+    setState(() {
+      _mapState = _mapState.selectSymbol(symbolId, multiSelect: multiSelect);
+    });
+  }
+
+  void _selectSymbols(Set<String> symbolIds) {
+    setState(() {
+      _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
+    });
+  }
+
+  void _selectAllSymbols() {
+    setState(() {
+      _mapState = _mapState.selectAllSymbols();
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _mapState = _mapState.clearSelection();
+    });
+  }
+
+  void _deleteSelectedSymbols() {
+    if (_mapState.selectedSymbolIds.isEmpty) return;
+    
+    setState(() {
+      _mapState = _mapState.removeSelectedSymbols();
+      _pushStateToHistory();
+    });
+  }
+
+  void _moveSymbols(Set<String> symbolIds, Offset delta) {
+    setState(() {
+      _mapState = _mapState.moveSelectedSymbols(delta);
+      _pushStateToHistory();
+    });
+  }
+
+  // ============================================================================
+  // GESTION DU CLIPBOARD
+  // ============================================================================
+
+  void _copySelectedSymbols() {
+    setState(() {
+      _clipboard = _mapState.copySelectedSymbols();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Symboles copiés')),
+    );
+  }
+
+  void _pasteSymbols() {
+    if (_clipboard.isEmpty || _mapState.selectedLayerIndex == null) return;
+    
+    // Calculer un décalage pour éviter de coller au même endroit
+    final offset = Offset(20, 20);
+    
+    setState(() {
+      _mapState = _mapState.pasteSymbols(_clipboard, offset);
+      _pushStateToHistory();
+    });
+  }
+
+  // ============================================================================
+  // GESTION DE LA VUE
+  // ============================================================================
 
   void _setZoomLevel(double zoom) {
     setState(() {
@@ -149,15 +241,21 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _resetView() {
+  void _zoomBy(double factor, Offset focalPoint) {
     setState(() {
-      _mapState = _mapState.resetView();
+      _mapState = _mapState.zoomBy(factor, focalPoint);
     });
   }
 
-  void _setCurrentTool(String tool) {
+  void _panBy(Offset delta) {
     setState(() {
-      _currentTool = tool;
+      _mapState = _mapState.panBy(delta);
+    });
+  }
+
+  void _resetView() {
+    setState(() {
+      _mapState = _mapState.resetView();
     });
   }
 
@@ -173,309 +271,344 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _addSymbol(symbol_model.MapSymbol symbol) {
-    if (_mapState.selectedLayerIndex == null) return;
+  // ============================================================================
+  // GESTION DES OUTILS
+  // ============================================================================
 
+  void _selectTool(String tool) {
     setState(() {
-      _mapState = _mapState.addSymbolToSelectedLayer(symbol);
-    });
-  }
-
-  /// Position, dans le repere de la carte, du centre actuellement visible
-  /// dans la zone de dessin. Utilise pour placer un symbole choisi depuis le
-  /// selecteur bien au centre de la vue plutot qu'a l'origine (0,0).
-  Offset _visibleCenterInMapCoordinates() {
-    final renderBox = _mapViewKey.currentContext?.findRenderObject() as RenderBox?;
-    final screenCenter = renderBox != null
-        ? Offset(renderBox.size.width / 2, renderBox.size.height / 2)
-        : Offset.zero;
-    return (screenCenter - _mapState.panOffset) / _mapState.zoomLevel;
-  }
-
-  void _openSymbolSelector() {
-    showDialog(
-      context: context,
-      builder: (context) => const SymbolSelectorDialog(
-        detailLevel: SymbolDetailLevel.standard,
-      ),
-    ).then((selectedSymbol) {
-      if (selectedSymbol is symbol_model.MapSymbol) {
-        final centered = selectedSymbol.copyWith(
-          position: _visibleCenterInMapCoordinates(),
-        );
-        _addSymbol(centered);
+      _currentTool = tool;
+      // Effacer la sélection si on change d'outil (sauf pour la sélection)
+      if (tool != 'select') {
+        _mapState = _mapState.clearSelection();
       }
     });
   }
 
-  void _showAboutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => app_about.AboutDialog(appVersion: _mapState.appVersion),
-    );
+  // ============================================================================
+  // GESTION DE L'HISTORIQUE
+  // ============================================================================
+
+  void _pushStateToHistory() {
+    _undoManager.pushState(_mapState);
   }
 
-  void _openFileLoader() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              MapFileLoaderWidget(
-                currentState: _mapState,
-                onFileLoaded: (newState) {
-                  setState(() {
-                    _mapState = newState;
-                  });
-                },
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Fermer'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _undo() {
+    final newState = _undoManager.undo();
+    if (newState != null) {
+      setState(() {
+        _mapState = newState;
+      });
+    }
   }
 
-  /// Ouvre le selecteur de fichiers pour importer une image de fond de carte
-  /// (jpg, jpeg ou png) et l'ajoute comme nouveau calque raster.
-  Future<void> _openBackgroundImagePicker() async {
-    final file = await pickBackgroundImage();
-    if (file == null) return;
+  void _redo() {
+    final newState = _undoManager.redo();
+    if (newState != null) {
+      setState(() {
+        _mapState = newState;
+      });
+    }
+  }
 
+  // ============================================================================
+  // GESTION DES FICHIERS
+  // ============================================================================
+
+  Future<void> _loadOmapFile() async {
+    try {
+      final fileContent = await FileLoader.loadOmapFile();
+      if (fileContent == null) return;
+      
+      final omapDocument = OmapFileLoader.parse(fileContent);
+      
+      setState(() {
+        _mapState = OmapFileLoader.mergeIntoState(_mapState, omapDocument);
+        _pushStateToHistory();
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fichier OMAP chargé (${omapDocument.layers.length} calques, ${omapDocument.objectCount} objets)')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement: $e')),
+      );
+    }
+  }
+
+  Future<void> _exportOmapFile() async {
+    try {
+      final omapXml = _mapState.toOmapXml();
+      final filePath = await FileLoader.saveOmapFile(omapXml);
+      
+      if (filePath != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Carte exportée vers: $filePath')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'export: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadImage() async {
+    try {
+      final imagePath = await BackgroundImagePicker.pickImage();
+      if (imagePath == null) return;
+      
+      setState(() {
+        _mapState = _mapState.addImageBackgroundLayer(
+          'Image ${_mapState.layers.length + 1}',
+          imagePath,
+        );
+        _pushStateToHistory();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement de l\'image: $e')),
+      );
+    }
+  }
+
+  Future<void> _saveProject() async {
+    try {
+      // Pour l'instant, on exporte en OMAP
+      await _exportOmapFile();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sauvegarde: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadProject() async {
+    await _loadOmapFile();
+  }
+
+  // ============================================================================
+  // GESTION DU MODE AVANCÉ
+  // ============================================================================
+
+  void _toggleAdvancedMode() {
     setState(() {
-      _mapState = _mapState.addImageBackgroundLayer(file.name, file.path);
+      _advancedMode = !_advancedMode;
     });
   }
 
-  void _toggleToolBar() {
-    setState(() {
-      _toolBarExpanded = !_toolBarExpanded;
-    });
-  }
+  // ============================================================================
+  // BUILD
+  // ============================================================================
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < kMobileBreakpoint;
-    return isMobile ? _buildMobileLayout(context) : _buildDesktopLayout(context);
-  }
-
-  List<Widget> _appBarActions() {
-    return [
-      IconButton(
-        icon: const Icon(Icons.folder_open),
-        onPressed: _openFileLoader,
-        tooltip: 'Ouvrir un fichier OMAP',
-      ),
-      IconButton(
-        icon: const Icon(Icons.image_outlined),
-        onPressed: _openBackgroundImagePicker,
-        tooltip: 'Importer un fond de carte (jpg, jpeg, png)',
-      ),
-      IconButton(
-        icon: const Icon(Icons.add_circle_outline),
-        onPressed: _openSymbolSelector,
-        tooltip: 'Ajouter un symbole IOF',
-      ),
-      IconButton(
-        icon: const Icon(Icons.info_outline),
-        onPressed: _showAboutDialog,
-        tooltip: 'A propos',
-      ),
-    ];
-  }
-
-  /// Mise en page pour grand ecran (tablette large, desktop) : trois
-  /// colonnes fixes, comme dans les versions precedentes.
-  Widget _buildDesktopLayout(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('OWildZimut'),
-        actions: _appBarActions(),
-      ),
-      body: Row(
-        children: [
-          SizedBox(
-            width: _toolBarExpanded ? 200 : 40,
-            child: ToolBar(
-              currentTool: _currentTool,
-              onToolChanged: _setCurrentTool,
-              onZoomIn: _zoomIn,
-              onZoomOut: _zoomOut,
-              onResetView: _resetView,
-              isExpanded: _toolBarExpanded,
-              onToggleExpand: _toggleToolBar,
+    
+    return KeyboardShortcuts.wrapWithShortcuts(
+      context: context,
+      mapState: _mapState,
+      onToolSelected: _selectTool,
+      onUndo: _undo,
+      onRedo: _redo,
+      onDeleteSelected: _deleteSelectedSymbols,
+      onCopySelected: _copySelectedSymbols,
+      onPaste: _pasteSymbols,
+      onSelectAll: _selectAllSymbols,
+      onClearSelection: _clearSelection,
+      onZoomIn: _zoomIn,
+      onZoomOut: _zoomOut,
+      onResetView: _resetView,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('OWildZimut'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () => app_about.showAboutDialog(context),
+              tooltip: 'À propos',
             ),
-          ),
-          Expanded(child: _buildMapView()),
-          SizedBox(
-            width: 280,
-            child: LayerPanel(
-              layers: _mapState.layers,
-              selectedLayerIndex: _mapState.selectedLayerIndex,
-              onLayerSelected: _selectLayer,
-              onLayerVisibilityChanged: _onLayerVisibilityChanged,
-              onLayerOpacityChanged: _setLayerOpacity,
-              onAddLayer: _addLayer,
-              onLayerRemoved: _removeLayer,
-              onLayerMoveUp: _moveLayerUp,
-              onLayerMoveDown: _moveLayerDown,
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveProject,
+              tooltip: 'Sauvegarder',
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Mise en page pour telephone (S23+ et similaires) : la carte occupe tout
-  /// l'ecran, les outils et les calques sont dans des tiroirs (Drawer)
-  /// accessibles depuis la barre d'application, et une barre d'outils
-  /// compacte et defilante reste toujours visible en bas.
-  Widget _buildMobileLayout(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('OWildZimut'),
-        actions: _appBarActions(),
-      ),
-      drawer: Drawer(
-        child: SafeArea(
-          child: Builder(
-            builder: (drawerContext) => SingleChildScrollView(
-              child: ToolBar(
-                currentTool: _currentTool,
-                onToolChanged: (tool) {
-                  _setCurrentTool(tool);
-                  Scaffold.of(drawerContext).closeDrawer();
-                },
-                onZoomIn: _zoomIn,
-                onZoomOut: _zoomOut,
-                onResetView: _resetView,
-                isExpanded: true,
-                onToggleExpand: () => Scaffold.of(drawerContext).closeDrawer(),
-              ),
+            IconButton(
+              icon: const Icon(Icons.folder_open),
+              onPressed: _loadProject,
+              tooltip: 'Ouvrir',
             ),
-          ),
-        ),
-      ),
-      endDrawer: Drawer(
-        child: SafeArea(
-          child: LayerPanel(
-            layers: _mapState.layers,
-            selectedLayerIndex: _mapState.selectedLayerIndex,
-            onLayerSelected: _selectLayer,
-            onLayerVisibilityChanged: _onLayerVisibilityChanged,
-            onLayerOpacityChanged: _setLayerOpacity,
-            onAddLayer: _addLayer,
-            onLayerRemoved: _removeLayer,
-            onLayerMoveUp: _moveLayerUp,
-            onLayerMoveDown: _moveLayerDown,
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(child: _buildMapView()),
-          _buildMobileQuickToolbar(),
-        ],
-      ),
-    );
-  }
-
-  /// Barre d'outils compacte, toujours visible et defilante horizontalement,
-  /// affichee en bas de l'ecran sur mobile pour un acces rapide aux outils
-  /// de dessin sans devoir ouvrir le tiroir.
-  Widget _buildMobileQuickToolbar() {
-    final tools = <(String value, IconData icon, String label)>[
-      ('select', Icons.select_all, 'Selection'),
-      ('point', Icons.circle, 'Point'),
-      ('line', Icons.polyline, 'Ligne'),
-      ('polygon', Icons.check, 'Polygone'),
-      ('text', Icons.text_fields, 'Texte'),
-    ];
-
-    return Material(
-      elevation: 4,
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 56,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu),
-                    tooltip: 'Outils',
-                    onPressed: () => Scaffold.of(context).openDrawer(),
+            IconButton(
+              icon: const Icon(Icons.export_rounded),
+              onPressed: _exportOmapFile,
+              tooltip: 'Exporter OMAP',
+            ),
+            PopupMenuButton<String>(
+              tooltip: 'Plus d\'options',
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'image',
+                  child: ListTile(
+                    leading: Icon(Icons.image),
+                    title: Text('Importer une image'),
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
-                const VerticalDivider(width: 1),
-                for (final tool in tools)
-                  IconButton(
-                    icon: Icon(tool.$2),
-                    tooltip: tool.$3,
-                    onPressed: () => _setCurrentTool(tool.$1),
-                    color: _currentTool == tool.$1
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
-                  ),
-                const VerticalDivider(width: 1),
-                IconButton(
-                  icon: const Icon(Icons.zoom_in),
-                  tooltip: 'Zoom avant',
-                  onPressed: _zoomIn,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.zoom_out),
-                  tooltip: 'Zoom arriere',
-                  onPressed: _zoomOut,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.exposure_zero),
-                  tooltip: 'Reinitialiser la vue',
-                  onPressed: _resetView,
-                ),
-                Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.layers),
-                    tooltip: 'Calques',
-                    onPressed: () => Scaffold.of(context).openEndDrawer(),
+                const PopupMenuItem(
+                  value: 'omap',
+                  child: ListTile(
+                    leading: Icon(Icons.map),
+                    title: Text('Importer OMAP'),
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ],
+              onSelected: (value) {
+                switch (value) {
+                  case 'image':
+                    _loadImage();
+                    break;
+                  case 'omap':
+                    _loadOmapFile();
+                    break;
+                }
+              },
             ),
-          ),
+          ],
         ),
+        body: isMobile ? _buildMobileLayout() : _buildDesktopLayout(),
+        // Barre d'outils compacte pour mobile
+        bottomNavigationBar: isMobile 
+            ? CompactToolBar(
+                currentTool: _currentTool,
+                selectedSymbolIds: _mapState.selectedSymbolIds,
+                canUndo: _undoManager.canUndo,
+                canRedo: _undoManager.canRedo,
+                onToolSelected: _selectTool,
+                onUndo: _undo,
+                onRedo: _redo,
+                onDeleteSelected: _deleteSelectedSymbols,
+                onZoomIn: _zoomIn,
+                onZoomOut: _zoomOut,
+                onResetView: _resetView,
+              )
+            : null,
       ),
     );
   }
 
-  void _onLayerVisibilityChanged(bool visible) {
-    if (_mapState.selectedLayerIndex != null) {
-      final layer = _mapState.layers[_mapState.selectedLayerIndex!];
-      _setLayerVisibility(layer.id, visible);
-    }
+  /// Layout pour les grands écrans (bureau)
+  Widget _buildDesktopLayout() {
+    return Row(
+      children: [
+        // Barre d'outils (gauche)
+        ToolBar(
+          currentTool: _currentTool,
+          selectedLayerIndex: _mapState.selectedLayerIndex,
+          selectedSymbolIds: _mapState.selectedSymbolIds,
+          canUndo: _undoManager.canUndo,
+          canRedo: _undoManager.canRedo,
+          advancedMode: _advancedMode,
+          onToolSelected: _selectTool,
+          onUndo: _undo,
+          onRedo: _redo,
+          onDeleteSelected: _deleteSelectedSymbols,
+          onCopySelected: _copySelectedSymbols,
+          onPaste: _pasteSymbols,
+          onSelectAll: _selectAllSymbols,
+          onClearSelection: _clearSelection,
+          onZoomIn: _zoomIn,
+          onZoomOut: _zoomOut,
+          onResetView: _resetView,
+          onToggleAdvancedMode: _toggleAdvancedMode,
+        ),
+        
+        // Zone de carte (centre)
+        Expanded(
+          child: MapView(
+            key: _mapViewKey,
+            layers: _mapState.layers,
+            zoomLevel: _mapState.zoomLevel,
+            panOffset: _mapState.panOffset,
+            selectedLayerIndex: _mapState.selectedLayerIndex,
+            currentTool: _currentTool,
+            selectedSymbolIds: _mapState.selectedSymbolIds,
+            onPanUpdate: _setPanOffset,
+            onZoomChanged: _setZoomLevel,
+            onSelectionRectChanged: (rect) {
+              // Sélectionner les symboles dans le rectangle
+              setState(() {
+                _mapState = _mapState.selectSymbolsInRect(rect);
+              });
+            },
+            onSymbolAdded: _addSymbol,
+            onSymbolSelected: (symbolId) {
+              _selectSymbol(symbolId, multiSelect: false);
+            },
+            onSymbolsSelected: _selectSymbols,
+            onSymbolsMoved: _moveSymbols,
+            onSymbolsDeleted: (symbolIds) {
+              setState(() {
+                _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
+                _deleteSelectedSymbols();
+              });
+            },
+          ),
+        ),
+        
+        // Panneau des calques (droite)
+        LayerPanel(
+          layers: _mapState.layers,
+          selectedLayerIndex: _mapState.selectedLayerIndex,
+          onLayerAdded: _addLayer,
+          onLayerRemoved: _removeLayer,
+          onLayerSelected: _selectLayer,
+          onLayerVisibilityChanged: _setLayerVisibility,
+          onLayerOpacityChanged: _setLayerOpacity,
+          onLayerMovedUp: _moveLayerUp,
+          onLayerMovedDown: _moveLayerDown,
+        ),
+      ],
+    );
   }
 
-  Widget _buildMapView() {
-    return MapView(
-      key: _mapViewKey,
-      layers: _mapState.layers,
-      zoomLevel: _mapState.zoomLevel,
-      panOffset: _mapState.panOffset,
-      selectedLayerIndex: _mapState.selectedLayerIndex,
-      currentTool: _currentTool,
-      onPanUpdate: _setPanOffset,
-      onZoomChanged: _setZoomLevel,
-      onSymbolAdded: _addSymbol,
+  /// Layout pour les petits écrans (mobile)
+  Widget _buildMobileLayout() {
+    return Row(
+      children: [
+        // Zone de carte (prend tout l'espace)
+        Expanded(
+          child: MapView(
+            key: _mapViewKey,
+            layers: _mapState.layers,
+            zoomLevel: _mapState.zoomLevel,
+            panOffset: _mapState.panOffset,
+            selectedLayerIndex: _mapState.selectedLayerIndex,
+            currentTool: _currentTool,
+            selectedSymbolIds: _mapState.selectedSymbolIds,
+            onPanUpdate: _setPanOffset,
+            onZoomChanged: _setZoomLevel,
+            onSelectionRectChanged: (rect) {
+              setState(() {
+                _mapState = _mapState.selectSymbolsInRect(rect);
+              });
+            },
+            onSymbolAdded: _addSymbol,
+            onSymbolSelected: (symbolId) {
+              _selectSymbol(symbolId, multiSelect: false);
+            },
+            onSymbolsSelected: _selectSymbols,
+            onSymbolsMoved: _moveSymbols,
+            onSymbolsDeleted: (symbolIds) {
+              setState(() {
+                _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
+                _deleteSelectedSymbols();
+              });
+            },
+          ),
+        ),
+      ],
     );
   }
 }

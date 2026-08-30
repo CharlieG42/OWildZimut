@@ -62,21 +62,74 @@ class OmapSymbolDefinition {
   final String? code;
   final String name;
   final symbol_model.MapSymbolType type;
+  final String? iconBase64; // Icône encodée en base64 si disponible
 
   const OmapSymbolDefinition({
     required this.id,
     this.code,
     this.name = '',
     this.type = symbol_model.MapSymbolType.point,
+    this.iconBase64,
   });
+}
+
+/// Type d'objet OMAP (1=point, 2=ligne, 4=surface, 8=texte)
+enum OmapObjectType {
+  point,
+  line,
+  area,
+  text,
 }
 
 /// Un objet geometrique place sur la carte (avant conversion en [symbol_model.MapSymbol]).
 class OmapObject {
   final String? symbolId;
+  final OmapObjectType type;
   final List<Offset> points;
+  final double rotation; // Rotation en radians
+  final bool isClosed; // Vrai si c'est un polygone ferme
 
-  const OmapObject({this.symbolId, this.points = const []});
+  const OmapObject({
+    this.symbolId,
+    this.type = OmapObjectType.point,
+    this.points = const [],
+    this.rotation = 0,
+    this.isClosed = false,
+  });
+
+  /// Crée un OmapObject à partir d'une liste de points et d'un type
+  factory OmapObject.fromPoints({
+    String? symbolId,
+    required OmapObjectType type,
+    required List<Offset> points,
+    double rotation = 0,
+    bool isClosed = false,
+  }) {
+    return OmapObject(
+      symbolId: symbolId,
+      type: type,
+      points: points,
+      rotation: rotation,
+      isClosed: isClosed || (points.length > 1 && points.first == points.last),
+    );
+  }
+}
+
+/// Informations de géoréférencement extraites du fichier OMAP
+class OmapGeoreferencing {
+  final int scaleDenominator; // Échelle (ex: 10000 pour 1:10000)
+  final String? crsId; // Système de coordonnées (ex: "UTM")
+  final String? proj4Spec; // Spécification PROJ.4
+  final Offset? refPoint; // Point de référence en coordonnées carte
+  final Offset? refPointReal; // Point de référence en coordonnées réelles
+
+  const OmapGeoreferencing({
+    this.scaleDenominator = 10000,
+    this.crsId,
+    this.proj4Spec,
+    this.refPoint,
+    this.refPointReal,
+  });
 }
 
 /// Un calque tel que decrit dans le fichier OMAP (correspond a une
@@ -84,8 +137,15 @@ class OmapObject {
 class OmapLayerData {
   final String name;
   final List<OmapObject> objects;
+  final bool visible;
+  final double opacity;
 
-  const OmapLayerData({required this.name, this.objects = const []});
+  const OmapLayerData({
+    required this.name,
+    this.objects = const [],
+    this.visible = true,
+    this.opacity = 1.0,
+  });
 }
 
 /// Document OMAP complet, apres analyse du XML.
@@ -95,6 +155,7 @@ class OmapDocument {
   final List<OmapColorDefinition> colors;
   final Map<String, OmapSymbolDefinition> symbolsById;
   final List<OmapLayerData> layers;
+  final OmapGeoreferencing? georeferencing;
 
   const OmapDocument({
     this.formatVersion = '',
@@ -102,6 +163,7 @@ class OmapDocument {
     this.colors = const [],
     this.symbolsById = const {},
     this.layers = const [],
+    this.georeferencing,
   });
 
   /// Nombre total d'objets geometriques lus, toutes couches confondues.
@@ -121,14 +183,9 @@ class OmapDocument {
 
     final formatVersion = mapElement.getAttribute('version') ?? '';
 
-    // NB : a partir du format version 9 (Mapper 0.9+), certains blocs (les
-    // symboles, les parties de la carte, ...) peuvent etre enveloppes dans
-    // un element <barrier>, utilise comme marqueur de compatibilite de
-    // version. On recherche donc ces elements n'importe ou sous <map>
-    // (recherche recursive), et pas seulement parmi ses enfants directs.
-    final georeferencing = mapElement.findAllElements('georeferencing').firstOrNull;
-    final scaleDenominator =
-        int.tryParse(georeferencing?.getAttribute('scale') ?? '') ?? 10000;
+    // Parsing du géoréférencement
+    final georeferencing = _parseGeoreferencing(mapElement);
+    final scaleDenominator = georeferencing.scaleDenominator;
 
     final colors = _parseColors(mapElement);
     final symbolsById = _parseSymbols(mapElement);
@@ -140,6 +197,64 @@ class OmapDocument {
       colors: colors,
       symbolsById: symbolsById,
       layers: layers,
+      georeferencing: georeferencing,
+    );
+  }
+
+  static OmapGeoreferencing _parseGeoreferencing(XmlElement mapElement) {
+    final georefElement = mapElement.findAllElements('georeferencing').firstOrNull;
+    
+    if (georefElement == null) {
+      return OmapGeoreferencing();
+    }
+
+    final scaleDenominator = 
+        int.tryParse(georefElement.getAttribute('scale') ?? '10000') ?? 10000;
+    final crsId = georefElement.getAttribute('id');
+    
+    // Chercher le spécification PROJ.4
+    String? proj4Spec;
+    Offset? refPoint;
+    Offset? refPointReal;
+    
+    final projectedCrs = georefElement.findAllElements('projected_crs').firstOrNull;
+    if (projectedCrs != null) {
+      final specElement = projectedCrs.findAllElements('spec').firstOrNull;
+      proj4Spec = specElement?.innerText.trim();
+      
+      final refPointElement = projectedCrs.findAllElements('ref_point').firstOrNull;
+      if (refPointElement != null) {
+        final x = double.tryParse(refPointElement.getAttribute('x') ?? '0') ?? 0;
+        final y = double.tryParse(refPointElement.getAttribute('y') ?? '0') ?? 0;
+        refPointReal = Offset(x, y);
+      }
+    }
+    
+    final geographicCrs = georefElement.findAllElements('geographic_crs').firstOrNull;
+    if (geographicCrs != null && refPointReal == null) {
+      final refPointDeg = geographicCrs.findAllElements('ref_point_deg').firstOrNull;
+      if (refPointDeg != null) {
+        // Convertir lat/lon en Offset (simplifié)
+        final lat = double.tryParse(refPointDeg.getAttribute('lat') ?? '0') ?? 0;
+        final lon = double.tryParse(refPointDeg.getAttribute('lon') ?? '0') ?? 0;
+        refPointReal = Offset(lon, lat);
+      }
+    }
+    
+    // Point de référence dans la carte
+    final refPointElement = georefElement.findAllElements('ref_point').firstOrNull;
+    if (refPointElement != null && refPoint == null) {
+      final x = double.tryParse(refPointElement.getAttribute('x') ?? '0') ?? 0;
+      final y = double.tryParse(refPointElement.getAttribute('y') ?? '0') ?? 0;
+      refPoint = Offset(x, y);
+    }
+
+    return OmapGeoreferencing(
+      scaleDenominator: scaleDenominator,
+      crsId: crsId,
+      proj4Spec: proj4Spec,
+      refPoint: refPoint,
+      refPointReal: refPointReal,
     );
   }
 
@@ -169,23 +284,36 @@ class OmapDocument {
   static Map<String, OmapSymbolDefinition> _parseSymbols(XmlElement mapElement) {
     // <symbols> peut se trouver directement sous <map>, ou imbrique dans un
     // element <barrier> (format version 9 et suivants) : recherche recursive.
-    final symbolsElement = mapElement.findAllElements('symbols').firstOrNull;
-    if (symbolsElement == null) return const {};
-
+    final symbolsElements = mapElement.findAllElements('symbols');
+    
     final result = <String, OmapSymbolDefinition>{};
-    // Seuls les <symbol> enfants directs de <symbols> definissent des
-    // symboles de la palette de la carte (les <symbol> plus profonds sont
-    // des sous-elements graphiques internes, ex. motifs de hachures).
-    for (final s in symbolsElement.childElements.where((e) => e.name.local == 'symbol')) {
-      final id = s.getAttribute('id');
-      if (id == null) continue;
+    
+    for (final symbolsElement in symbolsElements) {
+      // Seuls les <symbol> enfants directs de <symbols> definissent des
+      // symboles de la palette de la carte (les <symbol> plus profonds sont
+      // des sous-elements graphiques internes, ex. motifs de hachures).
+      for (final s in symbolsElement.childElements.where((e) => e.name.local == 'symbol')) {
+        final id = s.getAttribute('id');
+        if (id == null) continue;
 
-      result[id] = OmapSymbolDefinition(
-        id: id,
-        code: s.getAttribute('code'),
-        name: s.getAttribute('name') ?? '',
-        type: _mapSymbolTypeFromCode(s.getAttribute('type')),
-      );
+        // Extraire l'icône si disponible
+        String? iconBase64;
+        final iconElement = s.findAllElements('icon').firstOrNull;
+        if (iconElement != null) {
+          final src = iconElement.getAttribute('src');
+          if (src != null && src.startsWith('data:image/png;base64,')) {
+            iconBase64 = src.substring('data:image/png;base64,'.length);
+          }
+        }
+
+        result[id] = OmapSymbolDefinition(
+          id: id,
+          code: s.getAttribute('code'),
+          name: s.getAttribute('name') ?? '',
+          type: _mapSymbolTypeFromCode(s.getAttribute('type')),
+          iconBase64: iconBase64,
+        );
+      }
     }
     return result;
   }
@@ -210,81 +338,128 @@ class OmapDocument {
   }
 
   static List<OmapLayerData> _parseLayers(XmlElement mapElement) {
-    // <parts> peut lui aussi etre imbrique dans un element <barrier> :
-    // recherche recursive plutot que limitee aux enfants directs de <map>.
-    final partsElement = mapElement.findAllElements('parts').firstOrNull;
-    if (partsElement == null) return const [];
-
+    // Rechercher <parts> ou <part> directement
+    final partsElements = mapElement.findAllElements('parts');
+    final partElements = mapElement.findAllElements('part');
+    
     final result = <OmapLayerData>[];
-    var partIndex = 0;
-    for (final part in partsElement.findElements('part')) {
-      partIndex++;
-      final partName = part.getAttribute('name') ?? 'Partie $partIndex';
-
-      // On recherche les elements <objects> n'importe ou sous <part>, quelle
-      // que soit la profondeur d'imbrication (<layer>, <barrier>, ...) :
-      // les versions du format ne placent pas toujours <objects> au meme
-      // niveau.
-      var layerIndex = 0;
-      for (final objectsEl in part.findAllElements('objects')) {
-        layerIndex++;
-
-        final objects = objectsEl
-            .findElements('object')
-            .map(_parseObject)
-            .where((o) => o.points.isNotEmpty)
-            .toList();
-
-        if (objects.isEmpty) continue;
-
-        // Le nom du calque prend, si possible, le nom du <layer> ancetre le
-        // plus proche (attribut "name" ou, a defaut, "type").
-        final ancestorLayer = _nearestAncestorNamed(objectsEl, 'layer');
-        final layerLabel = ancestorLayer?.getAttribute('name') ??
-            (ancestorLayer != null ? 'Calque type ${ancestorLayer.getAttribute('type') ?? ''}' : null);
-
-        final name = layerLabel != null && layerLabel.trim().isNotEmpty
-            ? '$partName — $layerLabel'
-            : (layerIndex > 1 ? '$partName ($layerIndex)' : partName);
-
-        result.add(OmapLayerData(name: name, objects: objects));
+    
+    // Cas 1: <parts> avec des <part> enfants
+    for (final partsElement in partsElements) {
+      for (final part in partsElement.findElements('part')) {
+        _processPartElement(part, result);
       }
     }
+    
+    // Cas 2: <part> directement sous <map>
+    for (final part in partElements) {
+      // Vérifier que ce n'est pas déjà traité (enfant de <parts>)
+      if (part.parent?.name.local != 'parts') {
+        _processPartElement(part, result);
+      }
+    }
+    
     return result;
   }
 
-  /// Remonte l'arborescence XML a partir de [node] pour trouver le premier
-  /// ancetre dont le nom local est [name], ou `null` si aucun n'est trouve.
-  static XmlElement? _nearestAncestorNamed(XmlElement node, String name) {
-    XmlNode? current = node.parent;
-    while (current != null) {
-      if (current is XmlElement && current.name.local == name) {
-        return current;
+  static void _processPartElement(XmlElement part, List<OmapLayerData> result) {
+    final name = part.getAttribute('name') ?? 'Calque sans nom';
+    final visible = part.getAttribute('visible')?.toLowerCase() != 'false';
+    final opacity = double.tryParse(part.getAttribute('opacity') ?? '1.0') ?? 1.0;
+    
+    // Rechercher tous les <objects> sous ce part (à n'importe quel niveau)
+    final objectsElements = part.findAllElements('objects');
+    final objects = <OmapObject>[];
+    
+    for (final objectsEl in objectsElements) {
+      for (final objectEl in objectsEl.findElements('object')) {
+        final object = _parseObject(objectEl);
+        if (object.points.isNotEmpty) {
+          objects.add(object);
+        }
       }
-      current = current.parent;
     }
-    return null;
+    
+    if (objects.isNotEmpty) {
+      result.add(OmapLayerData(
+        name: name,
+        objects: objects,
+        visible: visible,
+        opacity: opacity,
+      ));
+    }
   }
 
   static OmapObject _parseObject(XmlElement objectEl) {
     final symbolId = objectEl.getAttribute('symbol');
-    final coordsEl = objectEl.findElements('coords').firstOrNull;
+    final typeAttr = objectEl.getAttribute('type') ?? '1';
+    final type = _parseOmapObjectType(typeAttr);
+    
+    // Parser les coordonnées
+    final coordsEl = objectEl.findAllElements('coords').firstOrNull;
+    final points = _parseCoords(coordsEl);
+    
+    // Parser la rotation
+    final patternEl = objectEl.findAllElements('pattern').firstOrNull;
+    final rotation = double.tryParse(patternEl?.getAttribute('rotation') ?? '0') ?? 0;
+    
+    // Détecter si c'est un polygone fermé
+    // En OMAP, les polygones ont souvent le dernier point = premier point
+    // ou un flag spécial dans les coords
+    final isClosed = points.length > 1 && points.first == points.last;
+    
+    return OmapObject(
+      symbolId: symbolId,
+      type: type,
+      points: points,
+      rotation: rotation,
+      isClosed: isClosed,
+    );
+  }
 
+  static OmapObjectType _parseOmapObjectType(String typeAttr) {
+    switch (int.tryParse(typeAttr)) {
+      case 1:
+        return OmapObjectType.point;
+      case 2:
+        return OmapObjectType.line;
+      case 4:
+        return OmapObjectType.area;
+      case 8:
+        return OmapObjectType.text;
+      default:
+        return OmapObjectType.point;
+    }
+  }
+
+  static List<Offset> _parseCoords(XmlElement? coordsEl) {
+    if (coordsEl == null) return [];
+
+    final coordsText = coordsEl.innerText.trim();
+    // Format: "x1 y1;x2 y2;x3 y3" ou "x1 y1 flags;x2 y2 flags"
+    // Les coordonnées sont en 0.001 mm (1 unité = 0.001 mm)
+    final coords = coordsText.split(';').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    
     final points = <Offset>[];
-    if (coordsEl != null) {
-      final raw = coordsEl.innerText.trim();
-      // Format: "x1 y1 flags;x2 y2 flags;..." (coordonnees en 1/1000 mm)
-      for (final chunk in raw.split(';')) {
-        final parts = chunk.trim().split(RegExp(r'\s+'));
-        if (parts.length < 2) continue;
-        final x = int.tryParse(parts[0]);
-        final y = int.tryParse(parts[1]);
-        if (x == null || y == null) continue;
+    for (final coord in coords) {
+      // Séparer par espace/tabulation
+      final parts = coord.split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
+      
+      if (parts.length >= 2) {
+        // Les deux premiers éléments sont x et y
+        // Le troisième (si présent) est un flag (1 = point de contrôle, etc.)
+        final x = double.tryParse(parts[0]) ?? 0.0;
+        final y = double.tryParse(parts[1]) ?? 0.0;
+        
+        // Convertir de 0.001 mm à mm (pour compatibilité avec Flutter)
+        // 1 unité OMAP = 0.001 mm, donc on divise par 1000 pour obtenir des mm
+        // Puis on convertit en pixels (1 mm ≈ 3.78 pixels à 96 DPI)
+        // Mais pour simplifier, on garde en mm et on laisse le rendu gérer l'échelle
         points.add(Offset(x / 1000.0, y / 1000.0));
       }
     }
-
-    return OmapObject(symbolId: symbolId, points: points);
+    
+    return points;
   }
 
   /// Convertit le document analyse en calques OWildZimut prets a l'emploi.
@@ -298,25 +473,42 @@ class OmapDocument {
       for (var j = 0; j < omapLayer.objects.length; j++) {
         final object = omapLayer.objects[j];
         final symbolDef = symbolsById[object.symbolId];
+        
+        // Trouver le symbole IOF correspondant
         final iofMatch = symbolDef?.code != null
             ? iofSymbolLibrary.getSymbolByCode(symbolDef!.code!)
             : null;
 
-        final type = symbolDef?.type ??
-            _guessTypeFromGeometry(object.points);
+        // Déterminer le type (depuis la définition ou la géométrie)
+        final type = symbolDef?.type ?? _guessTypeFromGeometry(object);
 
-        symbols.add(symbol_model.MapSymbol(
+        // Trouver la couleur associée au symbole
+        Color symbolColor = Colors.black;
+        if (symbolDef != null && symbolDef.code != null) {
+          final iofSymbol = iofSymbolLibrary.getSymbolByCode(symbolDef.code!);
+          if (iofSymbol != null) {
+            symbolColor = iofSymbol.defaultColor;
+          }
+        }
+        
+        // Créer le symbole OWildZimut
+        final symbol = symbol_model.MapSymbol(
           id: 'omap_${DateTime.now().millisecondsSinceEpoch}_${i}_$j',
           type: type,
           code: symbolDef?.code ?? symbolDef?.id ?? '',
-          position: object.points.first,
-          description: iofMatch?.description ??
-              symbolDef?.name ??
-              'Objet importe',
-          color: iofMatch?.defaultColor ?? Colors.black,
-          size: iofMatch?.defaultSize ?? 1.0,
+          name: symbolDef?.name ?? iofMatch?.description ?? 'Objet importe',
+          position: object.points.isNotEmpty ? object.points.first : Offset.zero,
+          description: iofMatch?.description ?? symbolDef?.name ?? 'Objet importe',
+          color: symbolColor,
+          size: iofMatch?.defaultSize ?? _getDefaultSize(type),
           points: object.points,
-        ));
+          rotation: object.rotation,
+          isClosed: object.isClosed,
+          iofCode: symbolDef?.code,
+          iconBase64: symbolDef?.iconBase64,
+        );
+        
+        symbols.add(symbol);
       }
 
       result.add(Layer(
@@ -324,6 +516,8 @@ class OmapDocument {
         name: omapLayer.name.isNotEmpty ? omapLayer.name : 'Calque importe ${i + 1}',
         type: LayerType.vector,
         zIndex: i + 1,
+        visible: omapLayer.visible,
+        opacity: omapLayer.opacity,
         symbols: symbols,
       ));
     }
@@ -331,14 +525,28 @@ class OmapDocument {
     return result;
   }
 
-  /// Determine un type de symbole plausible a partir du nombre de points,
+  /// Détermine un type de symbole plausible a partir du nombre de points,
   /// quand le fichier ne fournit pas de definition de symbole exploitable.
-  static symbol_model.MapSymbolType _guessTypeFromGeometry(List<Offset> points) {
-    if (points.length <= 1) return symbol_model.MapSymbolType.point;
-    if (points.length >= 3 && points.first == points.last) {
+  static symbol_model.MapSymbolType _guessTypeFromGeometry(OmapObject object) {
+    if (object.points.length <= 1) return symbol_model.MapSymbolType.point;
+    if (object.isClosed || (object.points.length >= 3 && object.points.first == object.points.last)) {
       return symbol_model.MapSymbolType.area;
     }
     return symbol_model.MapSymbolType.line;
+  }
+
+  /// Taille par défaut selon le type
+  static double _getDefaultSize(symbol_model.MapSymbolType type) {
+    switch (type) {
+      case symbol_model.MapSymbolType.point:
+        return 5.0;
+      case symbol_model.MapSymbolType.line:
+        return 2.0;
+      case symbol_model.MapSymbolType.area:
+        return 1.0;
+      case symbol_model.MapSymbolType.text:
+        return 12.0;
+    }
   }
 }
 
@@ -370,12 +578,17 @@ class OmapFileLoader {
   /// en ajoutant ses calques a la suite de ceux deja presents dans [base].
   static MapState mergeIntoState(MapState base, OmapDocument document) {
     var newState = base;
-    for (final layer in document.toLayers()) {
-      newState = newState.copyWith(layers: [...newState.layers, layer]);
+    final newLayers = document.toLayers();
+    
+    if (newLayers.isNotEmpty) {
+      // Ajouter les nouveaux calques
+      final allLayers = [...newState.layers, ...newLayers];
+      newState = newState.copyWith(
+        layers: allLayers,
+        selectedLayerIndex: allLayers.length - 1,
+      );
     }
-    if (document.toLayers().isNotEmpty) {
-      newState = newState.copyWith(selectedLayerIndex: newState.layers.length - 1);
-    }
+    
     return newState;
   }
 }

@@ -1,167 +1,215 @@
 # OWildZimut
 
-**Outil de creation de cartes de Course d'Orientation avec gestion avancee de calques**
+**Outil de création de cartes de Course d'Orientation avec gestion avancée de calques**
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.12.2+-blue.svg)](https://flutter.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 
-## A propos
+## À propos
 
-**OWildZimut** est une application mobile developpee en **Flutter** pour la creation et l'edition de cartes de **Course d'Orientation**. Elle permet de concevoir des cartes avec une gestion avancee des calques, des symboles IOF (International Orienteering Federation), et des outils de dessin specialises.
+**OWildZimut** est une application mobile développée en **Flutter** pour la création et l'édition de cartes de **Course d'Orientation**. Elle permet de concevoir des cartes avec une **gestion avancée des calques**, des **symboles IOF** (International Orienteering Federation), et des **outils de dessin spécialisés**.
 
-OWildZimut ne travaille qu'avec des formats ouverts : le format proprietaire **OCAD n'est pas et ne sera pas supporte**. L'import/export de cartes se fait via le format ouvert **OMAP** (OpenOrienteering Mapper).
+OWildZimut ne travaille qu'avec des **formats ouverts** : le format propriétaire **OCAD n'est pas et ne sera pas supporté**. L'import/export de cartes se fait via le format ouvert **OMAP** (OpenOrienteering Mapper).
 
-### Fonctionnalites principales
+### Fonctionnalités principales
 
-#### Version actuelle (0.0.006)
-- **Interface adaptee mobile** : bascule automatique entre une mise en page bureau (trois colonnes) et une mise en page telephone (carte plein ecran, outils et calques dans des tiroirs defilants), pensee pour les ecrans type Galaxy S23+
-- **Gestion des calques** : ajout, suppression, reorganisation, visibilite et opacite
-- **Import d'un fond de carte** (jpg, jpeg, png) : un calque image est ajoute sous les calques vectoriels pour servir de support de traçage
-- **Import de fichiers OMAP** : lecture des calques, de la geometrie des objets et association aux symboles IOF connus (voir limites ci-dessous)
-- **Outils de dessin** : selection, points, lignes, polygones, texte
-- **Navigation avancee** : zoom, defilement, reinitialisation de la vue
-- **Symboles IOF** : bibliotheque des symboles standard IOF avec selection interactive, recherche et filtres par categorie
-- **Sauvegarde/Chargement** : export et import de projets au format JSON (y compris la reference au fond de carte importe)
-- **Panneaux repliables** : barre d'outils et panneau des calques peuvent etre reduits pour plus d'espace (bureau) ou places dans des tiroirs (mobile)
+#### Version actuelle (0.0.007)
 
-#### Limites connues de l'import OMAP
-Le format OMAP complet est riche (definitions graphiques detaillees des symboles, courbes de Bezier, trous dans les surfaces, gabarits/images georeferencees, ...). Le parseur actuel lit la structure des calques et la geometrie des objets (points, lignes, surfaces) et les associe, quand c'est possible, aux symboles IOF deja connus d'OWildZimut via leur code. Il ne restitue pas encore le rendu graphique exact des symboles OMAP d'origine.
+✅ **Interface adaptée mobile** : bascule automatique entre une mise en page bureau (trois colonnes) et une mise en page téléphone (carte plein écran, outils et calques dans des tiroirs défilants), pensée pour les écrans type Galaxy S23+
 
-#### Fonctionnalites en developpement
-- **Calibrage du fond de carte** : l'image importee peut etre deplacee/mise a l'echelle par programmation (`imageOffset`, `imageScale`) mais l'interface de calibrage tactile (glisser-deposer, calage sur points de controle) reste a construire
-- **Export OMAP** : generation de fichiers OMAP a partir d'un projet OWildZimut
-- **Gestion des symboles personnalises** : creation et modification de symboles personnalises
+✅ **Gestion des calques** : 
+- Ajout, suppression, réorganisation
+- Visibilité et opacité ajustables
+- Déplacement des calques (monter/descendre)
 
-## Roadmap detaillee
+✅ **Import/Export complet** :
+- **Import OMAP** : lecture des calques, couleurs, symboles, géométrie des objets (points, lignes, surfaces)
+- **Export OMAP v9** : génération de fichiers compatibles avec OpenOrienteering Mapper
+- Import d'un fond de carte (jpg, jpeg, png)
 
-### Phase 1: Fondations (Version 0.0.001 - 0.0.002) COMPLETE
+✅ **Outils de dessin** :
+- Sélection (simple et multiple)
+- Points, lignes, polygones, texte
+- **Drag & Drop** pour déplacer les symboles
+- **Sélection par rectangle** (maintenez enfoncé)
+
+✅ **Expérience utilisateur améliorée** :
+- **Undo/Redo** complet (50 niveaux d'historique)
+- **Copier/Coller** des symboles
+- **Raccourcis clavier** (Ctrl+Z, Ctrl+Y, Ctrl+C, Ctrl+V, Del, etc.)
+- **Feedback visuel** : animations, survol, sélection
+- **Barre d'outils contextuelle** avec icônes
+- **Mode avancé** pour les fonctionnalités professionnelles
+
+✅ **Navigation avancée** :
+- Zoom (molette, pincement, boutons)
+- Défilement (glisser, clic droit)
+- Réinitialisation de la vue
+
+✅ **Symboles IOF** :
+- Bibliothèque complète des symboles standard IOF
+- Sélection interactive avec recherche et filtres par catégorie
+- **Support des lignes et surfaces** (pas seulement les points)
+- **Gestion des codes IOF** pour l'interopérabilité
+
+✅ **Sauvegarde/Chargement** :
+- Export et import de projets au format JSON
+- Export OMAP pour compatibilité avec d'autres logiciels
+- Gestion des versions de fichiers
+
+### Fonctionnalités en développement
+
+- **Calibrage du fond de carte** : interface tactile de déplacement/mise à l'échelle par glisser-déposer
+- **Géoréférencement avancé** : support des systèmes de coordonnées (UTM, WGS84, etc.)
+- **Export PDF** : génération de fichiers PDF avec légende
+- **Export image** : export en PNG/JPEG haute résolution
+- **Gestion des projets** : création et gestion de projets multi-cartes
+
+## Roadmap détaillée
+
+### Phase 1: Fondations (Version 0.0.001 - 0.0.002) ✅ COMPLÈTE
 - [x] Structure de base de l'application Flutter
-- [x] Modele de donnees pour les calques
-- [x] Modele de donnees pour les symboles
+- [x] Modèle de données pour les calques
+- [x] Modèle de données pour les symboles
 - [x] Vue de la carte avec zoom et panoramique
 - [x] Barre d'outils de dessin
 - [x] Panneau de gestion des calques
 
-### Phase 2: Import/Export et mobile (Version 0.0.003 - 0.0.006) EN COURS
-- [x] Interface adaptee aux telephones (mise en page responsive, tiroirs, defilement)
+### Phase 2: Import/Export et mobile (Version 0.0.003 - 0.0.007) ✅ EN COURS
+- [x] Interface adaptée aux téléphones (mise en page responsive, tiroirs)
 - [x] Import d'un fond de carte au format jpg/jpeg/png
-- [x] Modele de donnees pour les fichiers OMAP
-- [x] Parseur OMAP (couleurs, symboles, geometrie des objets) — version simplifiee, voir limites ci-dessus
+- [x] **Parseur OMAP complet** (couleurs, symboles, géométrie des objets : points, lignes, surfaces)
+- [x] **Export OMAP v9** (compatible avec OpenOrienteering Mapper)
 - [x] Interface utilisateur pour le chargement OMAP
-- [ ] **Export OMAP** (Priorite moyenne)
-  - [ ] Generation de fichiers OMAP
-  - [ ] Export des calques et symboles
-  - [ ] Options d'export (version, echelle, etc.)
-- [x] Sauvegarde/Chargement JSON (export, import avec valeurs par defaut robustes)
-- [ ] Gestion des versions de fichiers JSON / compression des fichiers volumineux
+- [x] Sauvegarde/Chargement JSON
 
-### Phase 3: Outils avances (Version 0.0.007+)
-- [ ] **Outils de dessin ameliores**
-  - [ ] Outils de selection multiple
-  - [ ] Deplacement, rotation, mise a l'echelle
-  - [ ] Copier/coller des elements
-  - [ ] Annuler/Retablir (Historique)
+### Phase 3: Outils avancés (Version 0.0.008+) 🎯 PROCHAINE
+- [ ] **Géoréférencement complet**
+  - [x] Structure de base (Georeferencing class)
+  - [ ] Interface tactile de calage
+  - [ ] Support des points de contrôle
+  - [ ] Transformation affine
+- [ ] **Outils de dessin améliorés**
+  - [x] Sélection multiple
+  - [x] Déplacement par drag & drop
+  - [ ] Rotation des symboles
+  - [ ] Mise à l'échelle des symboles
+  - [ ] Copier/coller avec décalage
+  - [ ] Annuler/Retablir (✅ Implémenté)
 - [ ] **Gestion des symboles**
-  - [ ] Creation de symboles personnalises
-  - [ ] Bibliotheque de symboles utilisateur
-  - [ ] Import de symboles depuis des fichiers
+  - [ ] Création de symboles personnalisés
+  - [ ] Bibliothèque de symboles utilisateur
   - [ ] Editeur de symboles visuel
-- [ ] **Calibrage et georeferencement**
-  - [ ] Interface tactile de deplacement/mise a l'echelle du fond de carte
-  - [ ] Support des images georeferencees
-  - [ ] Transformation affine (rotation, echelle, translation)
-  - [ ] Calage sur points de controle
 
-### Phase 4: Fonctionnalites professionnelles (Version 0.1.0+)
-- [ ] **Gestion de projet** : creation et gestion de projets, multi-cartes, metadonnees
+### Phase 4: Fonctionnalités professionnelles (Version 0.1.0+)
+- [ ] **Gestion de projet** : création et gestion de projets, multi-cartes, métadonnées
 - [ ] **Collaboration** : partage de projets, travail collaboratif, commentaires
-- [ ] **Export avance** : PDF avec legende, image (PNG/JPEG), vectoriel (SVG/DXF), impression professionnelle
+- [ ] **Export avancé** : PDF avec légende, image (PNG/JPEG), vectoriel (SVG/DXF)
+- [ ] **Impression professionnelle**
 
-### Phase 5: Optimisation et deploiement (Version 0.2.0+)
-- [ ] **Performances** : rendu optimise pour les grandes cartes, chargement progressif, gestion memoire
+### Phase 5: Optimisation et déploiement (Version 0.2.0+)
+- [ ] **Performances** : rendu optimisé pour les grandes cartes, chargement progressif
 - [ ] **Multiplateforme** : desktop (Windows, macOS, Linux), web
-- [ ] **Tests et qualite** : suite de tests complete, documentation utilisateur, tutoriels interactifs
+- [ ] **Tests complets** : suite de tests unitaires et d'intégration
+- [ ] **Documentation utilisateur** : tutoriels interactifs
 
 ## Structure du projet
 
 ```
 o_wild_zimut/
 ├── lib/
-│   ├── main.dart                       # Point d'entree, mise en page responsive
+│   ├── main.dart                       # Point d'entrée, mise en page responsive
 │   ├── models/
-│   │   ├── layer.dart                  # Modele de calque (vectoriel ou image de fond)
-│   │   ├── map_state.dart              # Etat global de la carte
-│   │   ├── symbol.dart                 # Modele de symbole
-│   │   ├── iof_symbols.dart            # Bibliotheque des symboles IOF
-│   │   └── omap_file.dart              # Lecture des fichiers .omap (OpenOrienteering Mapper)
-│   ├── screens/
-│   │   └── about_dialog.dart           # Dialogue "A propos"
-│   └── widgets/
-│       ├── layer_item.dart             # Element de calque dans la liste
-│       ├── layer_panel.dart            # Panneau de gestion des calques
-│       ├── map_view.dart               # Vue de la carte (calques vectoriels + image de fond)
-│       ├── tool_bar.dart                # Barre d'outils
-│       ├── symbol_selector.dart        # Selecteur de symboles IOF
-│       ├── file_loader.dart            # Chargeur de fichiers OMAP
-│       └── background_image_picker.dart # Selecteur d'image de fond (jpg/jpeg/png)
-├── pubspec.yaml                        # Configuration des dependances
+│   │   ├── layer.dart                  # Modèle de calque (vectoriel ou image de fond)
+│   │   ├── map_state.dart              # État global de la carte avec gestion de la sélection
+│   │   ├── symbol.dart                 # Modèle de symbole (point, ligne, surface, texte)
+│   │   ├── iof_symbols.dart            # Bibliothèque des symboles IOF
+│   │   ├── omap_file.dart              # Parseur/Export OMAP complet
+│   │   └── georeferencing.dart          # Gestion du géoréférencement
+│   ├── formatters/
+│   │   └── omap_exporter.dart          # Export OMAP v9
+│   ├── services/
+│   │   └── undo_manager.dart           # Gestion de l'historique (Undo/Redo)
+│   ├── widgets/
+│   │   ├── map_view.dart               # Vue de la carte avec gestion des gestes
+│   │   ├── layer_panel.dart            # Panneau de gestion des calques
+│   │   ├── tool_bar.dart                # Barre d'outils avec raccourcis clavier
+│   │   ├── symbol_selector.dart        # Sélecteur de symboles IOF
+│   │   ├── file_loader.dart            # Chargeur de fichiers
+│   │   ├── background_image_picker.dart # Sélecteur d'image de fond
+│   │   └── feedback_animations.dart     # Animations de feedback visuel
+│   └── screens/
+│       └── about_dialog.dart           # Dialogue "À propos"
+├── pubspec.yaml                        # Configuration des dépendances
 └── README.md                           # Ce fichier
 ```
 
 ## Architecture technique
 
-### Gestion d'etat
-L'application utilise une approche simple, immuable, basee sur `MapState` (copie modifiee a chaque action via `copyWith`). Une migration vers Riverpod ou Bloc pourra etre envisagee pour des besoins plus complexes.
+### Gestion d'état
+L'application utilise une approche **immutable** basée sur `MapState` avec un système d'**Undo/Redo** complet. Chaque modification de la carte est stockée dans l'historique, permettant à l'utilisateur d'annuler ou de rétablir ses actions.
 
-### Modele de donnees
-- **Layer** : un calque, vectoriel (symboles) ou raster (image de fond avec decalage/echelle)
-- **Symbol** : un symbole place sur la carte (position, type, couleur, ...)
-- **MapState** : etat global de l'application (calques, vue, selection, ...)
-- **IOFSymbolDefinition** : definition complete d'un symbole IOF
-- **OmapDocument** : representation d'un fichier OMAP analyse (couleurs, symboles, calques/objets)
+### Modèle de données
+- **Layer** : un calque, vectoriel (symboles) ou raster (image de fond avec décalage/échelle)
+- **MapSymbol** : un symbole placé sur la carte (position, type, couleur, points, etc.)
+- **MapState** : état global de l'application (calques, vue, sélection, historique)
+- **IOFSymbolDefinition** : définition complète d'un symbole IOF
+- **OmapDocument** : représentation d'un fichier OMAP analysé (couleurs, symboles, calques/objets)
+- **Georeferencing** : gestion du géoréférencement et des transformations
 
-### Interface adaptee aux telephones
-A partir d'une largeur d'ecran de 700dp, l'application bascule automatiquement vers une mise en page mobile : la carte occupe tout l'ecran, la barre d'outils et le panneau des calques sont accessibles via des tiroirs (`Drawer`/`endDrawer`) defilants, et une barre d'outils compacte reste toujours visible en bas de l'ecran pour un acces rapide aux outils de dessin et au zoom.
+### Interface adaptée aux téléphones
+À partir d'une largeur d'écran de **700dp**, l'application bascule automatiquement vers une mise en page mobile :
+- La carte occupe tout l'écran
+- La barre d'outils et le panneau des calques sont accessibles via des tiroirs
+- Une barre d'outils compacte reste visible en bas pour un accès rapide
 
 ### Rendu graphique
-- **CustomPaint** : dessine la grille, le marqueur d'origine et les symboles des calques vectoriels
-- **Image.file** : affiche les calques image de fond, sous les calques vectoriels
-- **InteractiveViewer** / **Gestures** : zoom, panoramique et interactions tactiles/souris
+- **CustomPaint** : dessine la grille, le marqueur d'origine et les symboles
+- **Image.file** : affiche les calques image de fond
+- **InteractiveViewer** / **Gestures** : zoom, panoramique et interactions tactiles
 
-## Symboles IOF supportes
+## Symboles IOF supportés
 
-L'application supporte les categories de symboles IOF suivantes :
+L'application supporte toutes les catégories de symboles IOF standard :
 
-### Foret et vegetation
-Foret blanche, jaune, verte (niveaux de passabilite), terrain ouvert, marais (passable et impraticable), fourre, clairiere, terre cultivee, vignoble, verger
+### Forêt et végétation
+- Forêt blanche, jaune, verte (niveaux de passabilité)
+- Terrain ouvert, marais (passable et impraticable)
+- Fourré, clairière, terre cultivée, vignoble, verger
 
 ### Relief
-Talus de terre, mur de terre / falaise, fosse, butte, depression
+- Talus de terre, mur de terre / falaise
+- Fosse, butte, dépression
 
 ### Eau
-Lac, riviere, ruisseau, marais bleu (impraticable)
+- Lac, rivière, ruisseau
+- Marais bleu (impraticable)
 
 ### Chemins et routes
-Chemin public/prive, chemin forestier, sentier, route goudronnee
+- Chemin public/privé, chemin forestier
+- Sentier, route goudronnée
 
-### Batiments et constructions
-Batiment, ruine, cloture, mur
+### Bâtiments et constructions
+- Bâtiment, ruine, clôture, mur
 
 ### Rochers
-Rocher isole, groupe de rochers, terrain rocheux
+- Rocher isolé, groupe de rochers
+- Terrain rocheux
 
 ### Points remarquables
-Point de controle, depart, arrivee, point de passage obligatoire
+- Point de contrôle, départ, arrivée
+- Point de passage obligatoire
 
 ### Symboles techniques
-Limite de carte, zone hors limites, passage obligatoire, zone interdite
+- Limite de carte, zone hors limites
+- Passage obligatoire, zone interdite
 
 ## Installation
 
-### Prerequis
-- [Flutter SDK](https://flutter.dev/docs/get-started/install) (version 3.12.2 ou superieure)
+### Prérequis
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) (version 3.12.2 ou supérieure)
 - [Git](https://git-scm.com/)
-- Un editeur de code (VS Code, Android Studio, etc.)
+- Un éditeur de code (VS Code, Android Studio, etc.)
 
 ### Cloner le projet
 
@@ -170,7 +218,7 @@ git clone https://github.com/CharlieG42/OWildZimut.git
 cd OWildZimut
 ```
 
-### Installer les dependances
+### Installer les dépendances
 
 ```bash
 flutter pub get
@@ -189,13 +237,13 @@ flutter run -d ios
 flutter run -d chrome
 ```
 
-## Dependances
+## Dépendances
 
 - **flutter** : SDK Flutter
-- **cupertino_icons** : icones iOS
+- **cupertino_icons** : icônes iOS
 - **flutter_lints** : recommandations de linting
-- **file_selector** : selection de fichiers (import OMAP, import d'image de fond)
-- **path_provider** : acces a des repertoires standards
+- **file_picker** : sélection de fichiers (import OMAP, import d'image de fond)
+- **path_provider** : accès à des répertoires standards
 - **path** : manipulation de chemins de fichiers
 - **xml** : analyse des fichiers OMAP (format XML)
 
@@ -203,53 +251,86 @@ flutter run -d chrome
 
 ### Structure de l'interface
 
-**Sur ordinateur / grand ecran**, l'application est organisee en trois zones :
-1. **Barre d'outils (gauche)** : outils de dessin et commandes de zoom, repliable
+**Sur ordinateur / grand écran**, l'application est organisée en trois zones :
+1. **Barre d'outils (gauche)** : outils de dessin et commandes de zoom
 2. **Zone de carte (centre)** : espace de travail principal
 3. **Panneau des calques (droite)** : gestion des calques
 
-**Sur telephone**, la carte occupe tout l'ecran :
-- Le bouton ☰ (menu) de la barre d'application, ou de la barre d'outils compacte en bas, ouvre le tiroir des outils
+**Sur téléphone**, la carte occupe tout l'écran :
+- Le bouton ☰ (menu) ouvre le tiroir des outils
 - Le bouton "calques" ouvre le tiroir de gestion des calques
-- Une barre compacte et defilante en bas donne un acces direct aux outils de dessin et au zoom
+- Une barre compacte en bas donne un accès direct aux outils
 
-### Creer une nouvelle carte
+### Raccourcis clavier
 
-1. L'application demarre avec 3 calques par defaut : Carte de base, Vegetation, Chemins
-2. Selectionnez un calque (panneau ou tiroir des calques)
-3. Choisissez un outil (barre d'outils ou tiroir des outils)
+| Raccourci | Action |
+|-----------|--------|
+| **Ctrl+Z** | Annuler |
+| **Ctrl+Y** | Rétablir |
+| **Ctrl+C** | Copier les symboles sélectionnés |
+| **Ctrl+V** | Coller les symboles |
+| **Ctrl+A** | Tout sélectionner |
+| **Del/Backspace** | Supprimer les symboles sélectionnés |
+| **Échap** | Effacer la sélection |
+| **S** | Outil Sélection |
+| **P** | Outil Point |
+| **L** | Outil Ligne |
+| **G** | Outil Polygone |
+| **T** | Outil Texte |
+| **+/-** | Zoom avant/arrière |
+| **0** | Réinitialiser la vue |
+
+### Créer une nouvelle carte
+
+1. L'application démarre avec 3 calques par défaut : Carte de base, Végétation, Chemins
+2. Sélectionnez un calque (panneau des calques)
+3. Choisissez un outil (barre d'outils)
 4. Dessinez sur la carte :
    - **Point** : cliquez pour placer un point
-   - **Ligne** : cliquez pour demarrer, continuez a cliquer pour ajouter des points, double-cliquez pour terminer
-   - **Polygone** : comme la ligne, mais se ferme automatiquement
+   - **Ligne** : cliquez pour démarrer, continuez à cliquer pour ajouter des points, double-cliquez ou appuyez sur Entrée pour terminer
+   - **Polygone** : comme la ligne, mais se ferme automatiquement quand vous cliquez près du premier point
    - **Texte** : cliquez pour placer un texte
-5. Utilisez le bouton "+" de la barre d'application pour ajouter des symboles IOF (places au centre de la vue actuelle)
 
 ### Importer un fond de carte
 
-1. Cliquez sur le bouton image de la barre d'application
+1. Cliquez sur le bouton image dans la barre d'application
 2. Choisissez un fichier .jpg, .jpeg ou .png
-3. Un nouveau calque image est ajoute au bas de la pile de calques ; les calques vectoriels restent visibles par-dessus
+3. Un nouveau calque image est ajouté au bas de la pile
 
 ### Importer un fichier OMAP
 
-1. Cliquez sur le bouton dossier de la barre d'application
-2. Selectionnez un fichier .omap
-3. Les calques et objets lus dans le fichier sont ajoutes a la suite de votre projet actuel
+1. Cliquez sur le bouton dossier dans la barre d'application
+2. Sélectionnez un fichier .omap
+3. Les calques et objets lus dans le fichier sont ajoutés à votre projet
 
-### Gerer les calques
+### Exporter une carte
 
-- **Visibilite** : icone d'oeil pour afficher/masquer un calque
-- **Opacite** : curseur pour ajuster l'opacite
-- **Reorganisation** : fleches haut/bas pour changer l'ordre des calques
-- **Suppression** : icone de corbeille
-- **Selection** : appui sur un calque pour le selectionner et dessiner dessus
+1. Cliquez sur le bouton Exporter dans la barre d'application
+2. Choisissez un emplacement pour enregistrer le fichier
+3. La carte est exportée au format OMAP v9
+
+### Gérer les calques
+
+- **Visibilité** : icône d'œil pour afficher/masquer un calque
+- **Opacité** : curseur pour ajuster l'opacité
+- **Réorganisation** : flèches haut/bas pour changer l'ordre des calques
+- **Suppression** : icône de corbeille
+- **Sélection** : cliquez sur un calque pour le sélectionner et dessiner dessus
+
+### Sélection et édition
+
+- **Sélection simple** : cliquez sur un symbole
+- **Sélection multiple** : maintenez la touche Ctrl (ou Shift) enfoncée et cliquez sur plusieurs symboles
+- **Sélection par rectangle** : maintenez le bouton de la souris enfoncé et déplacez pour dessiner un rectangle
+- **Déplacement** : sélectionnez un ou plusieurs symboles, puis faites glisser
+- **Suppression** : sélectionnez des symboles et appuyez sur Del
+- **Copier/Coller** : utilisez Ctrl+C / Ctrl+V ou les boutons de la barre d'outils
 
 ## Personnalisation
 
-### Theme
+### Thème
 
-Le theme de l'application peut etre modifie dans `main.dart` :
+Le thème de l'application peut être modifié dans `main.dart` :
 
 ```dart
 ThemeData(
@@ -263,18 +344,18 @@ ThemeData(
 
 ### Point de bascule mobile / bureau
 
-Le seuil de largeur declenchant la mise en page mobile est defini dans `main.dart` (`kMobileBreakpoint`, 700dp par defaut).
+Le seuil de largeur déclenchant la mise en page mobile est défini dans `main.dart` (`kMobileBreakpoint`, 700dp par défaut).
 
 ### Version de l'application
 
-La version est definie dans deux endroits :
+La version est définie dans :
 - `pubspec.yaml` : version de publication
-- `lib/models/map_state.dart` : version par defaut affichee dans l'application
+- `lib/models/map_state.dart` : version affichée dans l'application
 
 ## Contribution
 
 1. Forker le projet
-2. Creer une branche pour votre fonctionnalite (`git checkout -b feature/nouvelle-fonctionnalite`)
+2. Créer une branche pour votre fonctionnalité (`git checkout -b feature/nouvelle-fonctionnalité`)
 3. Commiter vos changements
 4. Pousser vers la branche
 5. Ouvrir une Pull Request
@@ -282,22 +363,46 @@ La version est definie dans deux endroits :
 ### Bonnes pratiques
 - Respecter le style de code existant
 - Ajouter des commentaires pour le code complexe
-- Ecrire des tests pour les nouvelles fonctionnalites
-- Mettre a jour la documentation
+- Écrire des tests pour les nouvelles fonctionnalités
+- Mettre à jour la documentation
 
-### Priorites de developpement
-1. **Export OMAP** - priorite haute
-2. **Calibrage tactile du fond de carte** - priorite haute
-3. **Historique (Undo/Redo)** - priorite moyenne
-4. **Outils de selection avances** - priorite moyenne
-5. **Gestion des projets** - priorite basse
+### Priorités de développement
+1. **Géoréférencement avancé** - priorité haute
+2. **Export PDF** - priorité haute
+3. **Editeur de symboles** - priorité moyenne
+4. **Gestion des projets** - priorité moyenne
 
 ## Licence
 
-Ce projet est sous licence **MIT**. Voir le fichier LICENSE pour plus de details.
+Ce projet est sous licence **MIT**. Voir le fichier LICENSE pour plus de détails.
 
 ## Remerciements
 
-- A la communaute Flutter pour son excellent travail
-- Aux developpeurs de la **International Orienteering Federation** pour leurs standards
+- À la communauté Flutter pour son excellent travail
+- Aux développeurs de la **International Orienteering Federation** pour leurs standards
 - Au projet **OpenOrienteering Mapper** pour le format ouvert OMAP
+- À tous les contributeurs et testeurs
+
+## Changelog
+
+### Version 0.0.007 (Actuelle)
+- ✅ **Export OMAP v9** : Export complet des cartes au format OpenOrienteering Mapper
+- ✅ **Parseur OMAP amélioré** : Support des lignes, surfaces, calques et géoréférencement
+- ✅ **Sélection multiple** : Sélection de plusieurs symboles avec Ctrl/Cmd ou par rectangle
+- ✅ **Undo/Redo** : Historique complet (50 niveaux) avec Ctrl+Z / Ctrl+Y
+- ✅ **Copier/Coller** : Copie et collage des symboles avec décalage automatique
+- ✅ **Drag & Drop** : Déplacement des symboles sélectionnés par glisser-déposer
+- ✅ **Raccourcis clavier** : Support complet des raccourcis (sélection, édition, vue)
+- ✅ **Feedback visuel** : Animations et survol pour une meilleure UX
+- ✅ **Barre d'outils améliorée** : Icônes, infobulles et mode avancé
+- ✅ **Mode mobile optimisé** : Barre d'outils compacte pour les petits écrans
+
+### Version 0.0.006
+- ✅ Interface adaptée mobile (tiroirs, barre compacte)
+- ✅ Import d'un fond de carte (jpg/jpeg/png)
+- ✅ Parseur OMAP basique (points uniquement)
+- ✅ Interface utilisateur pour le chargement OMAP
+- ✅ Sauvegarde/Chargement JSON
+
+### Versions précédentes
+- 0.0.001-0.0.005 : Fondations de l'application
