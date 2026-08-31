@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'dart:math' as math;
 import 'symbol.dart' as symbol_model;
 import 'symbol.dart' show MapSymbolType;
 
@@ -52,15 +52,15 @@ class Layer {
   
   /// Couleur par défaut pour ce calque
   Color color;
-
+  
   /// Chemin local de l'image de fond (uniquement pour les calques de type [LayerType.raster]).
   String? imagePath;
-
+  
   /// Décalage (en mm, dans le repère de la carte) appliqué à l'image de fond.
   /// Permet un calibrage manuel simple tant que le calage sur points de contrôle
   /// n'est pas implémenté.
   Offset imageOffset;
-
+  
   /// Facteur d'échelle appliqué à l'image de fond.
   double imageScale;
 
@@ -73,7 +73,7 @@ class Layer {
     this.zIndex = 1,
     this.locked = false,
     this.symbols = const [],
-    this.color = Colors.blue,
+    this.color = const Color(0xFF2196F3),
     this.imagePath,
     this.imageOffset = Offset.zero,
     this.imageScale = 1.0,
@@ -91,7 +91,7 @@ class Layer {
       name: name,
       type: LayerType.raster,
       zIndex: zIndex,
-      color: Colors.grey,
+      color: const Color(0xFF9E9E9E),
       imagePath: imagePath,
     );
   }
@@ -221,7 +221,7 @@ class Layer {
   }
 
   /// Récupère tous les symboles d'un certain type
-  List<symbol_model.MapSymbol> getSymbolsByType(MapSymbolType type) {
+  List<symbol_model.MapSymbol> getSymbolsByType(symbol_model.MapSymbolType type) {
     return symbols.where((s) => s.type == type).toList();
   }
 
@@ -283,171 +283,4 @@ class Layer {
     return Layer(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? 'Unnamed',
-      type: LayerType.values.firstWhere(
-        (e) => e.name == json['type'],
-        orElse: () => LayerType.vector,
-      ),
-      visible: json['visible'] as bool? ?? true,
-      opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
-      zIndex: json['z_index'] as int? ?? 1,
-      locked: json['locked'] as bool? ?? false,
-      color: Color(int.parse(json['color'] as String? ?? '0xFF0000FF')),
-      imagePath: json['image_path'] as String?,
-      imageOffset: Offset(
-        (json['image_offset']?['x'] as num?)?.toDouble() ?? 0.0,
-        (json['image_offset']?['y'] as num?)?.toDouble() ?? 0.0,
-      ),
-      imageScale: (json['image_scale'] as num?)?.toDouble() ?? 1.0,
-      symbols: symbols,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'Layer(id: $id, name: $name, type: $type, visible: $visible, '
-        'opacity: $opacity, zIndex: $zIndex, symbols: $symbolCount)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Layer &&
-        other.id == id &&
-        other.name == name &&
-        other.type == type &&
-        other.visible == visible &&
-        other.opacity == opacity &&
-        other.zIndex == zIndex &&
-        other.locked == locked &&
-        other.symbols == symbols &&
-        other.color == color &&
-        other.imagePath == imagePath &&
-        other.imageOffset == imageOffset &&
-        other.imageScale == imageScale;
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        name.hashCode ^
-        type.hashCode ^
-        visible.hashCode ^
-        opacity.hashCode ^
-        zIndex.hashCode ^
-        locked.hashCode ^
-        symbols.hashCode ^
-        color.hashCode ^
-        imagePath.hashCode ^
-        imageOffset.hashCode ^
-        imageScale.hashCode;
-  }
-}
-
-/// Extension pour manipuler les calques facilement
-extension LayerExtensions on Layer {
-  /// Vrai si le calque est visible et non verrouillé
-  bool get isEditable => visible && !locked;
-
-  /// Trouve le symbole le plus proche d'un point
-  symbol_model.MapSymbol? findSymbolNearestTo(Offset point, {double maxDistance = 10.0}) {
-    symbol_model.MapSymbol? nearestSymbol;
-    double nearestDistance = maxDistance;
-    
-    for (final symbol in symbols) {
-      final distance = _distanceToSymbol(point, symbol);
-      if (distance <= nearestDistance) {
-        nearestDistance = distance;
-        nearestSymbol = symbol;
-      }
-    }
-    
-    return nearestSymbol;
-  }
-
-  /// Calcule la distance d'un point à un symbole
-  static double _distanceToSymbol(Offset point, symbol_model.MapSymbol symbol) {
-    switch (symbol.type) {
-      case symbol_model.MapSymbolType.point:
-        return (point - symbol.position).distance - symbol.size / 2;
-      case symbol_model.MapSymbolType.line:
-        return _distanceToLine(point, symbol.points);
-      case symbol_model.MapSymbolType.area:
-        if (symbol.contains(point)) {
-          return 0;
-        }
-        return _distanceToPolygon(point, symbol.points);
-      case symbol_model.MapSymbolType.text:
-        return _distanceToRect(point, symbol.boundingBox);
-    }
-  }
-
-  /// Calcule la distance d'un point à une ligne
-  static double _distanceToLine(Offset point, List<Offset> linePoints) {
-    if (linePoints.isEmpty) return double.infinity;
-    if (linePoints.length == 1) return (point - linePoints.first).distance;
-    
-    double minDistance = double.infinity;
-    
-    for (var i = 0; i < linePoints.length - 1; i++) {
-      final p1 = linePoints[i];
-      final p2 = linePoints[i + 1];
-      final distance = _distanceToSegment(point, p1, p2);
-      if (distance < minDistance) {
-        minDistance = distance;
-      }
-    }
-    
-    return minDistance;
-  }
-
-  /// Calcule la distance d'un point à un segment de ligne
-  static double _distanceToSegment(Offset point, Offset p1, Offset p2) {
-    final lineLength = (p2 - p1).distance;
-    if (lineLength == 0) return (point - p1).distance;
-    
-    final t = ((point - p1).dot(p2 - p1)) / (lineLength * lineLength);
-    
-    if (t < 0) return (point - p1).distance;
-    if (t > 1) return (point - p2).distance;
-    
-    final projection = p1 + (p2 - p1) * t;
-    return (point - projection).distance;
-  }
-
-  /// Calcule la distance d'un point à un polygone
-  static double _distanceToPolygon(Offset point, List<Offset> polygonPoints) {
-    if (polygonPoints.isEmpty) return double.infinity;
-    
-    // Vérifier si le point est à l'intérieur du polygone
-    if (symbol_model.MapSymbol.pointInPolygon(point, polygonPoints)) {
-      return 0;
-    }
-    
-    // Sinon, calculer la distance à chaque segment
-    return _distanceToLine(point, polygonPoints);
-  }
-
-  /// Calcule la distance d'un point à un rectangle
-  static double _distanceToRect(Offset point, Rect rect) {
-    // Si le point est dans le rectangle, distance = 0
-    if (rect.contains(point)) return 0;
-    
-    // Sinon, calculer la distance au bord le plus proche
-    double dx = 0;
-    double dy = 0;
-    
-    if (point.dx < rect.left) {
-      dx = rect.left - point.dx;
-    } else if (point.dx > rect.right) {
-      dx = point.dx - rect.right;
-    }
-    
-    if (point.dy < rect.top) {
-      dy = rect.top - point.dy;
-    } else if (point.dy > rect.bottom) {
-      dy = point.dy - rect.bottom;
-    }
-    
-    return sqrt(dx * dx + dy * dy);
-  }
-}
+      type:

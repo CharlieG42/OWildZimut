@@ -497,7 +497,7 @@ class _MapViewState extends State<MapView> {
         id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
         points: List<Offset>.from(_currentPoints),
         isClosed: true,
-        fillColor: Colors.blue.withOpacity(0.3),
+        fillColor: Colors.blue.withValues(alpha: 0.3),
         strokeColor: Colors.blue,
         strokeWidth: 1.0,
       );
@@ -705,7 +705,7 @@ class _SymbolsPainter extends CustomPainter {
     final radius = symbol.size / 2;
     
     // Couleur de base
-    final baseColor = symbol.color.withOpacity(opacity);
+    final baseColor = symbol.color.withValues(alpha: opacity);
     
     // Dessiner le cercle
     final paint = Paint()
@@ -727,7 +727,7 @@ class _SymbolsPainter extends CustomPainter {
     // Surbrillance au survol
     if (isHovered) {
       final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
+        ..color = Colors.yellow.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
       
       canvas.drawCircle(center, radius + 1.0, hoverPaint);
@@ -752,7 +752,7 @@ class _SymbolsPainter extends CustomPainter {
     
     // Dessiner la ligne
     final paint = Paint()
-      ..color = symbol.color.withOpacity(opacity)
+      ..color = symbol.color.withValues(alpha: opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = symbol.strokeWidth
       ..strokeCap = StrokeCap.round
@@ -773,7 +773,7 @@ class _SymbolsPainter extends CustomPainter {
     // Surbrillance au survol
     if (isHovered) {
       final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
+        ..color = Colors.yellow.withValues(alpha: 0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = symbol.strokeWidth + 2.0;
       
@@ -802,18 +802,16 @@ class _SymbolsPainter extends CustomPainter {
     }
     
     // Remplissage
-    if (symbol.fillColor != null) {
-      final fillPaint = Paint()
-        ..color = symbol.fillColor!.withOpacity(opacity)
-        ..style = PaintingStyle.fill;
-      
-      canvas.drawPath(path, fillPaint);
-    }
+    final fillPaint = Paint()
+      ..color = symbol.fillColor!.withValues(alpha: opacity)
+      ..style = PaintingStyle.fill;
+    
+    canvas.drawPath(path, fillPaint);
     
     // Contour
-    if (symbol.strokeColor != null && symbol.strokeWidth > 0) {
+    if (symbol.strokeWidth > 0) {
       final strokePaint = Paint()
-        ..color = symbol.strokeColor!.withOpacity(opacity)
+        ..color = symbol.strokeColor.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = symbol.strokeWidth
         ..strokeCap = StrokeCap.round
@@ -837,7 +835,7 @@ class _SymbolsPainter extends CustomPainter {
     // Surbrillance au survol
     if (isHovered) {
       final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
+        ..color = Colors.yellow.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
       
       canvas.drawPath(path, hoverPaint);
@@ -851,13 +849,13 @@ class _SymbolsPainter extends CustomPainter {
     bool isSelected,
     bool isHovered,
   ) {
-    if (symbol.text == null || symbol.text!.isEmpty) return;
+    if (symbol.text.isEmpty) return;
     
     final textPainter = TextPainter(
       text: TextSpan(
         text: symbol.text,
         style: TextStyle(
-          color: symbol.color.withOpacity(opacity),
+          color: symbol.color.withValues(alpha: opacity),
           fontSize: symbol.fontSize ?? 12.0,
           fontFamily: symbol.fontFamily,
         ),
@@ -905,7 +903,7 @@ class _SelectionRectPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Rectangle semi-transparent
     final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.15)
+      ..color = Colors.blue.withValues(alpha: 0.15)
       ..style = PaintingStyle.fill;
     
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), fillPaint);

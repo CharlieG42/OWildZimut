@@ -44,14 +44,14 @@ class OmapColorDefinition {
 
   /// Conversion approximative CMJN (0-1) -> RVB, pour affichage seulement.
   Color toColor() {
-    final r = 255 * (1 - cyan) * (1 - black);
-    final g = 255 * (1 - magenta) * (1 - black);
-    final b = 255 * (1 - yellow) * (1 - black);
+    final r = (255 * (1 - cyan) * (1 - black)).round().clamp(0, 255);
+    final g = (255 * (1 - magenta) * (1 - black)).round().clamp(0, 255);
+    final b = (255 * (1 - yellow) * (1 - black)).round().clamp(0, 255);
     return Color.fromARGB(
       (opacity * 255).round().clamp(0, 255),
-      r.round().clamp(0, 255),
-      g.round().clamp(0, 255),
-      b.round().clamp(0, 255),
+      r,
+      g,
+      b,
     );
   }
 }
@@ -485,7 +485,7 @@ class OmapDocument {
         final type = symbolDef?.type ?? _guessTypeFromGeometry(object);
 
         // Trouver la couleur associée au symbole
-        Color symbolColor = Colors.black;
+        Color symbolColor = const Color(0xFF000000);
         if (symbolDef != null && symbolDef.code != null) {
           final iofSymbol = iofSymbolLibrary.getSymbolByCode(symbolDef.code!);
           if (iofSymbol != null) {
@@ -496,18 +496,15 @@ class OmapDocument {
         // Créer le symbole OWildZimut
         final symbol = symbol_model.MapSymbol(
           id: 'omap_${DateTime.now().millisecondsSinceEpoch}_${i}_$j',
+          name: symbolDef?.name ?? iofMatch?.name ?? 'Objet importe',
           type: type,
-          code: symbolDef?.code ?? symbolDef?.id ?? '',
-          name: symbolDef?.name ?? iofMatch?.description ?? 'Objet importe',
           position: object.points.isNotEmpty ? object.points.first : Offset.zero,
-          description: iofMatch?.description ?? symbolDef?.name ?? 'Objet importe',
-          color: symbolColor,
-          size: iofMatch?.defaultSize ?? _getDefaultSize(type),
           points: object.points,
-          rotation: object.rotation,
+          size: iofMatch?.defaultSize ?? _getDefaultSize(type),
+          strokeColor: symbolColor,
           isClosed: object.isClosed,
-          iofCode: symbolDef?.code,
-          iconBase64: symbolDef?.iconBase64,
+          rotation: object.rotation,
+          layerId: 'omap_layer_${DateTime.now().millisecondsSinceEpoch}_$i',
         );
         
         symbols.add(symbol);

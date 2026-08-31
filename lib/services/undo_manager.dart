@@ -11,7 +11,7 @@ import 'package:flutter/material.dart' show Offset;
 ///
 /// Utilisation :
 /// ```dart
-/// final undoManager = OWildUndoManager();
+/// final undoManager = UndoManager();
 /// 
 /// // Après chaque modification de l'état
 /// undoManager.pushState(newState);
@@ -22,34 +22,34 @@ import 'package:flutter/material.dart' show Offset;
 /// // Pour rétablir
 /// final redoneState = undoManager.redo();
 /// ```
-class OWildUndoManager with ChangeNotifier {
+class UndoManager with ChangeNotifier {
   /// Historique des états
-  final List<MapState> _history = [];
+  final List<MapState> history = [];
   
   /// Index de l'état actuel dans l'historique
-  int _currentIndex = -1;
+  int currentIndex = -1;
   
   /// Nombre maximum d'états dans l'historique (pour limiter la mémoire)
   final int maxHistoryLength;
 
-  /// Crée un nouveau OWildUndoManager
-  OWildUndoManager({this.maxHistoryLength = 50});
+  /// Crée un nouveau UndoManager
+  UndoManager({this.maxHistoryLength = 50});
 
   /// État actuel
   MapState get currentState => 
-      _history.isEmpty ? MapState.initial() : _history[_currentIndex];
+      history.isEmpty ? MapState.initial() : history[currentIndex];
 
   /// Peut-on annuler ?
-  bool get canUndo => _currentIndex > 0;
+  bool get canUndo => currentIndex > 0;
 
   /// Peut-on rétablir ?
-  bool get canRedo => _currentIndex < _history.length - 1;
+  bool get canRedo => currentIndex < history.length - 1;
 
   /// Nombre d'états dans l'historique
-  int get historyLength => _history.length;
+  int get historyLength => history.length;
 
   /// Position actuelle dans l'historique
-  int get currentPosition => _currentIndex;
+  int get currentPosition => currentIndex;
 
   /// Ajoute un nouvel état à l'historique
   ///
@@ -57,18 +57,18 @@ class OWildUndoManager with ChangeNotifier {
   /// de la carte qui doit pouvoir être annulée.
   void pushState(MapState state) {
     // Supprimer les états après currentIndex (si on a fait undo puis une nouvelle action)
-    if (_currentIndex < _history.length - 1) {
-      _history.removeRange(_currentIndex + 1, _history.length);
+    if (currentIndex < history.length - 1) {
+      history.removeRange(currentIndex + 1, history.length);
     }
     
     // Ajouter le nouvel état
-    _history.add(state);
-    _currentIndex = _history.length - 1;
+    history.add(state);
+    currentIndex = history.length - 1;
     
     // Limiter la taille de l'historique
-    if (_history.length > maxHistoryLength) {
-      _history.removeAt(0);
-      _currentIndex--;
+    if (history.length > maxHistoryLength) {
+      history.removeAt(0);
+      currentIndex--;
     }
     
     notifyListeners();
@@ -80,9 +80,9 @@ class OWildUndoManager with ChangeNotifier {
   MapState? undo() {
     if (!canUndo) return null;
     
-    _currentIndex--;
+    currentIndex--;
     notifyListeners();
-    return _history[_currentIndex];
+    return history[currentIndex];
   }
 
   /// Rétablit la dernière action annulée
@@ -91,9 +91,9 @@ class OWildUndoManager with ChangeNotifier {
   MapState? redo() {
     if (!canRedo) return null;
     
-    _currentIndex++;
+    currentIndex++;
     notifyListeners();
-    return _history[_currentIndex];
+    return history[currentIndex];
   }
 
   /// Va à une position spécifique dans l'historique
@@ -101,55 +101,55 @@ class OWildUndoManager with ChangeNotifier {
   /// [index] : L'index dans l'historique (0 = état initial)
   /// Retourne le nouvel état, ou null si l'index est invalide
   MapState? goTo(int index) {
-    if (index < 0 || index >= _history.length) return null;
+    if (index < 0 || index >= history.length) return null;
     
-    _currentIndex = index;
+    currentIndex = index;
     notifyListeners();
-    return _history[_currentIndex];
+    return history[currentIndex];
   }
 
   /// Efface l'historique
   void clear() {
-    _history.clear();
-    _currentIndex = -1;
+    history.clear();
+    currentIndex = -1;
     notifyListeners();
   }
 
   /// Réinitialise avec un nouvel état initial
   void reset(MapState initialState) {
-    _history.clear();
-    _history.add(initialState);
-    _currentIndex = 0;
+    history.clear();
+    history.add(initialState);
+    currentIndex = 0;
     notifyListeners();
   }
 
   /// Récupère un état à une position donnée
   MapState? getStateAt(int index) {
-    if (index < 0 || index >= _history.length) return null;
-    return _history[index];
+    if (index < 0 || index >= history.length) return null;
+    return history[index];
   }
 
   /// Supprime tous les états avant une certaine position
   void trimBefore(int index) {
     if (index <= 0) return;
     
-    final statesToKeep = _history.sublist(index);
-    _history.clear();
-    _history.addAll(statesToKeep);
-    _currentIndex -= index;
+    final statesToKeep = history.sublist(index);
+    history.clear();
+    history.addAll(statesToKeep);
+    currentIndex -= index;
     
-    if (_currentIndex < 0) _currentIndex = 0;
+    if (currentIndex < 0) currentIndex = 0;
     
     notifyListeners();
   }
 
   /// Supprime tous les états après une certaine position
   void trimAfter(int index) {
-    if (index >= _history.length - 1) return;
+    if (index >= history.length - 1) return;
     
-    _history.removeRange(index + 1, _history.length);
+    history.removeRange(index + 1, history.length);
     
-    if (_currentIndex > index) _currentIndex = index;
+    if (currentIndex > index) currentIndex = index;
     
     notifyListeners();
   }
@@ -160,7 +160,7 @@ class OWildUndoManager with ChangeNotifier {
 /// Cette classe représente une action qui peut être annulée et rétablie.
 /// Elle est utilisée pour implémenter un système d'undo/redo plus avancé
 /// basé sur les actions plutôt que sur les états.
-abstract class UndoableAction {
+class UndoableAction {
   /// Description de l'action (pour l'interface utilisateur)
   String get description;
   
@@ -173,28 +173,28 @@ abstract class UndoableAction {
 
 /// Gestionnaire d'actions undo/redo
 ///
-/// Alternative à OWildUndoManager qui stocke les actions plutôt que les états.
+/// Alternative à UndoManager qui stocke les actions plutôt que les états.
 /// Cela peut être plus efficace pour certaines applications.
 class ActionUndoManager with ChangeNotifier {
-  final List<UndoableAction> _actions = [];
-  final List<UndoableAction> _undoneActions = [];
+  final List<UndoableAction> actions = [];
+  final List<UndoableAction> undoneActions = [];
   final int maxActions;
 
   ActionUndoManager({this.maxActions = 50});
 
   /// Peut-on annuler ?
-  bool get canUndo => _actions.isNotEmpty;
+  bool get canUndo => actions.isNotEmpty;
 
   /// Peut-on rétablir ?
-  bool get canRedo => _undoneActions.isNotEmpty;
+  bool get canRedo => undoneActions.isNotEmpty;
 
   /// Ajoute une nouvelle action
   void pushAction(UndoableAction action) {
-    _actions.add(action);
-    _undoneActions.clear(); // Effacer les actions annulées
+    actions.add(action);
+    undoneActions.clear(); // Effacer les actions annulées
     
-    if (_actions.length > maxActions) {
-      _actions.removeAt(0);
+    if (actions.length > maxActions) {
+      actions.removeAt(0);
     }
     
     notifyListeners();
@@ -204,8 +204,8 @@ class ActionUndoManager with ChangeNotifier {
   MapState undo(MapState currentState) {
     if (!canUndo) return currentState;
     
-    final action = _actions.removeLast();
-    _undoneActions.add(action);
+    final action = actions.removeLast();
+    undoneActions.add(action);
     
     notifyListeners();
     return action.undo(currentState);
@@ -215,8 +215,8 @@ class ActionUndoManager with ChangeNotifier {
   MapState redo(MapState currentState) {
     if (!canRedo) return currentState;
     
-    final action = _undoneActions.removeLast();
-    _actions.add(action);
+    final action = undoneActions.removeLast();
+    actions.add(action);
     
     notifyListeners();
     return action.apply(currentState);
@@ -224,8 +224,8 @@ class ActionUndoManager with ChangeNotifier {
 
   /// Efface l'historique
   void clear() {
-    _actions.clear();
-    _undoneActions.clear();
+    actions.clear();
+    undoneActions.clear();
     notifyListeners();
   }
 }
@@ -233,7 +233,7 @@ class ActionUndoManager with ChangeNotifier {
 /// Actions prédéfinies
 
 /// Action pour ajouter un symbole
-class AddSymbolAction extends UndoableAction {
+class AddSymbolAction implements UndoableAction {
   final symbol_model.MapSymbol symbol;
   final int layerIndex;
 
@@ -257,7 +257,7 @@ class AddSymbolAction extends UndoableAction {
 }
 
 /// Action pour supprimer un symbole
-class RemoveSymbolAction extends UndoableAction {
+class RemoveSymbolAction implements UndoableAction {
   final String symbolId;
   final symbol_model.MapSymbol symbol;
   final int layerIndex;
@@ -279,7 +279,7 @@ class RemoveSymbolAction extends UndoableAction {
 }
 
 /// Action pour déplacer un symbole
-class MoveSymbolAction extends UndoableAction {
+class MoveSymbolAction implements UndoableAction {
   final String symbolId;
   final Offset oldPosition;
   final Offset newPosition;
@@ -301,7 +301,7 @@ class MoveSymbolAction extends UndoableAction {
 }
 
 /// Action pour modifier les propriétés d'un symbole
-class UpdateSymbolAction extends UndoableAction {
+class UpdateSymbolAction implements UndoableAction {
   final String symbolId;
   final symbol_model.MapSymbol oldSymbol;
   final symbol_model.MapSymbol newSymbol;
@@ -312,62 +312,4 @@ class UpdateSymbolAction extends UndoableAction {
   String get description => 'Modifier symbole';
 
   @override
-  MapState apply(MapState state) {
-    return state.updateSymbol(symbolId, newSymbol);
-  }
-
-  @override
-  MapState undo(MapState state) {
-    return state.updateSymbol(symbolId, oldSymbol);
-  }
-}
-
-/// Action pour ajouter un calque
-class AddLayerAction extends UndoableAction {
-  final Layer layer;
-
-  AddLayerAction(this.layer);
-
-  @override
-  String get description => 'Ajouter calque';
-
-  @override
-  MapState apply(MapState state) {
-    return state.copyWith(
-      layers: [...state.layers, layer],
-      selectedLayerIndex: state.layers.length,
-    );
-  }
-
-  @override
-  MapState undo(MapState state) {
-    return state.removeLayer(layer.id);
-  }
-}
-
-/// Action pour supprimer un calque
-class RemoveLayerAction extends UndoableAction {
-  final String layerId;
-  final Layer layer;
-  final int layerIndex;
-
-  RemoveLayerAction(this.layerId, this.layer, this.layerIndex);
-
-  @override
-  String get description => 'Supprimer calque';
-
-  @override
-  MapState apply(MapState state) {
-    return state.removeLayer(layerId);
-  }
-
-  @override
-  MapState undo(MapState state) {
-    final newLayers = List<Layer>.from(state.layers);
-    newLayers.insert(layerIndex, layer);
-    return state.copyWith(
-      layers: newLayers,
-      selectedLayerIndex: layerIndex,
-    );
-  }
-}
+  MapState apply(MapState stat
