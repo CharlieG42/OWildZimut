@@ -136,8 +136,8 @@ class _AnimatedSelectionRectState extends State<AnimatedSelectionRect>
     );
     
     _colorAnimation = ColorTween(
-      begin: Colors.blue.withOpacity(0.5),
-      end: Colors.transparent,
+      begin: const Color(0x802196F3),
+      end: const Color(0x00000000),
     ).animate(_controller);
     
     _opacityAnimation = Tween(begin: 1.0, end: 0.0).animate(_controller);
@@ -189,7 +189,7 @@ class SelectionRectPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+      ..color = color.withValues(alpha: opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
     
@@ -269,7 +269,7 @@ class _SymbolAddedAnimationState extends State<SymbolAddedAnimation>
               opacity: _opacityAnimation.value,
               child: const Icon(
                 Icons.add_circle,
-                color: Colors.green,
+                color: const Color(0xFF4CAF50),
                 size: 30,
               ),
             ),
@@ -347,7 +347,7 @@ class _SymbolDeletedAnimationState extends State<SymbolDeletedAnimation>
               opacity: _opacityAnimation.value,
               child: const Icon(
                 Icons.remove_circle,
-                color: Colors.red,
+                color: const Color(0xFFF44336),
                 size: 30,
               ),
             ),
@@ -430,7 +430,7 @@ class _CopyPasteAnimationState extends State<CopyPasteAnimation>
             opacity: _opacityAnimation.value,
             child: const Icon(
               Icons.content_copy,
-              color: Colors.blue,
+              color: const Color(0xFF2196F3),
               size: 24,
             ),
           ),

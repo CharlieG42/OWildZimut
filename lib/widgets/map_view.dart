@@ -15,8 +15,8 @@ import '../models/symbol.dart' as symbol_model;
 /// - Les feedbacks visuels
 class MapView extends StatefulWidget {
   final List<Layer> layers;
-  final double zoomLevel;
-  final Offset panOffset;
+  final double zoom;
+  final Offset cameraPosition;
   final int? selectedLayerIndex;
   final String currentTool;
   final Set<String> selectedSymbolIds;
@@ -26,7 +26,7 @@ class MapView extends StatefulWidget {
   final ValueChanged<Offset>? onTap;
   final ValueChanged<String>? onSymbolSelected;
   final ValueChanged<Set<String>>? onSymbolsSelected;
-  final Function(MapSymbol)? onSymbolAdded;
+  final Function(symbol_model.MapSymbol)? onSymbolAdded;
   final Function(String, Offset)? onSymbolMoved;
   final Function(Set<String>, Offset)? onSymbolsMoved;
   final Function(String)? onSymbolDeleted;
@@ -35,8 +35,8 @@ class MapView extends StatefulWidget {
   const MapView({
     super.key,
     required this.layers,
-    required this.zoomLevel,
-    required this.panOffset,
+    required this.zoom,
+    required this.cameraPosition,
     this.selectedLayerIndex,
     this.currentTool = 'select',
     this.selectedSymbolIds = const {},
@@ -74,7 +74,7 @@ class _MapViewState extends State<MapView> {
 
     return Focus(
       autofocus: true,
-      onKey: _handleKeyPress,
+      onKeyEvent: _handleKeyEvent,
       child: MouseRegion(
         cursor: _getCursorForCurrentState(),
         onHover: (details) {
@@ -92,12 +92,12 @@ class _MapViewState extends State<MapView> {
           },
           onScaleUpdate: (details) {
             if (details.scale != 1.0) {
-              widget.onZoomChanged?.call(widget.zoomLevel * details.scale);
+              widget.onZoomChanged?.call(widget.zoom * details.scale);
             }
 
             if (details.pointerCount >= 2) {
               final delta = details.focalPoint - _lastFocalPoint;
-              widget.onPanUpdate?.call(widget.panOffset + delta);
+              widget.onPanUpdate?.call(widget.cameraPosition + delta);
               _lastFocalPoint = details.focalPoint;
             }
           },
@@ -145,7 +145,7 @@ class _MapViewState extends State<MapView> {
               if (details.buttons == 2) {
                 // Bouton droit : défilement
                 final delta = details.localPosition - _dragStart!;
-                widget.onPanUpdate?.call(widget.panOffset + delta);
+                widget.onPanUpdate?.call(widget.cameraPosition + delta);
                 _dragStart = details.localPosition;
               }
             },
@@ -155,15 +155,15 @@ class _MapViewState extends State<MapView> {
               maxScale: 10.0,
               child: ClipRect(
                 child: Transform.translate(
-                  offset: widget.panOffset,
+                  offset: widget.cameraPosition,
                   child: Transform.scale(
-                    scale: widget.zoomLevel,
+                    scale: widget.zoom,
                     child: Stack(
                       children: [
                         // Fond blanc + grille
                         CustomPaint(
                           size: Size.infinite,
-                          painter: _GridPainter(zoomLevel: widget.zoomLevel),
+                          painter: _GridPainter(zoom: widget.zoom),
                         ),
                         // Images de fond (calques raster)
                         for (final layer in sortedLayers)
@@ -173,7 +173,7 @@ class _MapViewState extends State<MapView> {
                           size: Size.infinite,
                           painter: _SymbolsPainter(
                             layers: sortedLayers,
-                            zoomLevel: widget.zoomLevel,
+                            zoom: widget.zoom,
                             selectedSymbolIds: widget.selectedSymbolIds,
                             hoveredSymbolId: _hoveredSymbolId,
                           ),
@@ -198,6 +198,7 @@ class _MapViewState extends State<MapView> {
                               painter: _DrawingPainter(
                                 points: _currentPoints,
                                 tool: widget.currentTool,
+                                dragCurrent: _dragCurrent,
                               ),
                             ),
                           ),
@@ -220,7 +221,7 @@ class _MapViewState extends State<MapView> {
         case 'point':
           return SystemMouseCursors.precise;
         case 'line':
-        case 'polygon':
+        case 'area':
           return SystemMouseCursors.cell;
         case 'text':
           return SystemMouseCursors.text;
@@ -239,7 +240,7 @@ class _MapViewState extends State<MapView> {
   /// Convertit les coordonnées de l'écran aux coordonnées de la carte
   Offset _getLocalPosition(Offset screenPosition) {
     // Inverser le pan et le zoom
-    return (screenPosition - widget.panOffset) / widget.zoomLevel;
+    return (screenPosition - widget.cameraPosition) / widget.zoom;
   }
 
   /// Met à jour le symbole survolé
@@ -279,7 +280,7 @@ class _MapViewState extends State<MapView> {
           _handlePointTap(localPosition);
           break;
         case 'line':
-        case 'polygon':
+        case 'area':
           setState(() {
             _isDrawing = true;
             _currentPoints = [localPosition];
@@ -304,13 +305,13 @@ class _MapViewState extends State<MapView> {
   /// Gère le relâchement après un appui
   void _handleTapUp(Offset localPosition, List<Layer> sortedLayers) {
     if (_isDrawing &&
-        (widget.currentTool == 'line' || widget.currentTool == 'polygon')) {
+        (widget.currentTool == 'line' || widget.currentTool == 'area')) {
       
       if (widget.currentTool == 'line') {
         setState(() {
           _currentPoints.add(localPosition);
         });
-      } else if (widget.currentTool == 'polygon') {
+      } else if (widget.currentTool == 'area') {
         setState(() {
           _currentPoints.add(localPosition);
           // Fermer le polygone si on clique près du premier point
@@ -406,7 +407,7 @@ class _MapViewState extends State<MapView> {
           0,
         );
       });
-    } else if (_isDrawing && (widget.currentTool == 'line' || widget.currentTool == 'polygon')) {
+    } else if (_isDrawing && (widget.currentTool == 'line' || widget.currentTool == 'area')) {
       // Continuer le dessin
       _dragStart = localPosition;
     }
@@ -425,7 +426,7 @@ class _MapViewState extends State<MapView> {
     } else if (widget.currentTool == 'select' && _dragStart != null) {
       // Mettre à jour le rectangle de sélection
       _updateSelectionRect(localPosition);
-    } else if (_isDrawing && (widget.currentTool == 'line' || widget.currentTool == 'polygon')) {
+    } else if (_isDrawing && (widget.currentTool == 'line' || widget.currentTool == 'area')) {
       // Mettre à jour le point temporaire
       setState(() {
         _dragCurrent = localPosition;
@@ -457,7 +458,7 @@ class _MapViewState extends State<MapView> {
     final symbol = symbol_model.MapSymbol.point(
       id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
       position: localPosition,
-      color: Colors.black,
+      strokeColor: const Color(0xFF000000),
       size: 5.0,
     );
     
@@ -472,8 +473,7 @@ class _MapViewState extends State<MapView> {
       id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
       text: 'Nouveau texte',
       position: localPosition,
-      color: Colors.black,
-      fontSize: 12.0,
+      textStyle: const TextStyle(color: Color(0xFF000000), fontSize: 12.0),
     );
     
     widget.onSymbolAdded!(symbol);
@@ -489,16 +489,16 @@ class _MapViewState extends State<MapView> {
       symbol = symbol_model.MapSymbol.line(
         id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
         points: List<Offset>.from(_currentPoints),
-        color: Colors.black,
+        strokeColor: const Color(0xFF000000),
         strokeWidth: 2.0,
       );
-    } else if (widget.currentTool == 'polygon') {
+    } else if (widget.currentTool == 'area') {
       symbol = symbol_model.MapSymbol.area(
         id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
         points: List<Offset>.from(_currentPoints),
         isClosed: true,
-        fillColor: Colors.blue.withOpacity(0.3),
-        strokeColor: Colors.blue,
+        fillColor: const Color(0x4D2196F3),
+        strokeColor: const Color(0xFF2196F3),
         strokeWidth: 1.0,
       );
     } else {
@@ -514,8 +514,8 @@ class _MapViewState extends State<MapView> {
   }
 
   /// Gère les raccourcis clavier
-  KeyEventResult _handleKeyPress(FocusNode node, RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
       final key = event.logicalKey;
       
       // Supprimer
@@ -561,11 +561,11 @@ class _MapViewState extends State<MapView> {
               errorBuilder: (context, error, stackTrace) => Container(
                 width: 200,
                 height: 120,
-                color: Colors.red.withValues(alpha: 0.15),
+                color: const Color(0x26F44336),
                 alignment: Alignment.center,
                 child: const Text(
                   'Image de fond illisible',
-                  style: TextStyle(fontSize: 10, color: Colors.red),
+                  style: const TextStyle(fontSize: 10, color: Color(0xFFF44336)),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -579,30 +579,30 @@ class _MapViewState extends State<MapView> {
 
 /// Painter pour la grille
 class _GridPainter extends CustomPainter {
-  final double zoomLevel;
+  final double zoom;
 
-  _GridPainter({required this.zoomLevel});
+  _GridPainter({required this.zoom});
 
   @override
   void paint(Canvas canvas, Size size) {
     // Fond blanc
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
-      Paint()..color = Colors.white,
+      Paint()..color = const Color(0xFFFFFFFF),
     );
 
     // Grille (adaptée au zoom)
-    final gridSize = 100.0 / zoomLevel;
+    final gridSize = 100.0 / zoom;
     if (gridSize > 5) {
       final gridPaint = Paint()
-        ..color = Colors.grey.withValues(alpha: 0.2)
+        ..color = const Color(0x339E9E9E)
         ..strokeWidth = 0.5;
 
       // Lignes verticales
       for (var x = -size.width; x <= size.width * 2; x += gridSize) {
         canvas.drawLine(
-          Offset(x, -size.height),
-          Offset(x, size.height * 2),
+          Offset(x, 0),
+          Offset(x, size.height),
           gridPaint,
         );
       }
@@ -610,290 +610,298 @@ class _GridPainter extends CustomPainter {
       // Lignes horizontales
       for (var y = -size.height; y <= size.height * 2; y += gridSize) {
         canvas.drawLine(
-          Offset(-size.width, y),
-          Offset(size.width * 2, y),
+          Offset(0, y),
+          Offset(size.width, y),
           gridPaint,
         );
       }
+
+      // Lignes plus épaisses tous les 500mm
+      final majorGridSize = 500.0 / zoom;
+      if (majorGridSize > 20) {
+        final majorGridPaint = Paint()
+          ..color = const Color(0x669E9E9E)
+          ..strokeWidth = 1.0;
+
+        for (var x = -size.width; x <= size.width * 2; x += majorGridSize) {
+          canvas.drawLine(
+            Offset(x, 0),
+            Offset(x, size.height),
+            majorGridPaint,
+          );
+        }
+
+        for (var y = -size.height; y <= size.height * 2; y += majorGridSize) {
+          canvas.drawLine(
+            Offset(0, y),
+            Offset(size.width, y),
+            majorGridPaint,
+          );
+        }
+      }
     }
 
-    // Marqueur d'origine
-    canvas.drawCircle(
-      Offset.zero,
-      3.0,
-      Paint()..color = Colors.red,
-    );
+    // Axes
+    final axisPaint = Paint()
+      ..color = const Color(0xFF2196F3)
+      ..strokeWidth = 1.0;
+
+    canvas.drawLine(Offset(0, 0), Offset(size.width, 0), axisPaint);
+    canvas.drawLine(Offset(0, 0), Offset(0, size.height), axisPaint);
   }
 
   @override
   bool shouldRepaint(covariant _GridPainter oldDelegate) {
-    return oldDelegate.zoomLevel != zoomLevel;
+    return oldDelegate.zoom != zoom;
   }
 }
 
 /// Painter pour les symboles
 class _SymbolsPainter extends CustomPainter {
   final List<Layer> layers;
-  final double zoomLevel;
+  final double zoom;
   final Set<String> selectedSymbolIds;
   final String? hoveredSymbolId;
 
   _SymbolsPainter({
     required this.layers,
-    required this.zoomLevel,
+    required this.zoom,
     this.selectedSymbolIds = const {},
     this.hoveredSymbolId,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Dessiner chaque calque
+    // Dessiner les calques du bas vers le haut
     for (final layer in layers) {
       if (!layer.visible) continue;
       
-      // Appliquer l'opacité du calque
+      // Opacité du calque
       final layerOpacity = layer.opacity;
       
       for (final symbol in layer.symbols) {
-        final isSelected = selectedSymbolIds.contains(symbol.id);
-        final isHovered = hoveredSymbolId == symbol.id;
+        // Appliquer l'opacité du calque
+        final effectiveOpacity = layerOpacity * (symbol.visible ? 1.0 : 0.0);
         
-        _drawSymbol(
-          canvas,
-          symbol,
-          layerOpacity,
-          isSelected,
-          isHovered,
-        );
+        if (effectiveOpacity == 0) continue;
+        
+        _drawSymbol(canvas, symbol, effectiveOpacity);
       }
     }
   }
 
-  void _drawSymbol(
-    Canvas canvas,
-    symbol_model.MapSymbol symbol,
-    double layerOpacity,
-    bool isSelected,
-    bool isHovered,
-  ) {
-    final effectiveOpacity = symbol.opacity * layerOpacity;
+  /// Dessine un symbole
+  void _drawSymbol(Canvas canvas, symbol_model.MapSymbol symbol, double opacity) {
+    final paint = Paint();
+    final isSelected = selectedSymbolIds.contains(symbol.id);
+    final isHovered = hoveredSymbolId == symbol.id;
+    
+    // Appliquer l'opacité
+    paint.color = symbol.strokeColor.withValues(alpha: opacity);
     
     switch (symbol.type) {
       case symbol_model.MapSymbolType.point:
-        _drawPointSymbol(canvas, symbol, effectiveOpacity, isSelected, isHovered);
+        _drawPoint(canvas, symbol, paint, isSelected, isHovered);
         break;
       case symbol_model.MapSymbolType.line:
-        _drawLineSymbol(canvas, symbol, effectiveOpacity, isSelected, isHovered);
+        _drawLine(canvas, symbol, paint, isSelected, isHovered);
         break;
       case symbol_model.MapSymbolType.area:
-        _drawAreaSymbol(canvas, symbol, effectiveOpacity, isSelected, isHovered);
+        _drawArea(canvas, symbol, paint, isSelected, isHovered);
         break;
       case symbol_model.MapSymbolType.text:
-        _drawTextSymbol(canvas, symbol, effectiveOpacity, isSelected, isHovered);
+        _drawText(canvas, symbol, isSelected, isHovered);
         break;
     }
   }
 
-  void _drawPointSymbol(
+  /// Dessine un point
+  void _drawPoint(
     Canvas canvas,
     symbol_model.MapSymbol symbol,
-    double opacity,
+    Paint paint,
     bool isSelected,
     bool isHovered,
   ) {
     final center = symbol.position;
     final radius = symbol.size / 2;
     
-    // Couleur de base
-    final baseColor = symbol.color.withOpacity(opacity);
-    
-    // Dessiner le cercle
-    final paint = Paint()
-      ..color = baseColor
-      ..style = PaintingStyle.fill;
-    
-    canvas.drawCircle(center, radius, paint);
-    
-    // Contour pour la sélection
-    if (isSelected) {
-      final outlinePaint = Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0 / zoomLevel;
-      
-      canvas.drawCircle(center, radius + 2.0, outlinePaint);
-    }
-    
-    // Surbrillance au survol
-    if (isHovered) {
-      final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
-        ..style = PaintingStyle.fill;
-      
-      canvas.drawCircle(center, radius + 1.0, hoverPaint);
-    }
-  }
-
-  void _drawLineSymbol(
-    Canvas canvas,
-    symbol_model.MapSymbol symbol,
-    double opacity,
-    bool isSelected,
-    bool isHovered,
-  ) {
-    if (symbol.points.length < 2) return;
-    
-    final path = Path();
-    path.moveTo(symbol.points[0].dx, symbol.points[0].dy);
-    
-    for (var i = 1; i < symbol.points.length; i++) {
-      path.lineTo(symbol.points[i].dx, symbol.points[i].dy);
-    }
-    
-    // Dessiner la ligne
-    final paint = Paint()
-      ..color = symbol.color.withOpacity(opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = symbol.strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    
-    canvas.drawPath(path, paint);
-    
-    // Contour pour la sélection
-    if (isSelected) {
-      final outlinePaint = Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0 / zoomLevel;
-      
-      canvas.drawPath(path, outlinePaint);
-    }
-    
-    // Surbrillance au survol
-    if (isHovered) {
-      final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = symbol.strokeWidth + 2.0;
-      
-      canvas.drawPath(path, hoverPaint);
-    }
-  }
-
-  void _drawAreaSymbol(
-    Canvas canvas,
-    symbol_model.MapSymbol symbol,
-    double opacity,
-    bool isSelected,
-    bool isHovered,
-  ) {
-    if (symbol.points.length < 3) return;
-    
-    final path = Path();
-    path.moveTo(symbol.points[0].dx, symbol.points[0].dy);
-    
-    for (var i = 1; i < symbol.points.length; i++) {
-      path.lineTo(symbol.points[i].dx, symbol.points[i].dy);
-    }
-    
-    if (symbol.isClosed) {
-      path.close();
-    }
-    
-    // Remplissage
-    if (symbol.fillColor != null) {
+    // Fond (pour les points remplis)
+    if (symbol.fillColor != const Color(0x00000000)) {
       final fillPaint = Paint()
-        ..color = symbol.fillColor!.withOpacity(opacity)
+        ..color = symbol.fillColor.withValues(alpha: symbol.fillOpacity)
         ..style = PaintingStyle.fill;
       
-      canvas.drawPath(path, fillPaint);
+      canvas.drawCircle(center, radius, fillPaint);
     }
     
     // Contour
-    if (symbol.strokeColor != null && symbol.strokeWidth > 0) {
-      final strokePaint = Paint()
-        ..color = symbol.strokeColor!.withOpacity(opacity)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = symbol.strokeWidth
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-      
-      canvas.drawPath(path, strokePaint);
-    }
+    paint
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = symbol.strokeWidth / zoom;
     
-    // Contour pour la sélection
+    canvas.drawCircle(center, radius, paint);
+    
+    // Feedback visuel pour la sélection
     if (isSelected) {
-      final outlinePaint = Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0 / zoomLevel
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-      
-      canvas.drawPath(path, outlinePaint);
-    }
-    
-    // Surbrillance au survol
-    if (isHovered) {
-      final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
-        ..style = PaintingStyle.fill;
-      
-      canvas.drawPath(path, hoverPaint);
+      _drawSelectionFeedback(canvas, symbol.boundingBox);
+    } else if (isHovered) {
+      _drawHoverFeedback(canvas, symbol.boundingBox);
     }
   }
 
-  void _drawTextSymbol(
+  /// Dessine une ligne
+  void _drawLine(
     Canvas canvas,
     symbol_model.MapSymbol symbol,
-    double opacity,
+    Paint paint,
     bool isSelected,
     bool isHovered,
   ) {
-    if (symbol.text == null || symbol.text!.isEmpty) return;
+    if (symbol.points.isEmpty) return;
     
+    paint
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = symbol.strokeWidth / zoom;
+    
+    // Dessiner la ligne
+    final path = Path();
+    path.moveTo(symbol.points.first.dx, symbol.points.first.dy);
+    
+    for (var i = 1; i < symbol.points.length; i++) {
+      path.lineTo(symbol.points[i].dx, symbol.points[i].dy);
+    }
+    
+    canvas.drawPath(path, paint);
+    
+    // Feedback visuel pour la sélection
+    if (isSelected) {
+      _drawSelectionFeedback(canvas, symbol.boundingBox);
+    } else if (isHovered) {
+      _drawHoverFeedback(canvas, symbol.boundingBox);
+    }
+  }
+
+  /// Dessine une surface
+  void _drawArea(
+    Canvas canvas,
+    symbol_model.MapSymbol symbol,
+    Paint paint,
+    bool isSelected,
+    bool isHovered,
+  ) {
+    if (symbol.points.isEmpty) return;
+    
+    // Remplissage
+    final fillPaint = Paint()
+      ..color = symbol.fillColor.withValues(alpha: symbol.fillOpacity)
+      ..style = PaintingStyle.fill;
+    
+    final path = Path();
+    path.moveTo(symbol.points.first.dx, symbol.points.first.dy);
+    
+    for (var i = 1; i < symbol.points.length; i++) {
+      path.lineTo(symbol.points[i].dx, symbol.points[i].dy);
+    }
+    
+    if (symbol.isClosed && symbol.points.length > 1) {
+      path.close();
+    }
+    
+    canvas.drawPath(path, fillPaint);
+    
+    // Contour
+    paint
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = symbol.strokeWidth / zoom;
+    
+    canvas.drawPath(path, paint);
+    
+    // Feedback visuel pour la sélection
+    if (isSelected) {
+      _drawSelectionFeedback(canvas, symbol.boundingBox);
+    } else if (isHovered) {
+      _drawHoverFeedback(canvas, symbol.boundingBox);
+    }
+  }
+
+  /// Dessine du texte
+  void _drawText(
+    Canvas canvas,
+    symbol_model.MapSymbol symbol,
+    bool isSelected,
+    bool isHovered,
+  ) {
     final textPainter = TextPainter(
       text: TextSpan(
         text: symbol.text,
-        style: TextStyle(
-          color: symbol.color.withOpacity(opacity),
-          fontSize: symbol.fontSize ?? 12.0,
-          fontFamily: symbol.fontFamily,
+        style: symbol.textStyle.copyWith(
+          color: symbol.textStyle.color?.withValues(alpha: symbol.textStyle.color?.alpha ?? 1.0),
         ),
       ),
       textDirection: TextDirection.ltr,
-      textAlign: symbol.textAlign ?? TextAlign.left,
     );
     
     textPainter.layout();
-    textPainter.paint(
-      canvas,
-      symbol.position,
+    
+    // Positionner le texte
+    final offset = Offset(
+      symbol.position.dx - textPainter.width / 2,
+      symbol.position.dy - textPainter.height / 2,
     );
     
-    // Rectangle de sélection
+    textPainter.paint(canvas, offset);
+    
+    // Feedback visuel pour la sélection
     if (isSelected) {
-      final rect = Rect.fromLTWH(
-        symbol.position.dx,
-        symbol.position.dy - (symbol.fontSize ?? 12.0),
-        textPainter.width,
-        textPainter.height,
-      );
-      
-      final outlinePaint = Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0 / zoomLevel;
-      
-      canvas.drawRect(rect, outlinePaint);
+      _drawSelectionFeedback(canvas, symbol.boundingBox);
+    } else if (isHovered) {
+      _drawHoverFeedback(canvas, symbol.boundingBox);
     }
+  }
+
+  /// Dessine le feedback de sélection
+  void _drawSelectionFeedback(Canvas canvas, Rect bounds) {
+    final paint = Paint()
+      ..color = const Color(0xFF2196F3)
+      ..strokeWidth = 1.5 / zoom
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    
+    canvas.drawRect(
+      Rect.fromLTWH(
+        bounds.left - 2,
+        bounds.top - 2,
+        bounds.width + 4,
+        bounds.height + 4,
+      ),
+      paint,
+    );
+  }
+
+  /// Dessine le feedback de survol
+  void _drawHoverFeedback(Canvas canvas, Rect bounds) {
+    final paint = Paint()
+      ..color = const Color(0xFF2196F3).withValues(alpha: 0.5)
+      ..strokeWidth = 1.0 / zoom
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    
+    canvas.drawRect(
+      Rect.fromLTWH(
+        bounds.left - 1,
+        bounds.top - 1,
+        bounds.width + 2,
+        bounds.height + 2,
+      ),
+      paint,
+    );
   }
 
   @override
   bool shouldRepaint(covariant _SymbolsPainter oldDelegate) {
     return oldDelegate.layers != layers ||
-        oldDelegate.zoomLevel != zoomLevel ||
+        oldDelegate.zoom != zoom ||
         oldDelegate.selectedSymbolIds != selectedSymbolIds ||
         oldDelegate.hoveredSymbolId != hoveredSymbolId;
   }
@@ -905,61 +913,130 @@ class _SelectionRectPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Rectangle semi-transparent
     final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.15)
+      ..color = const Color(0xFF2196F3).withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
     
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), fillPaint);
     
     // Bordure
     final borderPaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..color = const Color(0xFF2196F3)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
     
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), borderPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _SelectionRectPainter oldDelegate) => false;
 }
 
 /// Painter pour le dessin en cours
 class _DrawingPainter extends CustomPainter {
   final List<Offset> points;
   final String tool;
+  final Offset? dragCurrent;
 
-  _DrawingPainter({required this.points, required this.tool});
+  _DrawingPainter({
+    required this.points,
+    required this.tool,
+    this.dragCurrent,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty) return;
     
     final paint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..color = const Color(0xFF2196F3)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
     
-    if (tool == 'line' || tool == 'polygon') {
-      final path = Path();
-      path.moveTo(points[0].dx, points[0].dy);
-      
-      for (var i = 1; i < points.length; i++) {
-        path.lineTo(points[i].dx, points[i].dy);
-      }
-      
-      canvas.drawPath(path, paint);
+    switch (tool) {
+      case 'line':
+        _drawLinePreview(canvas, paint);
+        break;
+      case 'area':
+        _drawAreaPreview(canvas, paint);
+        break;
+    }
+  }
+
+  /// Dessine l'aperçu de la ligne en cours
+  void _drawLinePreview(Canvas canvas, Paint paint) {
+    final path = Path();
+    path.moveTo(points.first.dx, points.first.dy);
+    
+    for (var i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
     }
     
+    // Ajouter le point temporaire
+    if (dragCurrent != null) {
+      path.lineTo(dragCurrent!.dx, dragCurrent!.dy);
+    }
+    
+    canvas.drawPath(path, paint);
+    
     // Dessiner les points de contrôle
+    _drawControlPoints(canvas, paint);
+  }
+
+  /// Dessine l'aperçu de la surface en cours
+  void _drawAreaPreview(Canvas canvas, Paint paint) {
+    if (points.length < 2) {
+      _drawLinePreview(canvas, paint);
+      return;
+    }
+    
+    final path = Path();
+    path.moveTo(points.first.dx, points.first.dy);
+    
+    for (var i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+    
+    // Ajouter le point temporaire
+    if (dragCurrent != null) {
+      path.lineTo(dragCurrent!.dx, dragCurrent!.dy);
+    }
+    
+    // Fermer le polygone
+    if (points.length > 1) {
+      path.lineTo(points.first.dx, points.first.dy);
+    }
+    
+    // Remplissage semi-transparent
+    final fillPaint = Paint()
+      ..color = const Color(0xFF2196F3).withValues(alpha: 0.15)
+      ..style = PaintingStyle.fill;
+    
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, paint);
+    
+    // Dessiner les points de contrôle
+    _drawControlPoints(canvas, paint);
+  }
+
+  /// Dessine les points de contrôle
+  void _drawControlPoints(Canvas canvas, Paint paint) {
+    final controlPaint = Paint()
+      ..color = const Color(0xFF2196F3)
+      ..style = PaintingStyle.fill;
+    
     for (final point in points) {
-      canvas.drawCircle(point, 3.0, Paint()..color = Colors.red);
+      canvas.drawCircle(point, 3.0, controlPaint);
+    }
+    
+    if (dragCurrent != null) {
+      canvas.drawCircle(dragCurrent!, 3.0, controlPaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant _DrawingPainter oldDelegate) {
-    return oldDelegate.points != points || oldDelegate.tool != tool;
+    return oldDelegate.points != points ||
+        oldDelegate.tool != tool ||
+        oldDelegate.dragCurrent != dragCurrent;
   }
 }

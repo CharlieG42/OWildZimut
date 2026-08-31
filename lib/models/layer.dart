@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'symbol.dart' as symbol_model;
 
 /// Types de calques possibles
@@ -64,7 +65,7 @@ class Layer {
     this.zIndex = 1,
     this.locked = false,
     this.symbols = const [],
-    this.color = Colors.blue,
+    this.color = const Color(0xFF2196F3),
     this.imagePath,
     this.imageOffset = Offset.zero,
     this.imageScale = 1.0,
@@ -82,7 +83,7 @@ class Layer {
       name: name,
       type: LayerType.raster,
       zIndex: zIndex,
-      color: Colors.grey,
+      color: const Color(0xFF9E9E9E),
       imagePath: imagePath,
     );
   }
@@ -212,7 +213,7 @@ class Layer {
   }
 
   /// Récupère tous les symboles d'un certain type
-  List<symbol_model.MapSymbol> getSymbolsByType(MapSymbolType type) {
+  List<symbol_model.MapSymbol> getSymbolsByType(symbol_model.MapSymbolType type) {
     return symbols.where((s) => s.type == type).toList();
   }
 
@@ -256,7 +257,7 @@ class Layer {
       'opacity': opacity,
       'z_index': zIndex,
       'locked': locked,
-      'color': color.toARGB32().toRadixString(16),
+      'color': color.value.toRadixString(16),
       if (imagePath != null) 'image_path': imagePath,
       'image_offset': {'x': imageOffset.dx, 'y': imageOffset.dy},
       'image_scale': imageScale,
@@ -396,12 +397,17 @@ extension LayerExtensions on Layer {
     final lineLength = (p2 - p1).distance;
     if (lineLength == 0) return (point - p1).distance;
     
-    final t = ((point - p1).dot(p2 - p1)) / (lineLength * lineLength);
+    // Produit scalaire pour projeter le point sur la ligne
+    final t = ((point.dx - p1.dx) * (p2.dx - p1.dx) + (point.dy - p1.dy) * (p2.dy - p1.dy)) / 
+             (lineLength * lineLength);
     
     if (t < 0) return (point - p1).distance;
     if (t > 1) return (point - p2).distance;
     
-    final projection = p1 + (p2 - p1) * t;
+    final projection = Offset(
+      p1.dx + t * (p2.dx - p1.dx),
+      p1.dy + t * (p2.dy - p1.dy),
+    );
     return (point - projection).distance;
   }
 
@@ -410,7 +416,7 @@ extension LayerExtensions on Layer {
     if (polygonPoints.isEmpty) return double.infinity;
     
     // Vérifier si le point est à l'intérieur du polygone
-    if (symbol_model.MapSymbol._pointInPolygon(point, polygonPoints)) {
+    if (symbol_model.MapSymbol.pointInPolygon(point, polygonPoints)) {
       return 0;
     }
     
@@ -439,6 +445,6 @@ extension LayerExtensions on Layer {
       dy = point.dy - rect.bottom;
     }
     
-    return (dx * dx + dy * dy).sqrt();
+    return math.sqrt(dx * dx + dy * dy);
   }
 }

@@ -137,14 +137,13 @@ class IOFSymbolDefinition {
   }) {
     return symbol_model.MapSymbol(
       id: id ?? 'symbol_${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
       type: type,
-      code: code,
       position: position ?? Offset.zero,
-      description: description,
-      color: color ?? defaultColor,
-      size: size ?? defaultSize,
-      rotation: rotation ?? 0.0,
       points: points ?? [],
+      size: size ?? defaultSize,
+      strokeColor: color ?? defaultColor,
+      rotation: rotation ?? 0.0,
     );
   }
 

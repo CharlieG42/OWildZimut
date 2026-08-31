@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/map_state.dart';
+import '../models/layer.dart';
+import '../models/symbol.dart' as symbol_model;
 
 /// Gère l'historique des états pour les opérations undo/redo
 ///
@@ -29,8 +31,8 @@ class MapUndoManager with ChangeNotifier {
   /// Nombre maximum d'états dans l'historique (pour limiter la mémoire)
   final int maxHistoryLength;
 
-  /// Crée un nouveau UndoManager
-  UndoManager({this.maxHistoryLength = 50});
+  /// Crée un nouveau MapUndoManager
+  MapUndoManager({this.maxHistoryLength = 50});
 
   /// État actuel
   MapState get currentState => 
@@ -177,7 +179,7 @@ class MapActionUndoManager with ChangeNotifier {
   final List<UndoableAction> _undoneActions = [];
   final int maxActions;
 
-  ActionUndoManager({this.maxActions = 50});
+  MapActionUndoManager({this.maxActions = 50});
 
   /// Peut-on annuler ?
   bool get canUndo => _actions.isNotEmpty;
@@ -230,7 +232,7 @@ class MapActionUndoManager with ChangeNotifier {
 /// Actions prédéfinies
 
 /// Action pour ajouter un symbole
-class AddSymbolAction extends UndoableAction {
+class AddSymbolAction implements UndoableAction {
   final symbol_model.MapSymbol symbol;
   final int layerIndex;
 
@@ -254,7 +256,7 @@ class AddSymbolAction extends UndoableAction {
 }
 
 /// Action pour supprimer un symbole
-class RemoveSymbolAction extends UndoableAction {
+class RemoveSymbolAction implements UndoableAction {
   final String symbolId;
   final symbol_model.MapSymbol symbol;
   final int layerIndex;
@@ -276,7 +278,7 @@ class RemoveSymbolAction extends UndoableAction {
 }
 
 /// Action pour déplacer un symbole
-class MoveSymbolAction extends UndoableAction {
+class MoveSymbolAction implements UndoableAction {
   final String symbolId;
   final Offset oldPosition;
   final Offset newPosition;
@@ -298,7 +300,7 @@ class MoveSymbolAction extends UndoableAction {
 }
 
 /// Action pour modifier les propriétés d'un symbole
-class UpdateSymbolAction extends UndoableAction {
+class UpdateSymbolAction implements UndoableAction {
   final String symbolId;
   final symbol_model.MapSymbol oldSymbol;
   final symbol_model.MapSymbol newSymbol;
@@ -320,7 +322,7 @@ class UpdateSymbolAction extends UndoableAction {
 }
 
 /// Action pour ajouter un calque
-class AddLayerAction extends UndoableAction {
+class AddLayerAction implements UndoableAction {
   final Layer layer;
 
   AddLayerAction(this.layer);
@@ -343,7 +345,7 @@ class AddLayerAction extends UndoableAction {
 }
 
 /// Action pour supprimer un calque
-class RemoveLayerAction extends UndoableAction {
+class RemoveLayerAction implements UndoableAction {
   final String layerId;
   final Layer layer;
   final int layerIndex;

@@ -1,391 +1,431 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
-/// Classe pour gérer le géoréférencement des cartes
-/// 
-/// Le géoréférencement permet de relier les coordonnées de la carte (en mm)
-/// à des coordonnées réelles (en mètres ou en degrés).
-class Georeferencing {
-  /// Dénominateur de l'échelle (ex: 10000 pour 1:10000)
-  final int scaleDenominator;
+/// Point de contrôle au sol pour le géoréférencement
+///
+/// Un point de contrôle au sol est un point dont on connaît à la fois
+/// les coordonnées dans le repère de la carte (en mm) et les coordonnées
+/// géographiques réelles (latitude, longitude, altitude).
+class GroundControlPoint {
+  /// Identifiant unique du point
+  final String id;
   
-  /// Facteur d'échelle de la grille
-  final double? gridScaleFactor;
+  /// Nom du point
+  final String name;
   
-  /// Facteur d'échelle auxiliaire
-  final double? auxiliaryScaleFactor;
+  /// Position dans le repère de la carte (en mm)
+  final Offset mapPosition;
   
-  /// Grivation (rotation de la grille)
-  final double? grivation;
+  /// Coordonnées géographiques (latitude, longitude en degrés décimaux)
+  final LatLng geoPosition;
   
-  /// ID du système de coordonnées projetées (ex: "UTM")
-  final String? crsId;
+  /// Altitude (en mètres, optionnelle)
+  final double? altitude;
   
-  /// Spécification PROJ.4 pour le système de coordonnées projetées
-  final String? proj4Spec;
-  
-  /// Paramètre du système de coordonnées projetées
-  final String? crsParameter;
-  
-  /// Point de référence dans la carte (en mm)
-  final Offset? refPoint;
-  
-  /// Point de référence dans le monde réel (en mètres ou coordonnées projetées)
-  final Offset? refPointReal;
-  
-  /// ID du système de coordonnées géographiques
-  final String? geographicCrsId;
-  
-  /// Spécification PROJ.4 pour le système de coordonnées géographiques
-  final String? geographicProj4Spec;
-  
-  /// Point de référence en degrés (latitude, longitude)
-  final GeographicRefPoint? refPointDeg;
+  /// Précision estimée (en mètres)
+  final double accuracy;
 
-  const Georeferencing({
-    this.scaleDenominator = 10000,
-    this.gridScaleFactor,
-    this.auxiliaryScaleFactor,
-    this.grivation,
-    this.crsId,
-    this.proj4Spec,
-    this.crsParameter,
-    this.refPoint,
-    this.refPointReal,
-    this.geographicCrsId,
-    this.geographicProj4Spec,
-    this.refPointDeg,
+  /// Crée un nouveau point de contrôle au sol
+  GroundControlPoint({
+    required this.id,
+    required this.name,
+    required this.mapPosition,
+    required this.geoPosition,
+    this.altitude,
+    this.accuracy = 0.0,
   });
 
-  /// Crée un géoréférencement basique avec une échelle
-  factory Georeferencing.basic({
-    int scaleDenominator = 10000,
-    String? crsId,
-    Offset? refPoint,
+  /// Crée une copie avec modifications
+  GroundControlPoint copyWith({
+    String? id,
+    String? name,
+    Offset? mapPosition,
+    LatLng? geoPosition,
+    double? altitude,
+    double? accuracy,
   }) {
-    return Georeferencing(
-      scaleDenominator: scaleDenominator,
-      crsId: crsId,
-      refPoint: refPoint,
-    );
-  }
-
-  /// Crée un géoréférencement à partir de points de contrôle
-  /// 
-  /// [controlPoints] : Liste de points de contrôle (au moins 2 requis)
-  /// [crsId] : ID du système de coordonnées
-  factory Georeferencing.fromControlPoints(
-    List<GroundControlPoint> controlPoints, {
-    String? crsId,
-  }) {
-    if (controlPoints.length < 2) {
-      throw ArgumentError('Au moins 2 points de contrôle sont requis');
-    }
-
-    // Calculer la transformation affine
-    final transformation = AffineTransformation.fromPoints(controlPoints);
-    
-    // Calculer l'échelle moyenne
-    final scale = transformation.scale;
-    
-    return Georeferencing(
-      scaleDenominator: (1 / scale).round(),
-      crsId: crsId,
-      refPoint: controlPoints.first.mapPoint,
-      refPointReal: controlPoints.first.realPoint,
-    );
-  }
-
-  /// Convertit des coordonnées de la carte (mm) en coordonnées réelles (m)
-  Offset? toRealCoordinates(Offset mapPoint) {
-    if (refPoint == null || refPointReal == null) return null;
-    
-    // Calculer le décalage par rapport au point de référence
-    final delta = mapPoint - refPoint!;
-    
-    // Convertir en mètres (1 mm sur la carte = scaleDenominator / 1000 mètres)
-    // 1:10000 signifie 1 cm = 100 m, donc 1 mm = 1 m
-    // Donc échelle = scaleDenominator / 1000
-    final scaleFactor = scaleDenominator / 1000.0;
-    
-    return refPointReal! + Offset(
-      delta.dx * scaleFactor,
-      delta.dy * scaleFactor,
-    );
-  }
-
-  /// Convertit des coordonnées réelles (m) en coordonnées de la carte (mm)
-  Offset? toMapCoordinates(Offset realPoint) {
-    if (refPoint == null || refPointReal == null) return null;
-    
-    // Calculer le décalage par rapport au point de référence réel
-    final delta = realPoint - refPointReal!;
-    
-    // Convertir en mm sur la carte
-    final scaleFactor = 1000.0 / scaleDenominator;
-    
-    return refPoint! + Offset(
-      delta.dx * scaleFactor,
-      delta.dy * scaleFactor,
+    return GroundControlPoint(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      mapPosition: mapPosition ?? this.mapPosition,
+      geoPosition: geoPosition ?? this.geoPosition,
+      altitude: altitude ?? this.altitude,
+      accuracy: accuracy ?? this.accuracy,
     );
   }
 
   /// Exporte en JSON
   Map<String, dynamic> toJson() {
     return {
-      'scale_denominator': scaleDenominator,
-      if (gridScaleFactor != null) 'grid_scale_factor': gridScaleFactor,
-      if (auxiliaryScaleFactor != null) 'auxiliary_scale_factor': auxiliaryScaleFactor,
-      if (grivation != null) 'grivation': grivation,
-      if (crsId != null) 'crs_id': crsId,
-      if (proj4Spec != null) 'proj4_spec': proj4Spec,
-      if (crsParameter != null) 'crs_parameter': crsParameter,
-      if (refPoint != null) 'ref_point': {'x': refPoint!.dx, 'y': refPoint!.dy},
-      if (refPointReal != null) 'ref_point_real': {'x': refPointReal!.dx, 'y': refPointReal!.dy},
-      if (geographicCrsId != null) 'geographic_crs_id': geographicCrsId,
-      if (geographicProj4Spec != null) 'geographic_proj4_spec': geographicProj4Spec,
-      if (refPointDeg != null) 'ref_point_deg': {
-        'lat': refPointDeg!.latitude,
-        'lon': refPointDeg!.longitude,
-      },
+      'id': id,
+      'name': name,
+      'map_position': {'x': mapPosition.dx, 'y': mapPosition.dy},
+      'geo_position': {'lat': geoPosition.latitude, 'lng': geoPosition.longitude},
+      if (altitude != null) 'altitude': altitude,
+      'accuracy': accuracy,
+    };
+  }
+
+  /// Charge depuis JSON
+  factory GroundControlPoint.fromJson(Map<String, dynamic> json) {
+    return GroundControlPoint(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      mapPosition: Offset(
+        (json['map_position']?['x'] as num?)?.toDouble() ?? 0.0,
+        (json['map_position']?['y'] as num?)?.toDouble() ?? 0.0,
+      ),
+      geoPosition: LatLng(
+        (json['geo_position']?['lat'] as num?)?.toDouble() ?? 0.0,
+        (json['geo_position']?['lng'] as num?)?.toDouble() ?? 0.0,
+      ),
+      altitude: (json['altitude'] as num?)?.toDouble(),
+      accuracy: (json['accuracy'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'GroundControlPoint(id: $id, name: $name, map: $mapPosition, geo: $geoPosition)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is GroundControlPoint &&
+        other.id == id &&
+        other.name == name &&
+        other.mapPosition == mapPosition &&
+        other.geoPosition == geoPosition &&
+        other.altitude == altitude &&
+        other.accuracy == accuracy;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        name.hashCode ^
+        mapPosition.hashCode ^
+        geoPosition.hashCode ^
+        altitude.hashCode ^
+        accuracy.hashCode;
+  }
+}
+
+/// Coordonnées géographiques (latitude, longitude)
+class LatLng {
+  /// Latitude en degrés décimaux
+  final double latitude;
+  
+  /// Longitude en degrés décimaux
+  final double longitude;
+
+  /// Crée de nouvelles coordonnées géographiques
+  const LatLng(this.latitude, this.longitude);
+
+  /// Exporte en JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'lat': latitude,
+      'lng': longitude,
+    };
+  }
+
+  /// Charge depuis JSON
+  factory LatLng.fromJson(Map<String, dynamic> json) {
+    return LatLng(
+      (json['lat'] as num?)?.toDouble() ?? 0.0,
+      (json['lng'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  /// Distance entre deux points géographiques (formule de Haversine)
+  ///
+  /// [other] : L'autre point
+  /// Retourne la distance en mètres
+  double distanceTo(LatLng other) {
+    const earthRadius = 6371000.0; // Rayon de la Terre en mètres
+    
+    final lat1 = latitude * 0.017453292519943295; // deg to rad
+    final lon1 = longitude * 0.017453292519943295;
+    final lat2 = other.latitude * 0.017453292519943295;
+    final lon2 = other.longitude * 0.017453292519943295;
+    
+    final dLat = lat2 - lat1;
+    final dLon = lon2 - lon1;
+    
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1) * cos(lat2) *
+        sin(dLon / 2) * sin(dLon / 2);
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    
+    return earthRadius * c;
+  }
+
+  /// Cap entre deux points (en degrés)
+  ///
+  /// [other] : L'autre point
+  /// Retourne le cap en degrés (0 = Nord, 90 = Est, etc.)
+  double bearingTo(LatLng other) {
+    final lat1 = latitude * 0.017453292519943295;
+    final lon1 = longitude * 0.017453292519943295;
+    final lat2 = other.latitude * 0.017453292519943295;
+    final lon2 = other.longitude * 0.017453292519943295;
+    
+    final y = sin(lon2 - lon1) * cos(lat2);
+    final x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(lon2 - lon1);
+    
+    final bearing = atan2(y, x);
+    return bearing * 57.29577951308232; // rad to deg
+  }
+
+  @override
+  String toString() {
+    return 'LatLng($latitude, $longitude)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is LatLng &&
+        other.latitude == latitude &&
+        other.longitude == longitude;
+  }
+
+  @override
+  int get hashCode => latitude.hashCode ^ longitude.hashCode;
+}
+
+/// Transformation affine pour la conversion de coordonnées
+///
+/// Cette classe représente une transformation affine 2D qui peut être utilisée
+/// pour convertir entre le repère de la carte et le repère géographique.
+class AffineTransformation {
+  /// Matrice de transformation [a, b, c, d, e, f]
+  /// où : x' = a * x + b * y + c
+  ///       y' = d * x + e * y + f
+  final List<double> matrix;
+
+  /// Crée une nouvelle transformation affine
+  AffineTransformation(this.matrix);
+
+  /// Transformation identité
+  factory AffineTransformation.identity() {
+    return AffineTransformation([1, 0, 0, 0, 1, 0]);
+  }
+
+  /// Crée une transformation à partir de points de contrôle
+  ///
+  /// [mapPoints] : Liste de points dans le repère de la carte
+  /// [geoPoints] : Liste de points géographiques correspondants
+  /// Nécessite au moins 3 points non alignés pour une transformation complète
+  factory AffineTransformation.fromControlPoints(
+    List<Offset> mapPoints,
+    List<LatLng> geoPoints,
+  ) {
+    if (mapPoints.length < 3 || geoPoints.length < 3) {
+      return AffineTransformation.identity();
+    }
+    
+    // Pour l'instant, on retourne une transformation identité
+    // TODO: Implémenter le calcul de la transformation affine
+    return AffineTransformation.identity();
+  }
+
+  /// Applique la transformation à un point
+  Offset transform(Offset point) {
+    final x = matrix[0] * point.dx + matrix[1] * point.dy + matrix[2];
+    final y = matrix[3] * point.dx + matrix[4] * point.dy + matrix[5];
+    return Offset(x, y);
+  }
+
+  /// Applique l'inverse de la transformation à un point
+  Offset inverseTransform(Offset point) {
+    // Pour l'instant, on retourne le point inchangé
+    // TODO: Implémenter l'inverse de la transformation
+    return point;
+  }
+
+  /// Exporte en JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'matrix': matrix,
+    };
+  }
+
+  /// Charge depuis JSON
+  factory AffineTransformation.fromJson(Map<String, dynamic> json) {
+    final matrixData = json['matrix'] as List<dynamic>? ?? [];
+    return AffineTransformation(
+      matrixData.map((v) => (v as num?)?.toDouble() ?? 0.0).toList(),
+    );
+  }
+}
+
+/// Gestion du géoréférencement de la carte
+///
+/// Cette classe gère la conversion entre les coordonnées de la carte
+/// (en mm) et les coordonnées géographiques réelles.
+class Georeferencing {
+  /// Échelle de la carte (1:scale = scale mètres pour 1 mm sur la carte)
+  final double scale;
+  
+  /// Rotation de la carte (en degrés)
+  final double rotation;
+  
+  /// Points de contrôle au sol
+  final List<GroundControlPoint> groundControlPoints;
+  
+  /// Transformation affine calculée à partir des points de contrôle
+  AffineTransformation? transformation;
+  
+  /// Système de coordonnées utilisé (par défaut WGS84)
+  final String coordinateSystem;
+
+  /// Crée un nouveau géoréférencement
+  Georeferencing({
+    required this.scale,
+    this.rotation = 0.0,
+    this.groundControlPoints = const [],
+    this.transformation,
+    this.coordinateSystem = 'WGS84',
+  });
+
+  /// Crée un géoréférencement par défaut
+  factory Georeferencing.defaultReferencing() {
+    return Georeferencing(
+      scale: 5000.0, // 1:5000 par défaut
+      rotation: 0.0,
+      groundControlPoints: [],
+    );
+  }
+
+  /// Crée une copie avec modifications
+  Georeferencing copyWith({
+    double? scale,
+    double? rotation,
+    List<GroundControlPoint>? groundControlPoints,
+    AffineTransformation? transformation,
+    String? coordinateSystem,
+  }) {
+    return Georeferencing(
+      scale: scale ?? this.scale,
+      rotation: rotation ?? this.rotation,
+      groundControlPoints: groundControlPoints ?? this.groundControlPoints,
+      transformation: transformation ?? this.transformation,
+      coordinateSystem: coordinateSystem ?? this.coordinateSystem,
+    );
+  }
+
+  /// Convertit une position carte en coordonnées géographiques
+  ///
+  /// [mapPosition] : Position dans le repère de la carte (en mm)
+  /// Retourne les coordonnées géographiques ou null si impossible
+  LatLng? mapToGeo(Offset mapPosition) {
+    // Si on a une transformation, l'utiliser
+    if (transformation != null) {
+      final transformed = transformation!.transform(mapPosition);
+      // TODO: Convertir en coordonnées géographiques
+      return null;
+    }
+    
+    // Sinon, utiliser l'échelle et la rotation
+    // Pour l'instant, on retourne null
+    // TODO: Implémenter la conversion
+    return null;
+  }
+
+  /// Convertit des coordonnées géographiques en position carte
+  ///
+  /// [geoPosition] : Coordonnées géographiques
+  /// Retourne la position dans le repère de la carte ou null si impossible
+  Offset? geoToMap(LatLng geoPosition) {
+    // Si on a une transformation, l'utiliser
+    if (transformation != null) {
+      // TODO: Convertir en position carte
+      return null;
+    }
+    
+    // Sinon, utiliser l'échelle et la rotation
+    // Pour l'instant, on retourne null
+    // TODO: Implémenter la conversion
+    return null;
+  }
+
+  /// Calcule la transformation à partir des points de contrôle
+  void calculateTransformation() {
+    if (groundControlPoints.length < 3) {
+      transformation = null;
+      return;
+    }
+    
+    final mapPoints = groundControlPoints.map((p) => p.mapPosition).toList();
+    final geoPoints = groundControlPoints.map((p) => p.geoPosition).toList();
+    
+    transformation = AffineTransformation.fromControlPoints(mapPoints, geoPoints);
+  }
+
+  /// Exporte en JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'scale': scale,
+      'rotation': rotation,
+      'coordinate_system': coordinateSystem,
+      'ground_control_points': groundControlPoints.map((p) => p.toJson()).toList(),
+      if (transformation != null) 'transformation': transformation!.toJson(),
     };
   }
 
   /// Charge depuis JSON
   factory Georeferencing.fromJson(Map<String, dynamic> json) {
+    final gcpData = json['ground_control_points'] as List<dynamic>? ?? [];
+    final gcp = gcpData
+        .map((data) => GroundControlPoint.fromJson(data as Map<String, dynamic>))
+        .toList();
+    
+    AffineTransformation? transformation;
+    if (json['transformation'] != null) {
+      transformation = AffineTransformation.fromJson(
+        json['transformation'] as Map<String, dynamic>,
+      );
+    }
+    
     return Georeferencing(
-      scaleDenominator: json['scale_denominator'] as int? ?? 10000,
-      gridScaleFactor: json['grid_scale_factor'] as double?,
-      auxiliaryScaleFactor: json['auxiliary_scale_factor'] as double?,
-      grivation: json['grivation'] as double?,
-      crsId: json['crs_id'] as String?,
-      proj4Spec: json['proj4_spec'] as String?,
-      crsParameter: json['crs_parameter'] as String?,
-      refPoint: json['ref_point'] != null
-          ? Offset(
-              (json['ref_point']['x'] as num?)?.toDouble() ?? 0.0,
-              (json['ref_point']['y'] as num?)?.toDouble() ?? 0.0,
-            )
-          : null,
-      refPointReal: json['ref_point_real'] != null
-          ? Offset(
-              (json['ref_point_real']['x'] as num?)?.toDouble() ?? 0.0,
-              (json['ref_point_real']['y'] as num?)?.toDouble() ?? 0.0,
-            )
-          : null,
-      geographicCrsId: json['geographic_crs_id'] as String?,
-      geographicProj4Spec: json['geographic_proj4_spec'] as String?,
-      refPointDeg: json['ref_point_deg'] != null
-          ? GeographicRefPoint(
-              (json['ref_point_deg']['lat'] as num?)?.toDouble() ?? 0.0,
-              (json['ref_point_deg']['lon'] as num?)?.toDouble() ?? 0.0,
-            )
-          : null,
-    );
-  }
-}
-
-/// Point de contrôle pour le géoréférencement
-/// 
-/// Un point de contrôle relie un point sur la carte (en mm) à un point réel
-/// (en mètres ou en coordonnées géographiques).
-class GroundControlPoint {
-  /// Position sur la carte (en mm)
-  final Offset mapPoint;
-  
-  /// Position réelle (en mètres ou coordonnées projetées)
-  final Offset realPoint;
-
-  const GroundControlPoint({
-    required this.mapPoint,
-    required this.realPoint,
-  });
-
-  /// Crée un point de contrôle à partir de coordonnées latitude/longitude
-  factory GroundControlPoint.fromLatLng({
-    required Offset mapPoint,
-    required double latitude,
-    required double longitude,
-  }) {
-    // Conversion simplifiée : on suppose que lat/lon sont en degrés
-    // et on les convertit en mètres (approximation)
-    // Note: Une conversion précise nécessiterait une projection cartographique
-    return GroundControlPoint(
-      mapPoint: mapPoint,
-      realPoint: Offset(longitude, latitude), // Simplifié
-    );
-  }
-}
-
-/// Point de référence géographique (latitude/longitude en degrés)
-class GeographicRefPoint {
-  final double latitude;
-  final double longitude;
-
-  const GeographicRefPoint(this.latitude, this.longitude);
-
-  /// Convertit en Offset (pour compatibilité)
-  Offset toOffset() => Offset(longitude, latitude);
-}
-
-/// Transformation affine pour le géoréférencement
-/// 
-/// Une transformation affine permet de convertir des coordonnées entre deux
-/// systèmes de coordonnées à l'aide d'une matrice 2x3.
-class AffineTransformation {
-  /// Coefficients de la transformation :
-  /// x' = a * x + b * y + c
-  /// y' = d * x + e * y + f
-  final double a, b, c;
-  final double d, e, f;
-
-  const AffineTransformation(this.a, this.b, this.c, this.d, this.e, this.f);
-
-  /// Transformation identité
-  static const AffineTransformation identity = AffineTransformation(1, 0, 0, 0, 1, 0);
-
-  /// Crée une transformation affine à partir de points de contrôle
-  /// 
-  /// [controlPoints] : Liste de points de contrôle (au moins 3 requis pour une
-  /// transformation affine complète, mais 2 points suffisent pour une
-  /// transformation de similarité)
-  factory AffineTransformation.fromPoints(List<GroundControlPoint> controlPoints) {
-    if (controlPoints.length < 2) {
-      throw ArgumentError('Au moins 2 points de contrôle sont requis');
-    }
-
-    if (controlPoints.length >= 3) {
-      // Transformation affine complète (6 paramètres)
-      return _calculateAffineTransformation(controlPoints);
-    } else {
-      // Transformation de similarité (4 paramètres : translation, rotation, échelle)
-      return _calculateSimilarityTransformation(controlPoints);
-    }
-  }
-
-  /// Calcule une transformation affine complète à partir de 3+ points
-  static AffineTransformation _calculateAffineTransformation(List<GroundControlPoint> points) {
-    // On utilise les 3 premiers points pour calculer la transformation
-    final p1 = points[0];
-    final p2 = points[1];
-    final p3 = points[2];
-
-    // Matrice des coordonnées sources (map)
-    final x1 = p1.mapPoint.dx;
-    final y1 = p1.mapPoint.dy;
-    final x2 = p2.mapPoint.dx;
-    final y2 = p2.mapPoint.dy;
-    final x3 = p3.mapPoint.dx;
-    final y3 = p3.mapPoint.dy;
-
-    // Matrice des coordonnées destinations (real)
-    final x1p = p1.realPoint.dx;
-    final y1p = p1.realPoint.dy;
-    final x2p = p2.realPoint.dx;
-    final y2p = p2.realPoint.dy;
-    final x3p = p3.realPoint.dx;
-    final y3p = p3.realPoint.dy;
-
-    // Résoudre le système d'équations pour a, b, c, d, e, f
-    // x' = a*x + b*y + c
-    // y' = d*x + e*y + f
-    
-    // Pour 3 points, on a 6 équations :
-    // x1p = a*x1 + b*y1 + c
-    // x2p = a*x2 + b*y2 + c
-    // x3p = a*x3 + b*y3 + c
-    // y1p = d*x1 + e*y1 + f
-    // y2p = d*x2 + e*y2 + f
-    // y3p = d*x3 + e*y3 + f
-    
-    // Résoudre pour a, b, c
-    final denom = (y2 - y3) * (x1 - x2) - (x2 - x3) * (y1 - y2);
-    
-    if (denom == 0) {
-      // Les points sont colinéaires, utiliser une transformation de similarité
-      return _calculateSimilarityTransformation(points);
-    }
-    
-    final a = ((y2 - y3) * (x1p - x2p) - (x2 - x3) * (y1p - y2p)) / denom;
-    final b = ((x3 - x2) * (x1p - x2p) - (x1 - x2) * (x3p - x2p)) / denom;
-    final c = x1p - a * x1 - b * y1;
-    
-    final d = ((y2 - y3) * (y1p - y2p) - (x2 - x3) * (x1p - x2p)) / denom;
-    final e = ((x3 - x2) * (y1p - y2p) - (x1 - x2) * (y3p - y2p)) / denom;
-    final f = y1p - d * x1 - e * y1;
-
-    return AffineTransformation(a, b, c, d, e, f);
-  }
-
-  /// Calcule une transformation de similarité à partir de 2 points
-  static AffineTransformation _calculateSimilarityTransformation(List<GroundControlPoint> points) {
-    final p1 = points[0];
-    final p2 = points[1];
-
-    // Vecteurs
-    final dx = p2.mapPoint.dx - p1.mapPoint.dx;
-    final dy = p2.mapPoint.dy - p1.mapPoint.dy;
-    final dxp = p2.realPoint.dx - p1.realPoint.dx;
-    final dyp = p2.realPoint.dy - p1.realPoint.dy;
-
-    // Calculer l'échelle et la rotation
-    final length1 = math.sqrt(dx * dx + dy * dy);
-    final length2 = math.sqrt(dxp * dxp + dyp * dyp);
-    final scale = length2 / length1;
-    
-    final cosTheta = (dx * dxp + dy * dyp) / (length1 * length2);
-    final sinTheta = (dx * dyp - dy * dxp) / (length1 * length2);
-
-    // Coefficients de la transformation
-    final a = scale * cosTheta;
-    final b = -scale * sinTheta;
-    final d = scale * sinTheta;
-    final e = scale * cosTheta;
-    final c = p2.realPoint.dx - a * p2.mapPoint.dx - b * p2.mapPoint.dy;
-    final f = p2.realPoint.dy - d * p2.mapPoint.dx - e * p2.mapPoint.dy;
-
-    return AffineTransformation(a, b, c, d, e, f);
-  }
-
-  /// Applique la transformation à un point
-  Offset transform(Offset point) {
-    return Offset(
-      a * point.dx + b * point.dy + c,
-      d * point.dx + e * point.dy + f,
+      scale: (json['scale'] as num?)?.toDouble() ?? 5000.0,
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+      groundControlPoints: gcp,
+      transformation: transformation,
+      coordinateSystem: json['coordinate_system'] as String? ?? 'WGS84',
     );
   }
 
-  /// Applique l'inverse de la transformation à un point
-  Offset inverseTransform(Offset point) {
-    // Calculer le déterminant
-    final det = a * e - b * d;
-    
-    if (det == 0) {
-      // La transformation n'est pas inversible
-      return point;
-    }
-    
-    final invDet = 1 / det;
-    
-    return Offset(
-      (e * (point.dx - c) - b * (point.dy - f)) * invDet,
-      (-d * (point.dx - c) + a * (point.dy - f)) * invDet,
-    );
+  @override
+  String toString() {
+    return 'Georeferencing(scale: 1:$scale, rotation: $rotation°, gcps: ${groundControlPoints.length})';
   }
 
-  /// Échelle moyenne de la transformation
-  double get scale {
-    // Échelle dans la direction x
-    final scaleX = math.sqrt(a * a + d * d);
-    // Échelle dans la direction y
-    final scaleY = math.sqrt(b * b + e * e);
-    // Échelle moyenne
-    return (scaleX + scaleY) / 2;
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Georeferencing &&
+        other.scale == scale &&
+        other.rotation == rotation &&
+        other.groundControlPoints == groundControlPoints &&
+        other.transformation == transformation &&
+        other.coordinateSystem == coordinateSystem;
   }
 
-  /// Rotation moyenne de la transformation (en radians)
-  double get rotation {
-    // Utiliser l'atan2 de la matrice de rotation
-    return math.atan2(d, a);
+  @override
+  int get hashCode {
+    return scale.hashCode ^
+        rotation.hashCode ^
+        groundControlPoints.hashCode ^
+        transformation.hashCode ^
+        coordinateSystem.hashCode;
   }
 }
+
+/// Fonctions mathématiques utiles
+num sin(num x) => x.sin();
+num cos(num x) => x.cos();
+num atan2(num y, num x) => y.atan2(x);
+num sqrt(num x) => x.sqrt();

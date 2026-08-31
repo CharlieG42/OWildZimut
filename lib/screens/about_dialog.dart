@@ -18,7 +18,7 @@ class AboutDialog extends StatelessWidget {
             const Icon(
               Icons.map,
               size: 64,
-              color: Colors.blue,
+              color: const Color(0xFF2196F3),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -49,14 +49,14 @@ class AboutDialog extends StatelessWidget {
               'Auteur: Charlie Gentil',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: const Color(0xFF9E9E9E),
               ),
             ),
             const Text(
               'Organisation: WildZimut',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: const Color(0xFF9E9E9E),
               ),
             ),
           ],
