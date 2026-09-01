@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:path/path.dart' as path;
 
 /// Chargeur de fichiers pour OWildZimut
 ///
@@ -19,10 +18,10 @@ class FileLoader {
         extensions: ['omap', 'xml'],
       );
       
-      final xfile = await openFile(acceptedTypeGroups: [typeGroup]);
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
       
-      if (xfile != null) {
-        final fileContent = await File(xfile.path).readAsString();
+      if (file != null) {
+        final fileContent = await File(file.path).readAsString();
         return fileContent;
       }
       return null;
@@ -38,13 +37,13 @@ class FileLoader {
   /// Retourne le chemin du fichier sauvegardé, ou null si annulé.
   static Future<String?> saveOmapFile(String omapXml) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'carte_${DateTime.now().millisecondsSinceEpoch}.omap';
-      final filePath = path.join(directory.path, fileName);
+      // Obtenir le répertoire de téléchargements
+      final directory = await getDownloadsDirectory();
+      if (directory == null) return null;
       
+      final filePath = '${directory.path}/carte_${DateTime.now().millisecondsSinceEpoch}.omap';
       final file = File(filePath);
       await file.writeAsString(omapXml);
-      
       return filePath;
     } catch (e) {
       debugPrint('Erreur lors de la sauvegarde du fichier OMAP: $e');
@@ -69,7 +68,7 @@ class FileLoader {
       }
       return null;
     } catch (e) {
-      debugPrint('Erreur lors du chargement de l\'image: $e');
+      debugPrint("Erreur lors du chargement de l'image: $e");
       return null;
     }
   }
@@ -86,7 +85,7 @@ class FileLoader {
       }
       return null;
     } catch (e) {
-      debugPrint('Erreur lors du chargement du fichier: $e');
+      debugPrint("Erreur lors du chargement du fichier: $e");
       return null;
     }
   }

@@ -141,7 +141,7 @@ class ToolBar extends StatelessWidget {
         _buildToolButton(context, 'select', Icons.select_all, 'Sélection', 'S'),
         _buildToolButton(context, 'point', Icons.circle, 'Point', 'P'),
         _buildToolButton(context, 'line', Icons.polyline, 'Ligne', 'L'),
-        _buildToolButton(context, 'polygon', Icons.check, 'Polygone', 'G'),
+        _buildToolButton(context, 'polygon', Icons.hexagon, 'Polygone', 'G'),
         _buildToolButton(context, 'text', Icons.text_fields, 'Texte', 'T'),
       ],
     );
@@ -231,7 +231,7 @@ class ToolBar extends StatelessWidget {
             onPressed: selectedSymbolIds.isNotEmpty ? onDeleteSelected : null,
             style: IconButton.styleFrom(
               padding: const EdgeInsets.all(8),
-              foregroundColor: const Color(0xFFF44336),
+              foregroundColor: Colors.red,
             ),
           ),
         ),
@@ -422,7 +422,7 @@ class CompactToolBar extends StatelessWidget {
             _buildCompactToolButton(context, 'select', Icons.select_all, 'Sélection'),
             _buildCompactToolButton(context, 'point', Icons.circle, 'Point'),
             _buildCompactToolButton(context, 'line', Icons.polyline, 'Ligne'),
-            _buildCompactToolButton(context, 'polygon', Icons.check, 'Polygone'),
+            _buildCompactToolButton(context, 'polygon', Icons.hexagon, 'Polygone'),
             _buildCompactToolButton(context, 'text', Icons.text_fields, 'Texte'),
             const VerticalDivider(),
             
@@ -438,8 +438,10 @@ class CompactToolBar extends StatelessWidget {
               tooltip: 'Rétablir',
             ),
             IconButton(
-              style: IconButton.styleFrom(foregroundColor: const Color(0xFFF44336)),
-              style: IconButton.styleFrom(foregroundColor: const Color(0xFFF44336)),
+              icon: const Icon(Icons.delete),
+              onPressed: selectedSymbolIds.isNotEmpty ? onDeleteSelected : null,
+              tooltip: 'Supprimer',
+              style: IconButton.styleFrom(foregroundColor: Colors.red),
             ),
             const VerticalDivider(),
             
@@ -493,7 +495,7 @@ class CompactToolBar extends StatelessWidget {
 ///
 /// Cette classe gère les raccourcis clavier pour l'application.
 class KeyboardShortcuts {
-  static final Map<LogicalKeySet, Intent> shortcuts = {
+  static Map<LogicalKeySet, Intent> shortcuts = {
     // Sélection
     LogicalKeySet(
       LogicalKeyboardKey.keyA,
@@ -588,86 +590,86 @@ class KeyboardShortcuts {
     return Shortcuts(
       shortcuts: shortcuts,
       child: Actions(
-        actions: <Type, Action<Intent>>{
+        actions: {
           // Sélection
-          SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (_) {
+          SelectAllIntent: CallbackAction(onInvoke: (_) {
             onSelectAll();
             return null;
           }),
           
           // Édition
-          UndoIntent: CallbackAction<UndoIntent>(onInvoke: (_) {
+          UndoIntent: CallbackAction(onInvoke: (_) {
             onUndo();
             return null;
           }),
           
-          RedoIntent: CallbackAction<RedoIntent>(onInvoke: (_) {
+          RedoIntent: CallbackAction(onInvoke: (_) {
             onRedo();
             return null;
           }),
           
-          CopyIntent: CallbackAction<CopyIntent>(onInvoke: (_) {
+          CopyIntent: CallbackAction(onInvoke: (_) {
             if (mapState.selectedSymbolIds.isNotEmpty) {
               onCopySelected();
             }
             return null;
           }),
           
-          PasteIntent: CallbackAction<PasteIntent>(onInvoke: (_) {
+          PasteIntent: CallbackAction(onInvoke: (_) {
             onPaste();
             return null;
           }),
           
-          DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (_) {
+          DeleteIntent: CallbackAction(onInvoke: (_) {
             if (mapState.selectedSymbolIds.isNotEmpty) {
               onDeleteSelected();
             }
             return null;
           }),
           
-          EscapeIntent: CallbackAction<EscapeIntent>(onInvoke: (_) {
+          EscapeIntent: CallbackAction(onInvoke: (_) {
             onClearSelection();
             return null;
           }),
           
           // Outils
-          SelectToolIntent: CallbackAction<SelectToolIntent>(onInvoke: (_) {
+          SelectToolIntent: CallbackAction(onInvoke: (_) {
             onToolSelected('select');
             return null;
           }),
           
-          PointToolIntent: CallbackAction<PointToolIntent>(onInvoke: (_) {
+          PointToolIntent: CallbackAction(onInvoke: (_) {
             onToolSelected('point');
             return null;
           }),
           
-          LineToolIntent: CallbackAction<LineToolIntent>(onInvoke: (_) {
+          LineToolIntent: CallbackAction(onInvoke: (_) {
             onToolSelected('line');
             return null;
           }),
           
-          PolygonToolIntent: CallbackAction<PolygonToolIntent>(onInvoke: (_) {
-            onToolSelected('area');
+          PolygonToolIntent: CallbackAction(onInvoke: (_) {
+            onToolSelected('polygon');
             return null;
           }),
           
-          TextToolIntent: CallbackAction<TextToolIntent>(onInvoke: (_) {
+          TextToolIntent: CallbackAction(onInvoke: (_) {
             onToolSelected('text');
             return null;
           }),
           
           // Vue
-          ZoomInIntent: CallbackAction<ZoomInIntent>(onInvoke: (_) {
+          ZoomInIntent: CallbackAction(onInvoke: (_) {
             onZoomIn();
             return null;
           }),
           
-          ZoomOutIntent: CallbackAction<ZoomOutIntent>(onInvoke: (_) {
+          ZoomOutIntent: CallbackAction(onInvoke: (_) {
             onZoomOut();
             return null;
           }),
           
-          ResetViewIntent: CallbackAction<ResetViewIntent>(onInvoke: (_) {
+          ResetViewIntent: CallbackAction(onInvoke: (_) {
             onResetView();
             return null;
           }),

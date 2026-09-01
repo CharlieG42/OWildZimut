@@ -1,298 +1,550 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import '../extensions/offset_extensions.dart';
 
-/// Types de symboles possibles dans une carte d'orientation
-///
-/// Ces types correspondent aux types de symboles IOF (International Orienteering Federation)
-/// et sont utilisés dans le format OMAP.
+/// Type de symbole IOF (International Orienteering Federation)
 enum MapSymbolType {
-  /// Point : symbole ponctuel (rocher, arbre isolé, etc.)
+  /// Symbole ponctuel (ex: rocher, arbre isolé)
   point,
   
-  /// Ligne : symbole linéaire (chemin, rivière, ligne électrique, etc.)
+  /// Symbole linéaire (ex: chemin, rivière)
   line,
   
-  /// Surface : symbole de surface (forêt, champ, zone rocheuse, etc.)
+  /// Symbole de surface (ex: forêt, lac)
   area,
   
-  /// Texte : symbole textuel (nom, numéro, description, etc.)
+  /// Symbole de texte
   text,
 }
 
-/// Modèle de données pour un symbole de carte d'orientation
+/// Symbole de carte d'orientation
 ///
-/// Un symbole représente un élément graphique sur la carte :
-/// - Un point (rocher, arbre isolé, etc.)
-/// - Une ligne (chemin, rivière, etc.)
-/// - Une surface (forêt, champ, etc.)
-/// - Du texte (nom, numéro, etc.)
-///
-/// Les coordonnées sont en millimètres dans le repère de la carte.
+/// Un symbole représente un élément géométrique sur la carte avec des
+/// propriétés comme la position, la couleur, la taille, etc.
 class MapSymbol {
   /// Identifiant unique du symbole
   final String id;
   
-  /// Nom ou description du symbole
-  String name;
+  /// Type de symbole (point, ligne, surface, texte)
+  final MapSymbolType type;
   
-  /// Type du symbole (point, ligne, surface, texte)
-  MapSymbolType type;
+  /// Code IOF (ex: "701.1" pour forêt blanche)
+  final String? iofCode;
   
-  /// Position du symbole (pour les points et les textes)
-  Offset position;
+  /// Code personnalisé (si différent du code IOF)
+  final String? code;
   
-  /// Liste de points (pour les lignes et les surfaces)
-  /// Pour une ligne : liste de points formant la ligne
-  /// Pour une surface : liste de points formant le polygone (doit être fermé)
-  List<Offset> points;
+  /// Nom du symbole
+  final String name;
   
-  /// Taille du symbole (pour les points, diamètre du cercle)
-  double size;
+  /// Description du symbole
+  final String description;
   
-  /// Couleur de la ligne (pour les lignes, surfaces et textes)
-  Color strokeColor;
+  /// Position principale (pour les points, ou premier point pour les lignes/surfaces)
+  final Offset position;
   
-  /// Largeur de la ligne (pour les lignes et surfaces)
-  double strokeWidth;
+  /// Liste de tous les points (pour les lignes et surfaces)
+  final List<Offset> points;
   
-  /// Style de la ligne (pleine, pointillée, etc.)
-  StrokeStyle strokeStyle;
+  /// Couleur principale
+  final Color color;
   
-  /// Couleur de remplissage (pour les surfaces et les points)
-  Color fillColor;
+  /// Couleur de contour (pour les surfaces)
+  final Color? strokeColor;
   
-  /// Opacité de remplissage (0.0 - 1.0)
-  double fillOpacity;
+  /// Couleur de remplissage (pour les surfaces)
+  final Color? fillColor;
   
-  /// Vrai si la surface est fermée (pour les polygones)
-  bool isClosed;
+  /// Épaisseur de la ligne (pour les lignes et contours)
+  final double strokeWidth;
   
-  /// Texte à afficher (pour les symboles de type texte)
-  String text;
+  /// Taille (pour les points, diamètre en pixels)
+  final double size;
   
-  /// Style du texte
-  TextStyle textStyle;
+  /// Rotation en radians
+  final double rotation;
   
-  /// Alignement du texte
-  TextAlign textAlign;
+  /// Vrai si la surface est fermée (dernier point = premier point)
+  final bool isClosed;
   
-  /// Rotation du symbole (en radians)
-  double rotation;
+  /// Opacité (0.0 - 1.0)
+  final double opacity;
   
-  /// Vrai si le symbole est visible
-  bool visible;
+  /// Icône encodée en base64 (pour les symboles ponctuels)
+  final String? iconBase64;
   
-  /// Vrai si le symbole est sélectionné
-  bool selected;
+  /// Texte (pour les symboles de texte)
+  final String? text;
   
-  /// Niveau de détail (pour le filtrage par échelle)
-  int detailLevel;
+  /// Style de police (pour les symboles de texte)
+  final String? fontFamily;
   
-  /// Couche à laquelle appartient le symbole
-  String layerId;
+  /// Taille de la police (pour les symboles de texte)
+  final double? fontSize;
   
-  /// Crée un nouveau symbole
-  MapSymbol({
+  /// Alignement horizontal du texte
+  final TextAlign? textAlign;
+
+  /// Vrai si la ligne doit être dessinée en pointillés (ex. sentier peu
+  /// marqué). Sans effet sur les points/surfaces.
+  final bool isDashed;
+
+  /// Longueur d'un tiret, en unités de coordonnées (mm) — utilisé seulement
+  /// si [isDashed] est vrai.
+  final double? dashLength;
+
+  /// Longueur d'un espace entre deux tirets, en unités de coordonnées (mm)
+  /// — utilisé seulement si [isDashed] est vrai.
+  final double? gapLength;
+
+  const MapSymbol({
     required this.id,
+    required this.type,
+    this.iofCode,
+    this.code,
     this.name = '',
-    this.type = MapSymbolType.point,
+    this.description = '',
     this.position = Offset.zero,
     this.points = const [],
-    this.size = 1.0,
-    this.strokeColor = const Color(0xFF000000),
-    this.strokeWidth = 0.35,
-    this.strokeStyle = StrokeStyle.solid,
-    this.fillColor = const Color(0xFFFFFFFF),
-    this.fillOpacity = 1.0,
-    this.isClosed = false,
-    this.text = '',
-    this.textStyle = const TextStyle(color: Color(0xFF000000), fontSize: 2.5),
-    this.textAlign = TextAlign.center,
+    this.color = Colors.black,
+    this.strokeColor,
+    this.fillColor,
+    this.strokeWidth = 1.0,
+    this.size = 5.0,
     this.rotation = 0.0,
-    this.visible = true,
-    this.selected = false,
-    this.detailLevel = 0,
-    this.layerId = '',
+    this.isClosed = false,
+    this.opacity = 1.0,
+    this.iconBase64,
+    this.text,
+    this.fontFamily,
+    this.fontSize,
+    this.textAlign,
+    this.isDashed = false,
+    this.dashLength,
+    this.gapLength,
   });
 
-  /// Crée un symbole point
+  /// Crée un symbole ponctuel
   factory MapSymbol.point({
     required String id,
-    required Offset position,
-    double size = 1.0,
-    Color color = const Color(0xFF000000),
-    String name = '',
-    String layerId = '',
+    Offset? position,
+    Color? color,
+    double? size,
+    String? iofCode,
+    String? name,
+    String? description,
+    double? rotation,
+    String? iconBase64,
   }) {
     return MapSymbol(
       id: id,
-      name: name,
       type: MapSymbolType.point,
-      position: position,
-      size: size,
-      strokeColor: color,
-      fillColor: color,
-      layerId: layerId,
+      iofCode: iofCode,
+      name: name ?? 'Point',
+      description: description ?? '',
+      position: position ?? Offset.zero,
+      points: position != null ? [position] : [],
+      color: color ?? Colors.black,
+      size: size ?? 5.0,
+      rotation: rotation ?? 0.0,
+      iconBase64: iconBase64,
     );
   }
 
-  /// Crée un symbole ligne
+  /// Crée un symbole linéaire
   factory MapSymbol.line({
     required String id,
     required List<Offset> points,
-    Color color = const Color(0xFF000000),
-    double width = 0.35,
-    String name = '',
-    String layerId = '',
+    Color? color,
+    double? strokeWidth,
+    String? iofCode,
+    String? name,
+    String? description,
   }) {
     return MapSymbol(
       id: id,
-      name: name,
       type: MapSymbolType.line,
+      iofCode: iofCode,
+      name: name ?? 'Ligne',
+      description: description ?? '',
+      position: points.isNotEmpty ? points.first : Offset.zero,
       points: points,
+      color: color ?? Colors.black,
       strokeColor: color,
-      strokeWidth: width,
+      strokeWidth: strokeWidth ?? 2.0,
       isClosed: false,
-      layerId: layerId,
     );
   }
 
-  /// Crée un symbole surface
+  /// Crée un symbole de surface (polygone)
   factory MapSymbol.area({
     required String id,
     required List<Offset> points,
-    Color fillColor = const Color(0xFFFFEB3B),
-    Color strokeColor = const Color(0xFF000000),
-    double strokeWidth = 0.35,
-    String name = '',
-    String layerId = '',
+    Color? fillColor,
+    Color? strokeColor,
+    double? strokeWidth,
+    String? iofCode,
+    String? name,
+    String? description,
+    bool? isClosed,
   }) {
     return MapSymbol(
       id: id,
-      name: name,
       type: MapSymbolType.area,
+      iofCode: iofCode,
+      name: name ?? 'Surface',
+      description: description ?? '',
+      position: points.isNotEmpty ? points.first : Offset.zero,
       points: points,
+      color: fillColor ?? Colors.blue.withValues(alpha: 0.3),
       fillColor: fillColor,
-      strokeColor: strokeColor,
-      strokeWidth: strokeWidth,
-      isClosed: true,
-      layerId: layerId,
+      strokeColor: strokeColor ?? Colors.blue,
+      strokeWidth: strokeWidth ?? 1.0,
+      isClosed: isClosed ?? (points.length > 1 && points.first == points.last),
     );
   }
 
-  /// Crée un symbole texte
+  /// Crée un symbole de texte
   factory MapSymbol.text({
     required String id,
     required String text,
-    required Offset position,
-    TextStyle style = const TextStyle(color: Color(0xFF000000), fontSize: 2.5),
-    String name = '',
-    String layerId = '',
+    Offset? position,
+    Color? color,
+    double? fontSize,
+    String? fontFamily,
+    TextAlign? textAlign,
+    String? iofCode,
+    String? name,
+    String? description,
   }) {
     return MapSymbol(
       id: id,
-      name: name,
       type: MapSymbolType.text,
-      position: position,
+      iofCode: iofCode,
+      name: name ?? 'Texte',
+      description: description ?? '',
+      position: position ?? Offset.zero,
+      points: position != null ? [position] : [],
+      color: color ?? Colors.black,
       text: text,
-      textStyle: style,
-      layerId: layerId,
+      fontSize: fontSize ?? 12.0,
+      fontFamily: fontFamily,
+      textAlign: textAlign,
     );
   }
 
-  /// Crée une copie du symbole avec des modifications
+  /// Crée une copie avec des modifications
   MapSymbol copyWith({
     String? id,
-    String? name,
     MapSymbolType? type,
+    String? iofCode,
+    String? code,
+    String? name,
+    String? description,
     Offset? position,
     List<Offset>? points,
-    double? size,
+    Color? color,
     Color? strokeColor,
-    double? strokeWidth,
-    StrokeStyle? strokeStyle,
     Color? fillColor,
-    double? fillOpacity,
-    bool? isClosed,
-    String? text,
-    TextStyle? textStyle,
-    TextAlign? textAlign,
+    double? strokeWidth,
+    double? size,
     double? rotation,
-    bool? visible,
-    bool? selected,
-    int? detailLevel,
-    String? layerId,
+    bool? isClosed,
+    double? opacity,
+    String? iconBase64,
+    String? text,
+    String? fontFamily,
+    double? fontSize,
+    TextAlign? textAlign,
   }) {
     return MapSymbol(
       id: id ?? this.id,
-      name: name ?? this.name,
       type: type ?? this.type,
+      iofCode: iofCode ?? this.iofCode,
+      code: code ?? this.code,
+      name: name ?? this.name,
+      description: description ?? this.description,
       position: position ?? this.position,
       points: points ?? this.points,
-      size: size ?? this.size,
+      color: color ?? this.color,
       strokeColor: strokeColor ?? this.strokeColor,
-      strokeWidth: strokeWidth ?? this.strokeWidth,
-      strokeStyle: strokeStyle ?? this.strokeStyle,
       fillColor: fillColor ?? this.fillColor,
-      fillOpacity: fillOpacity ?? this.fillOpacity,
-      isClosed: isClosed ?? this.isClosed,
-      text: text ?? this.text,
-      textStyle: textStyle ?? this.textStyle,
-      textAlign: textAlign ?? this.textAlign,
+      strokeWidth: strokeWidth ?? this.strokeWidth,
+      size: size ?? this.size,
       rotation: rotation ?? this.rotation,
-      visible: visible ?? this.visible,
-      selected: selected ?? this.selected,
-      detailLevel: detailLevel ?? this.detailLevel,
-      layerId: layerId ?? this.layerId,
+      isClosed: isClosed ?? this.isClosed,
+      opacity: opacity ?? this.opacity,
+      iconBase64: iconBase64 ?? this.iconBase64,
+      text: text ?? this.text,
+      fontFamily: fontFamily ?? this.fontFamily,
+      fontSize: fontSize ?? this.fontSize,
+      textAlign: textAlign ?? this.textAlign,
     );
   }
 
-  // ============================================================================
-  // PROPRIÉTÉS CALCULÉES
-  // ============================================================================
-
-  /// Rectangle englobant du symbole
+  /// Rectangle englobant (bounding box) du symbole
   Rect get boundingBox {
+    if (points.isEmpty) {
+      return Rect.fromCircle(center: position, radius: size / 2);
+    }
+    
+    if (points.length == 1) {
+      return Rect.fromCircle(center: points.first, radius: size / 2);
+    }
+    
+    // Calculer le rectangle englobant de tous les points
+    double minX = points.first.dx;
+    double minY = points.first.dy;
+    double maxX = points.first.dx;
+    double maxY = points.first.dy;
+    
+    for (final point in points) {
+      minX = point.dx < minX ? point.dx : minX;
+      minY = point.dy < minY ? point.dy : minY;
+      maxX = point.dx > maxX ? point.dx : maxX;
+      maxY = point.dy > maxY ? point.dy : maxY;
+    }
+    
+    // Ajouter une marge pour les symboles avec taille
+    final margin = size / 2;
+    return Rect.fromLTRB(
+      minX - margin,
+      minY - margin,
+      maxX + margin,
+      maxY + margin,
+    );
+  }
+
+  /// Centre géométrique du symbole
+  Offset get center {
+    if (points.isEmpty) return position;
+    
+    double sumX = 0;
+    double sumY = 0;
+    for (final point in points) {
+      sumX += point.dx;
+      sumY += point.dy;
+    }
+    return Offset(sumX / points.length, sumY / points.length);
+  }
+
+  /// Vérifie si le symbole contient un point
+  bool contains(Offset point) {
     switch (type) {
       case MapSymbolType.point:
-        final halfSize = size / 2;
-        return Rect.fromCircle(
-          center: position,
-          radius: halfSize,
-        );
+        return (point - position).distance <= size / 2;
       case MapSymbolType.line:
-        if (points.isEmpty) return Rect.zero;
-        if (points.length == 1) {
-          return Rect.fromCircle(
-            center: points.first,
-            radius: strokeWidth / 2,
-          );
-        }
-        return _computeLineBoundingBox();
+        return _pointOnLine(point, points, strokeWidth + 2);
       case MapSymbolType.area:
-        if (points.isEmpty) return Rect.zero;
-        return _computePolygonBoundingBox();
+        return pointInPolygon(point, points);
       case MapSymbolType.text:
-        // Estimation de la taille du texte (simplifiée)
-        final textLength = text.length * textStyle.fontSize! * 0.6;
-        final textHeight = textStyle.fontSize! * 1.2;
-        return Rect.fromLTWH(
-          position.dx - textLength / 2,
-          position.dy - textHeight / 2,
-          textLength,
-          textHeight,
-        );
+        return boundingBox.contains(point);
     }
   }
 
-  /// Calcule le rectangle englobant pour une ligne
-  Rect _computeLineBoundingBox() {
-    double minX = double.infinity;
-    double minY = double.infinity;
-    double maxX = -double.infinity;
-    double maxY = -double.infinity;
+  /// Vérifie si un point est sur une ligne (avec tolérance)
+  static bool _pointOnLine(Offset point, List<Offset> linePoints, double tolerance) {
+    if (linePoints.length < 2) return false;
     
-    for (final point in points) {
-      minX = math.min(minX, point.dx);
-      minY = math.min(minY, point.dy);
+    for (var i = 0; i < linePoints.length - 1; i++) {
+      final p1 = linePoints[i];
+      final p2 = linePoints[i + 1];
       
+      if (_pointOnSegment(point, p1, p2, tolerance)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Vérifie si un point est sur un segment de ligne
+  static bool _pointOnSegment(Offset point, Offset p1, Offset p2, double tolerance) {
+    // Calculer la distance du point à la ligne
+    final lineLength = (p2 - p1).distance;
+    if (lineLength == 0) return false;
+    
+    final t = ((point - p1).dot(p2 - p1)) / (lineLength * lineLength);
+    
+    // Projeter le point sur la ligne
+    final projection = p1 + (p2 - p1) * t.clamp(0, 1);
+    
+    return (point - projection).distance <= tolerance;
+  }
+
+  /// Vérifie si un point est à l'intérieur d'un polygone
+  /// (algorithme du rayon)
+  static bool pointInPolygon(Offset point, List<Offset> polygonPoints) {
+    if (polygonPoints.length < 3) return false;
+    
+    bool inside = false;
+    for (var i = 0, j = polygonPoints.length - 1; i < polygonPoints.length; j = i++) {
+      final xi = polygonPoints[i].dx;
+      final yi = polygonPoints[i].dy;
+      final xj = polygonPoints[j].dx;
+      final yj = polygonPoints[j].dy;
+      
+      final intersect = ((yi > point.dy) != (yj > point.dy)) &&
+          (point.dx < (xj - xi) * (point.dy - yi) / (yj - yi) + xi);
+      
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  /// Exporte en JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type.name,
+      if (iofCode != null) 'iof_code': iofCode,
+      if (code != null) 'code': code,
+      'name': name,
+      'description': description,
+      'position': {'x': position.dx, 'y': position.dy},
+      'points': points.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
+      'color': color.toARGB32().toRadixString(16),
+      if (strokeColor != null) 'stroke_color': strokeColor!.toARGB32().toRadixString(16),
+      if (fillColor != null) 'fill_color': fillColor!.toARGB32().toRadixString(16),
+      'stroke_width': strokeWidth,
+      'size': size,
+      'rotation': rotation,
+      'is_closed': isClosed,
+      'opacity': opacity,
+      if (iconBase64 != null) 'icon_base64': iconBase64,
+      if (text != null) 'text': text,
+      if (fontFamily != null) 'font_family': fontFamily,
+      if (fontSize != null) 'font_size': fontSize,
+      if (textAlign != null) 'text_align': textAlign!.index,
+    };
+  }
+
+  /// Charge depuis JSON
+  factory MapSymbol.fromJson(Map<String, dynamic> json) {
+    final pointsData = json['points'] as List? ?? [];
+    final points = pointsData.map((p) => 
+      Offset(
+        (p['x'] as num?)?.toDouble() ?? 0.0,
+        (p['y'] as num?)?.toDouble() ?? 0.0,
+      )
+    ).toList();
+    
+    return MapSymbol(
+      id: json['id'] as String? ?? '',
+      type: MapSymbolType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => MapSymbolType.point,
+      ),
+      iofCode: json['iof_code'] as String?,
+      code: json['code'] as String?,
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      position: Offset(
+        (json['position']?['x'] as num?)?.toDouble() ?? 0.0,
+        (json['position']?['y'] as num?)?.toDouble() ?? 0.0,
+      ),
+      points: points,
+      color: Color(int.parse(json['color'] as String? ?? '0xFF000000')),
+      strokeColor: json['stroke_color'] != null
+          ? Color(int.parse(json['stroke_color'] as String))
+          : null,
+      fillColor: json['fill_color'] != null
+          ? Color(int.parse(json['fill_color'] as String))
+          : null,
+      strokeWidth: (json['stroke_width'] as num?)?.toDouble() ?? 1.0,
+      size: (json['size'] as num?)?.toDouble() ?? 5.0,
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+      isClosed: json['is_closed'] as bool? ?? false,
+      opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+      iconBase64: json['icon_base64'] as String?,
+      text: json['text'] as String?,
+      fontFamily: json['font_family'] as String?,
+      fontSize: (json['font_size'] as num?)?.toDouble(),
+      textAlign: json['text_align'] != null
+          ? TextAlign.values[json['text_align'] as int]
+          : null,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'MapSymbol(id: $id, type: $type, iofCode: $iofCode, name: $name, '
+        'position: $position, points: ${points.length}, color: $color)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is MapSymbol &&
+        other.id == id &&
+        other.type == type &&
+        other.iofCode == iofCode &&
+        other.code == code &&
+        other.name == name &&
+        other.description == description &&
+        other.position == position &&
+        other.points == points &&
+        other.color == color &&
+        other.strokeColor == strokeColor &&
+        other.fillColor == fillColor &&
+        other.strokeWidth == strokeWidth &&
+        other.size == size &&
+        other.rotation == rotation &&
+        other.isClosed == isClosed &&
+        other.opacity == opacity &&
+        other.iconBase64 == iconBase64 &&
+        other.text == text &&
+        other.fontFamily == fontFamily &&
+        other.fontSize == fontSize &&
+        other.textAlign == textAlign;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        type.hashCode ^
+        iofCode.hashCode ^
+        code.hashCode ^
+        name.hashCode ^
+        description.hashCode ^
+        position.hashCode ^
+        points.hashCode ^
+        color.hashCode ^
+        strokeColor.hashCode ^
+        fillColor.hashCode ^
+        strokeWidth.hashCode ^
+        size.hashCode ^
+        rotation.hashCode ^
+        isClosed.hashCode ^
+        opacity.hashCode ^
+        iconBase64.hashCode ^
+        text.hashCode ^
+        fontFamily.hashCode ^
+        fontSize.hashCode ^
+        textAlign.hashCode;
+  }
+}
+
+/// Extension pour créer des symboles facilement
+extension MapSymbolExtensions on MapSymbol {
+  /// Crée un symbole avec une position mise à jour
+  MapSymbol withPosition(Offset newPosition) {
+    return copyWith(
+      position: newPosition,
+      points: type == MapSymbolType.point ? [newPosition] : points,
+    );
+  }
+
+  /// Crée un symbole avec une couleur mise à jour
+  MapSymbol withColor(Color newColor) {
+    return copyWith(color: newColor);
+  }
+
+  /// Crée un symbole avec une taille mise à jour
+  MapSymbol withSize(double newSize) {
+    return copyWith(size: newSize);
+  }
+
+  /// Crée un symbole avec une rotation mise à jour
+  MapSymbol withRotation(double newRotation) {
+    return copyWith(rotation: newRotation);
+  }
+}

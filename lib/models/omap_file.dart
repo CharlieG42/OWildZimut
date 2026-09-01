@@ -27,31 +27,55 @@ extension _FirstOrNull<T> on Iterable<T> {
 /// Definition d'une couleur declaree dans le fichier OMAP (modele CMJN).
 class OmapColorDefinition {
   final String name;
+  final int priority;
   final double cyan;
   final double magenta;
   final double yellow;
   final double black;
   final double opacity;
 
+  /// RVB precalcule fourni par OpenOrienteering Mapper dans l'element
+  /// `<rgb r="" g="" b=""/>`, quand present. Plus fidele que la conversion
+  /// CMJN->RVB approximative faite ci-dessous (methode spotcolor, etc.),
+  /// donc prioritaire quand disponible.
+  final double? precomputedRed;
+  final double? precomputedGreen;
+  final double? precomputedBlue;
+
   const OmapColorDefinition({
     required this.name,
+    this.priority = 0,
     this.cyan = 0,
     this.magenta = 0,
     this.yellow = 0,
     this.black = 0,
     this.opacity = 1.0,
+    this.precomputedRed,
+    this.precomputedGreen,
+    this.precomputedBlue,
   });
 
-  /// Conversion approximative CMJN (0-1) -> RVB, pour affichage seulement.
+  /// Conversion CMJN (0-1) -> RVB. Utilise le RVB precalcule du fichier
+  /// OMAP quand il est present (fidele au rendu d'OpenOrienteering Mapper),
+  /// sinon retombe sur une conversion CMJN -> RVB approximative.
   Color toColor() {
-    final r = (255 * (1 - cyan) * (1 - black)).round().clamp(0, 255);
-    final g = (255 * (1 - magenta) * (1 - black)).round().clamp(0, 255);
-    final b = (255 * (1 - yellow) * (1 - black)).round().clamp(0, 255);
+    if (precomputedRed != null && precomputedGreen != null && precomputedBlue != null) {
+      return Color.fromARGB(
+        (opacity * 255).round().clamp(0, 255),
+        (precomputedRed! * 255).round().clamp(0, 255),
+        (precomputedGreen! * 255).round().clamp(0, 255),
+        (precomputedBlue! * 255).round().clamp(0, 255),
+      );
+    }
+
+    final r = 255 * (1 - cyan) * (1 - black);
+    final g = 255 * (1 - magenta) * (1 - black);
+    final b = 255 * (1 - yellow) * (1 - black);
     return Color.fromARGB(
       (opacity * 255).round().clamp(0, 255),
-      r,
-      g,
-      b,
+      r.round().clamp(0, 255),
+      g.round().clamp(0, 255),
+      b.round().clamp(0, 255),
     );
   }
 }
@@ -64,12 +88,42 @@ class OmapSymbolDefinition {
   final symbol_model.MapSymbolType type;
   final String? iconBase64; // Icône encodée en base64 si disponible
 
+  /// Index de couleur (attribut `color` de `<line_symbol>`) pour les
+  /// symboles lineaires ; référence l'index (attribut `priority`) d'un
+  /// élément `<color>` de la palette de la carte. `null` ou négatif = pas
+  /// de couleur déclarée.
+  final int? lineColorIndex;
+
+  /// Épaisseur de ligne declarée (`line_width`), en unités OMAP brutes
+  /// (1 unité = 0.001 mm), avant conversion pixels.
+  final double? lineWidthRaw;
+
+  /// Index de couleur de remplissage (attribut `inner_color` de
+  /// `<area_symbol>`) pour les symboles de surface.
+  final int? areaFillColorIndex;
+
+  /// Vrai si la ligne doit être tracée en pointillés (attribut `dashed` du
+  /// `<line_symbol>` retenu).
+  final bool isDashed;
+
+  /// Longueur d'un tiret, en unités OMAP brutes (0.001 mm).
+  final double? dashLengthRaw;
+
+  /// Longueur d'un espace entre deux tirets, en unités OMAP brutes.
+  final double? breakLengthRaw;
+
   const OmapSymbolDefinition({
     required this.id,
     this.code,
     this.name = '',
     this.type = symbol_model.MapSymbolType.point,
     this.iconBase64,
+    this.lineColorIndex,
+    this.lineWidthRaw,
+    this.areaFillColorIndex,
+    this.isDashed = false,
+    this.dashLengthRaw,
+    this.breakLengthRaw,
   });
 }
 
@@ -185,7 +239,7 @@ class OmapDocument {
 
     // Parsing du géoréférencement
     final georeferencing = _parseGeoreferencing(mapElement);
-    var scaleDenominator = georeferencing.scaleDenominator;
+    final scaleDenominator = georeferencing.scaleDenominator;
 
     final colors = _parseColors(mapElement);
     final symbolsById = _parseSymbols(mapElement);
@@ -263,13 +317,18 @@ class OmapDocument {
     if (colorsElement == null) return const [];
 
     return colorsElement.findElements('color').map((c) {
+      final rgbElement = c.findElements('rgb').firstOrNull;
       return OmapColorDefinition(
         name: c.getAttribute('name') ?? '',
+        priority: int.tryParse(c.getAttribute('priority') ?? '') ?? 0,
         cyan: _percent(c.getAttribute('c')),
         magenta: _percent(c.getAttribute('m')),
         yellow: _percent(c.getAttribute('y')),
         black: _percent(c.getAttribute('k')),
         opacity: double.tryParse(c.getAttribute('opacity') ?? '1') ?? 1.0,
+        precomputedRed: rgbElement != null ? double.tryParse(rgbElement.getAttribute('r') ?? '') : null,
+        precomputedGreen: rgbElement != null ? double.tryParse(rgbElement.getAttribute('g') ?? '') : null,
+        precomputedBlue: rgbElement != null ? double.tryParse(rgbElement.getAttribute('b') ?? '') : null,
       );
     }).toList();
   }
@@ -306,12 +365,74 @@ class OmapDocument {
           }
         }
 
+        // Style reel declare pour ce symbole : couleur/epaisseur de ligne
+        // (<line_symbol>, enfant direct de <symbol> pour un symbole
+        // lineaire), et couleur de remplissage (<area_symbol>) pour un
+        // symbole de surface. Necessaire pour un rendu fidele : sans cela,
+        // les surfaces (forets, zones ouvertes, eau...) n'ont aucun
+        // remplissage et les lignes s'affichent toutes en noir.
+        var lineSymbolElement = s.findElements('line_symbol').firstOrNull;
+        var areaSymbolElement = s.findElements('area_symbol').firstOrNull;
+
+        final typeCode = int.tryParse(s.getAttribute('type') ?? '');
+
+        // Symbole combine (type=16, ex. "layon en foret", "route a double
+        // ligne") : ligne/surface ne sont pas des attributs directs de
+        // <symbol> mais imbriques dans
+        // <combined_symbol><part><symbol>...<line_symbol|area_symbol/>.
+        if (typeCode == 16) {
+          areaSymbolElement ??= s.findAllElements('area_symbol').firstOrNull;
+
+          // Une route a "double ligne" combine plusieurs parties lineaires
+          // (ex. fine ligne centrale + ligne large + cadre exterieur). On
+          // retient la partie la PLUS LARGE : elle correspond a la largeur
+          // physique reelle de la voie et donne un rendu bien plus fidele
+          // qu'un choix arbitraire de la premiere partie trouvee (souvent
+          // un simple detail, ex. marquage central fin).
+          final allLineSymbols = s.findAllElements('line_symbol').toList();
+          if (allLineSymbols.isNotEmpty) {
+            lineSymbolElement = allLineSymbols.reduce((a, b) {
+              final wa = double.tryParse(a.getAttribute('line_width') ?? '') ?? 0;
+              final wb = double.tryParse(b.getAttribute('line_width') ?? '') ?? 0;
+              return wb > wa ? b : a;
+            });
+          }
+        }
+
+        // Type effectif : pour un symbole combine, une partie "surface"
+        // (si presente) l'emporte sur une partie "ligne" (ex. contour
+        // rempli avec hachures) ; sinon c'est une ligne. Pour les autres
+        // types, on garde le mapping standard (point/ligne/surface/texte).
+        final resolvedType = typeCode == 16
+            ? (areaSymbolElement != null
+                ? symbol_model.MapSymbolType.area
+                : symbol_model.MapSymbolType.line)
+            : _mapSymbolTypeFromCode(s.getAttribute('type'));
+
+        final isDashed = lineSymbolElement?.getAttribute('dashed') == 'true';
+
         result[id] = OmapSymbolDefinition(
           id: id,
           code: s.getAttribute('code'),
           name: s.getAttribute('name') ?? '',
-          type: _mapSymbolTypeFromCode(s.getAttribute('type')),
+          type: resolvedType,
           iconBase64: iconBase64,
+          lineColorIndex: lineSymbolElement != null
+              ? int.tryParse(lineSymbolElement.getAttribute('color') ?? '')
+              : null,
+          lineWidthRaw: lineSymbolElement != null
+              ? double.tryParse(lineSymbolElement.getAttribute('line_width') ?? '')
+              : null,
+          areaFillColorIndex: areaSymbolElement != null
+              ? int.tryParse(areaSymbolElement.getAttribute('inner_color') ?? '')
+              : null,
+          isDashed: isDashed,
+          dashLengthRaw: isDashed
+              ? double.tryParse(lineSymbolElement?.getAttribute('dash_length') ?? '')
+              : null,
+          breakLengthRaw: isDashed
+              ? double.tryParse(lineSymbolElement?.getAttribute('break_length') ?? '')
+              : null,
         );
       }
     }
@@ -338,29 +459,28 @@ class OmapDocument {
   }
 
   static List<OmapLayerData> _parseLayers(XmlElement mapElement) {
-    // Rechercher <parts> ou <part> directement
-    final partsElements = mapElement.findAllElements('parts');
-    final partElements = mapElement.findAllElements('part');
-    
     final result = <OmapLayerData>[];
-    
-    // Cas 1: <parts> avec des <part> enfants
-    for (final partsElement in partsElements) {
-      for (final part in partsElement.findElements('part')) {
-        _processPartElement(part, result);
+
+    // Cas 1 (le plus courant) : un conteneur <parts> avec des <part> enfants
+    // directs.
+    final partsElements = mapElement.findAllElements('parts');
+    if (partsElements.isNotEmpty) {
+      for (final partsElement in partsElements) {
+        for (final part in partsElement.findElements('part')) {
+          _processPartElement(part, result);
+        }
       }
+      return result;
     }
-    
-    // Cas 2: <part> directement sous <map>
-    for (final part in partElements) {
-      // Vérifier que ce n'est pas déjà traité (enfant de <parts>)
-      if (part.parent is XmlElement && (part.parent as XmlElement).name.local != 'parts') {
-        _processPartElement(part, result);
-      } else if (part.parent == null) {
-        _processPartElement(part, result);
-      }
+
+    // Cas 2 (repli) : pas de <parts>, des <part> directement sous <map>.
+    // Utilise findElements (enfants directs) et non findAllElements pour ne
+    // jamais retraiter un <part> déjà traité ailleurs — sinon chaque calque
+    // se retrouve dupliqué (ex. calque "eau" apparaissant deux fois).
+    for (final part in mapElement.findElements('part')) {
+      _processPartElement(part, result);
     }
-    
+
     return result;
   }
 
@@ -464,6 +584,19 @@ class OmapDocument {
     return points;
   }
 
+  /// Résout un index de couleur (attribut `color`/`inner_color` du fichier
+  /// OMAP, référençant l'attribut `priority` d'un élément `<color>`) vers sa
+  /// couleur RVB réelle. Retourne `null` si l'index est absent, négatif
+  /// (valeurs spéciales OMAP telles que -1 "aucune" ou -900), ou hors
+  /// limites.
+  Color? _resolveColorIndex(int? index) {
+    if (index == null || index < 0) return null;
+    for (final c in colors) {
+      if (c.priority == index) return c.toColor();
+    }
+    return null;
+  }
+
   /// Convertit le document analyse en calques OWildZimut prets a l'emploi.
   List<Layer> toLayers() {
     final result = <Layer>[];
@@ -484,27 +617,48 @@ class OmapDocument {
         // Déterminer le type (depuis la définition ou la géométrie)
         final type = symbolDef?.type ?? _guessTypeFromGeometry(object);
 
-        // Trouver la couleur associée au symbole
-        Color symbolColor = const Color(0xFF000000);
-        if (symbolDef != null && symbolDef.code != null) {
-          final iofSymbol = iofSymbolLibrary.getSymbolByCode(symbolDef.code!);
-          if (iofSymbol != null) {
-            symbolColor = iofSymbol.defaultColor;
-          }
+        // Couleur de trait/ligne : priorité à la couleur réellement déclarée
+        // dans le fichier OMAP (line_symbol/color -> palette <colors>),
+        // puis repli sur la couleur IOF si le code est reconnu, puis noir.
+        Color? lineColor = _resolveColorIndex(symbolDef?.lineColorIndex);
+        if (lineColor == null && symbolDef?.code != null) {
+          final iofSymbol = iofSymbolLibrary.getSymbolByCode(symbolDef!.code!);
+          lineColor = iofSymbol?.defaultColor;
         }
+        lineColor ??= Colors.black;
+
+        // Épaisseur de ligne réelle (conversion 0.001 mm -> mm, même unité
+        // que les coordonnées) ; taille par défaut si absente du fichier.
+        final strokeWidth = symbolDef?.lineWidthRaw != null
+            ? symbolDef!.lineWidthRaw! / 1000.0
+            : (iofMatch?.defaultSize ?? 0.1);
+
+        // Couleur de remplissage des surfaces (forêt, zone ouverte, eau...)
+        final fillColor = type == symbol_model.MapSymbolType.area
+            ? (_resolveColorIndex(symbolDef?.areaFillColorIndex) ?? lineColor)
+            : null;
         
         // Créer le symbole OWildZimut
         final symbol = symbol_model.MapSymbol(
           id: 'omap_${DateTime.now().millisecondsSinceEpoch}_${i}_$j',
-          name: symbolDef?.name ?? iofMatch?.name ?? 'Objet importe',
           type: type,
+          code: symbolDef?.code ?? symbolDef?.id ?? '',
+          name: symbolDef?.name ?? iofMatch?.description ?? 'Objet importe',
           position: object.points.isNotEmpty ? object.points.first : Offset.zero,
-          points: object.points,
+          description: iofMatch?.description ?? symbolDef?.name ?? 'Objet importe',
+          color: lineColor,
+          fillColor: fillColor,
+          strokeColor: type == symbol_model.MapSymbolType.area ? lineColor : null,
+          strokeWidth: strokeWidth,
           size: iofMatch?.defaultSize ?? _getDefaultSize(type),
-          strokeColor: symbolColor,
-          isClosed: object.isClosed,
+          points: object.points,
           rotation: object.rotation,
-          layerId: 'omap_layer_${DateTime.now().millisecondsSinceEpoch}_$i',
+          isClosed: object.isClosed,
+          iofCode: symbolDef?.code,
+          iconBase64: symbolDef?.iconBase64,
+          isDashed: symbolDef?.isDashed ?? false,
+          dashLength: symbolDef?.dashLengthRaw != null ? symbolDef!.dashLengthRaw! / 1000.0 : null,
+          gapLength: symbolDef?.breakLengthRaw != null ? symbolDef!.breakLengthRaw! / 1000.0 : null,
         );
         
         symbols.add(symbol);

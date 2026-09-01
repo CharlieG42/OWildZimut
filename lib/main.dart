@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'models/map_state.dart';
 import 'models/layer.dart';
 import 'models/symbol.dart' as symbol_model;
 import 'models/omap_file.dart';
-import 'models/georeferencing.dart';
-import 'services/undo_manager.dart';
+import 'services/undo_manager.dart' as undo_service;
 import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
 import 'widgets/file_loader.dart';
+import 'widgets/background_image_picker.dart';
+import 'widgets/recenter_controls.dart';
 import 'screens/about_dialog.dart' as app_about;
 import 'formatters/omap_exporter.dart';
 
@@ -32,7 +32,7 @@ class OWildZimutApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4CAF50),
+          seedColor: Colors.green,
           brightness: Brightness.light,
         ),
         useMaterial3: true,
@@ -40,9 +40,9 @@ class OWildZimutApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: const CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
-          margin: EdgeInsets.all(4),
+          margin: const EdgeInsets.all(4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -50,7 +50,7 @@ class OWildZimutApp extends StatelessWidget {
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4CAF50),
+          seedColor: Colors.green,
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
@@ -72,13 +72,16 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   late MapState _mapState;
   String _currentTool = 'select';
+  final bool _toolBarExpanded = true;
   bool _advancedMode = false;
   
   // Gestion de l'historique
-  final UndoManager _undoManager = UndoManager(maxHistoryLength: 50);
+  final undo_service.UndoManager _undoManager = undo_service.UndoManager(maxHistoryLength: 50);
   
   // Clipboard pour copier/coller
   List<symbol_model.MapSymbol> _clipboard = [];
+  
+  final GlobalKey _mapViewKey = GlobalKey();
 
   @override
   void initState() {
@@ -94,11 +97,8 @@ class _MainScreenState extends State<MainScreen> {
   void _addLayer() {
     setState(() {
       _mapState = _mapState.addLayer(
-        Layer(
-          id: 'layer_${DateTime.now().millisecondsSinceEpoch}',
-          name: 'Nouveau calque ${_mapState.layers.length + 1}',
-          type: LayerType.vector,
-        ),
+        'Nouveau calque ${_mapState.layers.length + 1}',
+        LayerType.vector,
       );
       _pushStateToHistory();
     });
@@ -113,55 +113,35 @@ class _MainScreenState extends State<MainScreen> {
 
   void _selectLayer(int? index) {
     setState(() {
-      if (index != null) {
-        _mapState = _mapState.selectLayer(index);
-      }
+      _mapState = _mapState.selectLayer(index);
     });
   }
 
   void _setLayerVisibility(String layerId, bool visible) {
     setState(() {
-      final newLayers = _mapState.layers.map((l) {
-        if (l.id == layerId) {
-          return l.copyWith(visible: visible);
-        }
-        return l;
-      }).toList();
-      _mapState = _mapState.copyWith(layers: newLayers);
+      _mapState = _mapState.setLayerVisibility(layerId, visible);
       _pushStateToHistory();
     });
   }
 
   void _setLayerOpacity(String layerId, double opacity) {
     setState(() {
-      final newLayers = _mapState.layers.map((l) {
-        if (l.id == layerId) {
-          return l.copyWith(opacity: opacity);
-        }
-        return l;
-      }).toList();
-      _mapState = _mapState.copyWith(layers: newLayers);
+      _mapState = _mapState.setLayerOpacity(layerId, opacity);
       _pushStateToHistory();
     });
   }
 
   void _moveLayerUp(String layerId) {
     setState(() {
-      final index = _mapState.layers.indexWhere((l) => l.id == layerId);
-      if (index > 0) {
-        _mapState = _mapState.moveLayer(index, index - 1);
-        _pushStateToHistory();
-      }
+      _mapState = _mapState.moveLayerUp(layerId);
+      _pushStateToHistory();
     });
   }
 
   void _moveLayerDown(String layerId) {
     setState(() {
-      final index = _mapState.layers.indexWhere((l) => l.id == layerId);
-      if (index >= 0 && index < _mapState.layers.length - 1) {
-        _mapState = _mapState.moveLayer(index, index + 1);
-        _pushStateToHistory();
-      }
+      _mapState = _mapState.moveLayerDown(layerId);
+      _pushStateToHistory();
     });
   }
 
@@ -171,7 +151,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _addSymbol(symbol_model.MapSymbol symbol) {
     setState(() {
-      _mapState = _mapState.addSymbol(symbol);
+      _mapState = _mapState.addSymbolToSelectedLayer(symbol);
       _pushStateToHistory();
     });
   }
@@ -184,7 +164,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _selectSymbols(Set<String> symbolIds) {
     setState(() {
-      _mapState = _mapState.selectSymbols(symbolIds);
+      _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
     });
   }
 
@@ -211,7 +191,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _moveSymbols(Set<String> symbolIds, Offset delta) {
     setState(() {
-      _mapState = _mapState.moveSymbols(symbolIds, delta);
+      _mapState = _mapState.moveSelectedSymbols(delta);
       _pushStateToHistory();
     });
   }
@@ -222,23 +202,21 @@ class _MainScreenState extends State<MainScreen> {
 
   void _copySelectedSymbols() {
     setState(() {
-      _clipboard = _mapState.copyToClipboard();
+      _clipboard = _mapState.copySelectedSymbols();
     });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Symboles copiés')),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Symboles copiés')),
+    );
   }
 
   void _pasteSymbols() {
-    if (_clipboard.isEmpty) return;
+    if (_clipboard.isEmpty || _mapState.selectedLayerIndex == null) return;
     
     // Calculer un décalage pour éviter de coller au même endroit
-    final offset = const Offset(20, 20);
+    final offset = Offset(20, 20);
     
     setState(() {
-      _mapState = _mapState.pasteFromClipboard(_clipboard, offset);
+      _mapState = _mapState.pasteSymbols(_clipboard, offset);
       _pushStateToHistory();
     });
   }
@@ -247,9 +225,9 @@ class _MainScreenState extends State<MainScreen> {
   // GESTION DE LA VUE
   // ============================================================================
 
-  void _setZoom(double zoom) {
+  void _setZoomLevel(double zoom) {
     setState(() {
-      _mapState = _mapState.copyWith(zoom: zoom);
+      _mapState = _mapState.setZoomLevel(zoom);
     });
   }
 
@@ -279,13 +257,13 @@ class _MainScreenState extends State<MainScreen> {
 
   void _zoomIn() {
     setState(() {
-      _mapState = _mapState.zoomBy(1.2);
+      _mapState = _mapState.setZoomLevel(_mapState.zoomLevel * 1.2);
     });
   }
 
   void _zoomOut() {
     setState(() {
-      _mapState = _mapState.zoomBy(0.833);
+      _mapState = _mapState.setZoomLevel(_mapState.zoomLevel / 1.2);
     });
   }
 
@@ -349,56 +327,45 @@ class _MainScreenState extends State<MainScreen> {
         SnackBar(content: Text('Fichier OMAP chargé (${omapDocument.layers.length} calques, ${omapDocument.objectCount} objets)')),
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du chargement: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement: $e')),
+      );
     }
   }
 
   Future<void> _exportOmapFile() async {
     try {
-      final omapXml = OmapExporter.export(_mapState);
+      final omapXml = _mapState.toOmapXml();
       final filePath = await FileLoader.saveOmapFile(omapXml);
       
-      if (filePath != null && mounted) {
+      if (filePath != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Carte exportée vers: $filePath')),
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de l\'export: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'export: $e')),
+      );
     }
   }
 
   Future<void> _loadImage() async {
     try {
-      final imagePath = await BackgroundImagePicker.pickImage();
+      final imagePath = await pickBackgroundImage();
       if (imagePath == null) return;
       
-      if (mounted) {
-        setState(() {
-          _mapState = _mapState.addLayer(
-            Layer.imageBackground(
-              id: 'image_${DateTime.now().millisecondsSinceEpoch}',
-              name: 'Image ${_mapState.layers.length + 1}',
-              imagePath: imagePath,
-            ),
-          );
-          _pushStateToHistory();
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du chargement de l\'image: $e')),
+      setState(() {
+        _mapState = _mapState.addImageBackgroundLayer(
+          'Image ${_mapState.layers.length + 1}',
+          imagePath.path,
         );
-      }
+        _pushStateToHistory();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement de l\'image: $e')),
+      );
     }
   }
 
@@ -407,24 +374,14 @@ class _MainScreenState extends State<MainScreen> {
       // Pour l'instant, on exporte en OMAP
       await _exportOmapFile();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de la sauvegarde: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sauvegarde: $e')),
+      );
     }
   }
 
   Future<void> _loadProject() async {
-    try {
-      await _loadOmapFile();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du chargement: $e')),
-        );
-      }
-    }
+    await _loadOmapFile();
   }
 
   // ============================================================================
@@ -434,7 +391,6 @@ class _MainScreenState extends State<MainScreen> {
   void _toggleAdvancedMode() {
     setState(() {
       _advancedMode = !_advancedMode;
-      _mapState = _mapState.copyWith(advancedMode: _advancedMode);
     });
   }
 
@@ -466,7 +422,10 @@ class _MainScreenState extends State<MainScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.info_outline),
-              onPressed: () => app_about.showAboutDialog(context),
+              onPressed: () => showDialog(
+                context: context,
+                builder: (context) => app_about.AboutDialog(appVersion: '1.0.0'),
+              ),
               tooltip: 'À propos',
             ),
             IconButton(
@@ -480,22 +439,13 @@ class _MainScreenState extends State<MainScreen> {
               tooltip: 'Ouvrir',
             ),
             IconButton(
-              icon: const Icon(Icons.export_rounded),
+              icon: const Icon(Icons.upload),
               onPressed: _exportOmapFile,
               tooltip: 'Exporter OMAP',
             ),
             PopupMenuButton<String>(
-              tooltip: 'Exporter',
-              icon: const Icon(Icons.more_vert),
+              tooltip: 'Plus d\'options',
               itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'omap',
-                  child: ListTile(
-                    leading: Icon(Icons.map),
-                    title: Text('Exporter OMAP'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
                 const PopupMenuItem(
                   value: 'image',
                   child: ListTile(
@@ -504,14 +454,22 @@ class _MainScreenState extends State<MainScreen> {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
+                const PopupMenuItem(
+                  value: 'omap',
+                  child: ListTile(
+                    leading: Icon(Icons.map),
+                    title: Text('Importer OMAP'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               ],
               onSelected: (value) {
                 switch (value) {
-                  case 'omap':
-                    _exportOmapFile();
-                    break;
                   case 'image':
                     _loadImage();
+                    break;
+                  case 'omap':
+                    _loadOmapFile();
                     break;
                 }
               },
@@ -567,47 +525,63 @@ class _MainScreenState extends State<MainScreen> {
         
         // Zone de carte (centre)
         Expanded(
-          child: MapView(
-            layers: _mapState.layers,
-            zoom: _mapState.zoom,
-            cameraPosition: _mapState.cameraPosition,
-            selectedLayerIndex: _mapState.selectedLayerIndex,
-            currentTool: _currentTool,
-            selectedSymbolIds: _mapState.selectedSymbolIds,
-            onPanUpdate: _setPanOffset,
-            onZoomChanged: _setZoom,
-            onSelectionRectChanged: (rect) {
-              // Sélectionner les symboles dans le rectangle
-              setState(() {
-                // TODO: Implémenter la sélection par rectangle
-              });
-            },
-            onSymbolAdded: _addSymbol,
-            onSymbolSelected: (symbolId) {
-              _selectSymbol(symbolId, multiSelect: false);
-            },
-            onSymbolsSelected: _selectSymbols,
-            onSymbolsMoved: _moveSymbols,
-            onSymbolsDeleted: (symbolIds) {
-              setState(() {
-                _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
-                _deleteSelectedSymbols();
-              });
-            },
+          child: Stack(
+            children: [
+              MapView(
+                key: _mapViewKey,
+                layers: _mapState.layers,
+                zoomLevel: _mapState.zoomLevel,
+                panOffset: _mapState.panOffset,
+                selectedLayerIndex: _mapState.selectedLayerIndex,
+                currentTool: _currentTool,
+                selectedSymbolIds: _mapState.selectedSymbolIds,
+                onPanUpdate: _setPanOffset,
+                onZoomChanged: _setZoomLevel,
+                onSelectionRectChanged: (rect) {
+                  // Sélectionner les symboles dans le rectangle
+                  setState(() {
+                    _mapState = _mapState.selectSymbolsInRect(rect);
+                  });
+                },
+                onSymbolAdded: _addSymbol,
+                onSymbolSelected: (symbolId) {
+                  _selectSymbol(symbolId, multiSelect: false);
+                },
+                onSymbolsSelected: _selectSymbols,
+                onSymbolsMoved: _moveSymbols,
+                onSymbolsDeleted: (symbolIds) {
+                  setState(() {
+                    _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
+                    _deleteSelectedSymbols();
+                  });
+                },
+              ),
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: RecenterControls(
+                  onPanBy: _panBy,
+                  onResetView: _resetView,
+                ),
+              ),
+            ],
           ),
         ),
         
         // Panneau des calques (droite)
-        LayerPanel(
-          layers: _mapState.layers,
-          selectedLayerIndex: _mapState.selectedLayerIndex,
-          onLayerAdded: _addLayer,
-          onLayerRemoved: _removeLayer,
-          onLayerSelected: _selectLayer,
-          onLayerVisibilityChanged: (layerId, visible) => _setLayerVisibility(layerId, visible),
-          onLayerOpacityChanged: _setLayerOpacity,
-          onLayerMovedUp: _moveLayerUp,
-          onLayerMovedDown: _moveLayerDown,
+        SizedBox(
+          width: 250,
+          child: LayerPanel(
+            layers: _mapState.layers,
+            selectedLayerIndex: _mapState.selectedLayerIndex,
+            onAddLayer: _addLayer,
+            onLayerRemoved: _removeLayer,
+            onLayerSelected: _selectLayer,
+            onLayerVisibilityChanged: _setLayerVisibility,
+            onLayerOpacityChanged: _setLayerOpacity,
+            onLayerMoveUp: _moveLayerUp,
+            onLayerMoveDown: _moveLayerDown,
+          ),
         ),
       ],
     );
@@ -619,32 +593,45 @@ class _MainScreenState extends State<MainScreen> {
       children: [
         // Zone de carte (prend tout l'espace)
         Expanded(
-          child: MapView(
-            layers: _mapState.layers,
-            zoom: _mapState.zoom,
-            cameraPosition: _mapState.cameraPosition,
-            selectedLayerIndex: _mapState.selectedLayerIndex,
-            currentTool: _currentTool,
-            selectedSymbolIds: _mapState.selectedSymbolIds,
-            onPanUpdate: _setPanOffset,
-            onZoomChanged: _setZoom,
-            onSelectionRectChanged: (rect) {
-              setState(() {
-                // TODO: Implémenter la sélection par rectangle
-              });
-            },
-            onSymbolAdded: _addSymbol,
-            onSymbolSelected: (symbolId) {
-              _selectSymbol(symbolId, multiSelect: false);
-            },
-            onSymbolsSelected: _selectSymbols,
-            onSymbolsMoved: _moveSymbols,
-            onSymbolsDeleted: (symbolIds) {
-              setState(() {
-                _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
-                _deleteSelectedSymbols();
-              });
-            },
+          child: Stack(
+            children: [
+              MapView(
+                key: _mapViewKey,
+                layers: _mapState.layers,
+                zoomLevel: _mapState.zoomLevel,
+                panOffset: _mapState.panOffset,
+                selectedLayerIndex: _mapState.selectedLayerIndex,
+                currentTool: _currentTool,
+                selectedSymbolIds: _mapState.selectedSymbolIds,
+                onPanUpdate: _setPanOffset,
+                onZoomChanged: _setZoomLevel,
+                onSelectionRectChanged: (rect) {
+                  setState(() {
+                    _mapState = _mapState.selectSymbolsInRect(rect);
+                  });
+                },
+                onSymbolAdded: _addSymbol,
+                onSymbolSelected: (symbolId) {
+                  _selectSymbol(symbolId, multiSelect: false);
+                },
+                onSymbolsSelected: _selectSymbols,
+                onSymbolsMoved: _moveSymbols,
+                onSymbolsDeleted: (symbolIds) {
+                  setState(() {
+                    _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
+                    _deleteSelectedSymbols();
+                  });
+                },
+              ),
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: RecenterControls(
+                  onPanBy: _panBy,
+                  onResetView: _resetView,
+                ),
+              ),
+            ],
           ),
         ),
       ],
