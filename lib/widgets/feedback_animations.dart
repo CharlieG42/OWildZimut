@@ -8,15 +8,17 @@ class FeedbackAnimations {
   /// Affiche une animation de rectangle de sélection
   static void showSelectionRectAnimation(
     BuildContext context,
-    Rect rect,
-    {Duration duration = const Duration(milliseconds: 500)},
-  ) {
+    Rect rect, [
+    Duration? duration,
+  ]) {
+    final Duration effectiveDuration =
+        duration ?? const Duration(milliseconds: 500);
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) => AnimatedSelectionRect(
         rect: rect,
-        duration: duration,
+        duration: effectiveDuration,
         onComplete: () => overlayEntry?.remove(),
       ),
     );
@@ -27,9 +29,9 @@ class FeedbackAnimations {
   /// Affiche une animation lors de l'ajout d'un symbole
   static void showSymbolAddedAnimation(
     BuildContext context,
-    Offset position,
-    {Duration duration = const Duration(milliseconds: 300)},
-  ) {
+    Offset position, [
+    Duration duration = const Duration(milliseconds: 300),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -46,9 +48,9 @@ class FeedbackAnimations {
   /// Affiche une animation lors de la suppression d'un symbole
   static void showSymbolDeletedAnimation(
     BuildContext context,
-    Offset position,
-    {Duration duration = const Duration(milliseconds: 300)},
-  ) {
+    Offset position, [
+    Duration duration = const Duration(milliseconds: 300),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -66,9 +68,9 @@ class FeedbackAnimations {
   static void showCopyPasteAnimation(
     BuildContext context,
     Offset fromPosition,
-    Offset toPosition,
-    {Duration duration = const Duration(milliseconds: 400)},
-  ) {
+    Offset toPosition, [
+    Duration duration = const Duration(milliseconds: 400),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -86,9 +88,9 @@ class FeedbackAnimations {
   /// Affiche un message temporaire (style toast)
   static void showToast(
     BuildContext context,
-    String message,
-    {Duration duration = const Duration(seconds: 2)},
-  ) {
+    String message, [
+    Duration duration = const Duration(seconds: 2),
+  ]) {
     OverlayEntry? overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -123,7 +125,7 @@ class AnimatedSelectionRect extends StatefulWidget {
 class _AnimatedSelectionRectState extends State<AnimatedSelectionRect>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<Color> _colorAnimation;
+  late Animation<Color?> _colorAnimation;
   late Animation<double> _opacityAnimation;
 
   @override
@@ -136,10 +138,10 @@ class _AnimatedSelectionRectState extends State<AnimatedSelectionRect>
     );
     
     _colorAnimation = ColorTween(
-      begin: Colors.blue.withOpacity(0.5),
+      begin: const Color.fromRGBO(0, 0, 255, 0.5),
       end: Colors.transparent,
     ).animate(_controller);
-    
+
     _opacityAnimation = Tween(begin: 1.0, end: 0.0).animate(_controller);
     
     _controller.addStatusListener((status) {
@@ -165,7 +167,7 @@ class _AnimatedSelectionRectState extends State<AnimatedSelectionRect>
         return CustomPaint(
           painter: SelectionRectPainter(
             rect: widget.rect,
-            color: _colorAnimation.value,
+            color: _colorAnimation.value ?? Colors.transparent,
             opacity: _opacityAnimation.value,
           ),
         );
@@ -189,7 +191,7 @@ class SelectionRectPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+      ..color = color.withValues(alpha: opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
     
@@ -269,7 +271,7 @@ class _SymbolAddedAnimationState extends State<SymbolAddedAnimation>
               opacity: _opacityAnimation.value,
               child: const Icon(
                 Icons.add_circle,
-                color: Colors.green,
+                color: Color(0xFF4CAF50),
                 size: 30,
               ),
             ),
@@ -347,7 +349,7 @@ class _SymbolDeletedAnimationState extends State<SymbolDeletedAnimation>
               opacity: _opacityAnimation.value,
               child: const Icon(
                 Icons.remove_circle,
-                color: Colors.red,
+                color: Color(0xFFF44336),
                 size: 30,
               ),
             ),
@@ -430,7 +432,7 @@ class _CopyPasteAnimationState extends State<CopyPasteAnimation>
             opacity: _opacityAnimation.value,
             child: const Icon(
               Icons.content_copy,
-              color: Colors.blue,
+              color: Color(0xFF2196F3),
               size: 24,
             ),
           ),
@@ -738,7 +740,6 @@ class _SlideInAnimationState extends State<SlideInAnimation>
         ).animate(_controller);
         break;
       case Edge.right:
-      default:
         _positionAnimation = Tween<Offset>(
           begin: const Offset(1, 0),
           end: Offset.zero,

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:xml/xml.dart';
-import '../models/map_state.dart';
-import '../models/layer.dart';
+import 'package:xml/xml.dart' as xml;
+import '../models/models.dart';
 import '../models/symbol.dart' as symbol_model;
-
 /// Exporteur OMAP pour générer des fichiers au format OpenOrienteering Mapper XML v9
 ///
 /// Ce formateur permet d'exporter les cartes créées dans OWildZimut vers le format
@@ -16,7 +14,7 @@ class OmapExporter {
   /// [includeMetadata] : Si vrai, inclut les métadonnées (version, nom, etc.)
   /// Retourne une chaîne XML valide
   static String export(MapState mapState, {bool includeMetadata = true}) {
-    final builder = XmlBuilder();
+    final builder = xml.XmlBuilder();
     builder.processing('xml', 'version="1.0" encoding="UTF-8"');
     
     builder.element('map', attributes: {
@@ -47,14 +45,14 @@ class OmapExporter {
   }
 
   /// Exporte les métadonnées du document
-  static void _exportMetadata(XmlBuilder builder, MapState mapState) {
+  static void _exportMetadata(xml.XmlBuilder builder, MapState mapState) {
     builder.element('notes', nest: () {
       builder.text('Exported from OWildZimut v${mapState.appVersion}');
     });
   }
 
   /// Exporte les informations de géoréférencement
-  static void _exportGeoreferencing(XmlBuilder builder, Georeferencing georef) {
+  static void _exportGeoreferencing(xml.XmlBuilder builder, dynamic georef) {
     builder.element('georeferencing', attributes: {
       'scale': georef.scaleDenominator.toString(),
       if (georef.gridScaleFactor != null) 
@@ -125,7 +123,7 @@ class OmapExporter {
   }
 
   /// Exporte la palette de couleurs
-  static void _exportColors(XmlBuilder builder, MapState mapState) {
+  static void _exportColors(xml.XmlBuilder builder, MapState mapState) {
     // Collecter toutes les couleurs uniques
     final colorSet = <Color>{};
     final colorToId = <Color, int>{};
@@ -173,7 +171,7 @@ class OmapExporter {
           'm': cmjk.magenta.toStringAsFixed(2),
           'y': cmjk.yellow.toStringAsFixed(2),
           'k': cmjk.black.toStringAsFixed(2),
-          'opacity': color.opacity.toStringAsFixed(2),
+          'opacity': color.a.toStringAsFixed(2),
         }, nest: () {
           // Ajouter les spot colors (simplifié)
           builder.element('spotcolors', attributes: {
@@ -229,43 +227,44 @@ class OmapExporter {
     if (color == Colors.green) return 'Green';
     if (color == Colors.yellow) return 'Yellow';
     if (color == Colors.brown) return 'Brown';
-    if (color.value == const Color(0xFF0000FF).value) return 'Pure Blue';
-    if (color.value == const Color(0xFFFF0000).value) return 'Pure Red';
-    if (color.value == const Color(0xFF00FF00).value) return 'Pure Green';
+    if (color.toARGB32() == const Color(0xFF0000FF).toARGB32()) return 'Pure Blue';
+    if (color.toARGB32() == const Color(0xFFFF0000).toARGB32()) return 'Pure Red';
+    if (color.toARGB32() == const Color(0xFF00FF00).toARGB32()) return 'Pure Green';
     
     // Couleur personnalisée
     return 'Custom_$index';
   }
 
   /// Exporte les définitions des symboles
-  static void _exportSymbols(XmlBuilder builder, MapState mapState) {
-    // Collecter tous les symboles uniques
-    final symbolSet = <symbol_model.MapSymbol>{};
-    final symbolToId = <symbol_model.MapSymbol, String>{};
-    
+  static void _exportSymbols(xml.XmlBuilder builder, MapState mapState) {
+    // Un seul <symbol> par identifiant exporté (symbol.iofCode ?? symbol.id
+    // — le même calcul que la référence utilisée par chaque <object>), quel
+    // que soit le nombre d'objets qui l'utilisent. Sans ce regroupement par
+    // id, chaque objet produisait sa propre définition en double dans la
+    // palette (constaté : jusqu'à 260 définitions identiques pour un même
+    // id), car MapSymbol n'a pas d'égalité personnalisée et un Set<MapSymbol>
+    // ne déduplique donc jamais rien.
+    final symbolsByCode = <String, symbol_model.MapSymbol>{};
+
     for (final layer in mapState.layers) {
       for (final symbol in layer.symbols) {
-        // Utiliser le code IOF comme ID si disponible
         final symbolId = symbol.iofCode ?? symbol.id;
-        if (!symbolSet.contains(symbol)) {
-          symbolSet.add(symbol);
-          symbolToId[symbol] = symbolId;
-        }
+        symbolsByCode.putIfAbsent(symbolId, () => symbol);
       }
     }
-    
+
     builder.element('symbols', attributes: {
-      'count': symbolSet.length.toString(),
+      'count': symbolsByCode.length.toString(),
       'id': 'OWildZimut',
     }, nest: () {
-      for (final symbol in symbolSet) {
-        _exportSymbol(builder, symbol, symbolToId[symbol]!);
-      }
+      symbolsByCode.forEach((id, symbol) {
+        _exportSymbol(builder, symbol, id);
+      });
     });
   }
 
   /// Exporte un symbole individuel
-  static void _exportSymbol(XmlBuilder builder, symbol_model.MapSymbol symbol, String symbolId) {
+  static void _exportSymbol(xml.XmlBuilder builder, symbol_model.MapSymbol symbol, String symbolId) {
     final type = _mapSymbolTypeToOmapType(symbol.type);
     
     builder.element('symbol', attributes: {
@@ -313,7 +312,7 @@ class OmapExporter {
   }
 
   /// Exporte un symbole ponctuel
-  static void _exportPointSymbol(XmlBuilder builder, symbol_model.MapSymbol symbol) {
+  static void _exportPointSymbol(xml.XmlBuilder builder, symbol_model.MapSymbol symbol) {
     // Taille en 0.001 mm (1 unité OMAP = 0.001 mm)
     final innerRadius = (symbol.size * 1000).round();
     final colorIndex = _findColorIndex(symbol.color);
@@ -328,7 +327,7 @@ class OmapExporter {
   }
 
   /// Exporte un symbole linéaire
-  static void _exportLineSymbol(XmlBuilder builder, symbol_model.MapSymbol symbol) {
+  static void _exportLineSymbol(xml.XmlBuilder builder, symbol_model.MapSymbol symbol) {
     final colorIndex = _findColorIndex(symbol.color);
     final lineWidth = (symbol.strokeWidth * 1000).round(); // en 0.001 mm
     
@@ -346,7 +345,7 @@ class OmapExporter {
   }
 
   /// Exporte un symbole de surface
-  static void _exportAreaSymbol(XmlBuilder builder, symbol_model.MapSymbol symbol) {
+  static void _exportAreaSymbol(xml.XmlBuilder builder, symbol_model.MapSymbol symbol) {
     final colorIndex = _findColorIndex(symbol.fillColor ?? symbol.color);
     
     builder.element('area_symbol', attributes: {
@@ -357,7 +356,7 @@ class OmapExporter {
   }
 
   /// Exporte un symbole de texte
-  static void _exportTextSymbol(XmlBuilder builder, symbol_model.MapSymbol symbol) {
+  static void _exportTextSymbol(xml.XmlBuilder builder, symbol_model.MapSymbol symbol) {
     builder.element('text_symbol', attributes: {
       'font': 'Arial',
       'size': (symbol.size * 1000).round().toString(), // en 0.001 mm
@@ -374,14 +373,14 @@ class OmapExporter {
     // Une implémentation complète nécessiterait de tracker les couleurs exportées
     if (color == Colors.black) return 4; // Black est à l'index 4 dans Villerest
     if (color == Colors.white) return 3; // White est à l'index 3
-    if (color.value == const Color(0xFF0000FF).value) return 8; // Blue
-    if (color.value == const Color(0xFF00FF00).value) return 27; // Green
-    if (color.value == const Color(0xFFFF0000).value) return 6; // Brown
+    if (color.toARGB32() == const Color(0xFF0000FF).toARGB32()) return 8; // Blue
+    if (color.toARGB32() == const Color(0xFF00FF00).toARGB32()) return 27; // Green
+    if (color.toARGB32() == const Color(0xFFFF0000).toARGB32()) return 6; // Brown
     return 4; // Noir par défaut
   }
 
   /// Exporte les calques (parts) et leurs objets
-  static void _exportLayers(XmlBuilder builder, MapState mapState) {
+  static void _exportLayers(xml.XmlBuilder builder, MapState mapState) {
     builder.element('parts', attributes: {
       'count': mapState.layers.length.toString(),
       'current': (mapState.selectedLayerIndex ?? 0).toString(),
@@ -393,7 +392,7 @@ class OmapExporter {
   }
 
   /// Exporte un calque individuel
-  static void _exportLayer(XmlBuilder builder, Layer layer) {
+  static void _exportLayer(xml.XmlBuilder builder, Layer layer) {
     builder.element('part', attributes: {
       'name': layer.name,
       'visible': layer.visible.toString(),
@@ -413,7 +412,7 @@ class OmapExporter {
   }
 
   /// Exporte un objet (symbole) dans un calque
-  static void _exportObject(XmlBuilder builder, symbol_model.MapSymbol symbol) {
+  static void _exportObject(xml.XmlBuilder builder, symbol_model.MapSymbol symbol) {
     final type = _mapSymbolTypeToOmapType(symbol.type);
     final symbolCode = symbol.iofCode ?? symbol.id;
     

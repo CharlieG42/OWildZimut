@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/map_state.dart';
-import '../models/symbol.dart' as symbol_model;
 
 /// Barre d'outils principale pour OWildZimut
 ///
@@ -142,7 +141,7 @@ class ToolBar extends StatelessWidget {
         _buildToolButton(context, 'select', Icons.select_all, 'Sélection', 'S'),
         _buildToolButton(context, 'point', Icons.circle, 'Point', 'P'),
         _buildToolButton(context, 'line', Icons.polyline, 'Ligne', 'L'),
-        _buildToolButton(context, 'polygon', Icons.polygon, 'Polygone', 'G'),
+        _buildToolButton(context, 'polygon', Icons.hexagon, 'Polygone', 'G'),
         _buildToolButton(context, 'text', Icons.text_fields, 'Texte', 'T'),
       ],
     );
@@ -423,7 +422,7 @@ class CompactToolBar extends StatelessWidget {
             _buildCompactToolButton(context, 'select', Icons.select_all, 'Sélection'),
             _buildCompactToolButton(context, 'point', Icons.circle, 'Point'),
             _buildCompactToolButton(context, 'line', Icons.polyline, 'Ligne'),
-            _buildCompactToolButton(context, 'polygon', Icons.polygon, 'Polygone'),
+            _buildCompactToolButton(context, 'polygon', Icons.hexagon, 'Polygone'),
             _buildCompactToolButton(context, 'text', Icons.text_fields, 'Texte'),
             const VerticalDivider(),
             
@@ -496,7 +495,7 @@ class CompactToolBar extends StatelessWidget {
 ///
 /// Cette classe gère les raccourcis clavier pour l'application.
 class KeyboardShortcuts {
-  static const Map<LogicalKeySet, Intent> shortcuts = {
+  static Map<LogicalKeySet, Intent> shortcuts = {
     // Sélection
     LogicalKeySet(
       LogicalKeyboardKey.keyA,
@@ -565,10 +564,10 @@ class KeyboardShortcuts {
     LogicalKeySet(LogicalKeyboardKey.keyT): TextToolIntent(),
     
     // Zoom
-    LogicalKeySet(LogicalKeyboardKey.plus): ZoomInIntent(),
+    LogicalKeySet(LogicalKeyboardKey.add): ZoomInIntent(),
     LogicalKeySet(LogicalKeyboardKey.equal): ZoomInIntent(),
     LogicalKeySet(LogicalKeyboardKey.minus): ZoomOutIntent(),
-    LogicalKeySet(LogicalKeyboardKey.key0): ResetViewIntent(),
+    LogicalKeySet(LogicalKeyboardKey.digit0): ResetViewIntent(),
   };
 
   /// Enveloppe un widget avec la gestion des raccourcis clavier

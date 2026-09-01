@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+import '../extensions/offset_extensions.dart';
 import 'symbol.dart' as symbol_model;
 
 /// Types de calques possibles
@@ -212,7 +214,7 @@ class Layer {
   }
 
   /// Récupère tous les symboles d'un certain type
-  List<symbol_model.MapSymbol> getSymbolsByType(MapSymbolType type) {
+  List<symbol_model.MapSymbol> getSymbolsByType(symbol_model.MapSymbolType type) {
     return symbols.where((s) => s.type == type).toList();
   }
 
@@ -410,7 +412,7 @@ extension LayerExtensions on Layer {
     if (polygonPoints.isEmpty) return double.infinity;
     
     // Vérifier si le point est à l'intérieur du polygone
-    if (symbol_model.MapSymbol._pointInPolygon(point, polygonPoints)) {
+    if (symbol_model.MapSymbol.pointInPolygon(point, polygonPoints)) {
       return 0;
     }
     
@@ -439,6 +441,6 @@ extension LayerExtensions on Layer {
       dy = point.dy - rect.bottom;
     }
     
-    return (dx * dx + dy * dy).sqrt();
+    return math.sqrt(dx * dx + dy * dy);
   }
 }

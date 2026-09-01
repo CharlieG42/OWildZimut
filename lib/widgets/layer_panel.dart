@@ -4,12 +4,13 @@ import '../models/layer.dart';
 
 /// Panneau de gestion des calques
 typedef LayerOpacityCallback = void Function(String layerId, double opacity);
+typedef LayerVisibilityCallback = void Function(String layerId, bool visible);
 
 class LayerPanel extends StatefulWidget {
   final List<Layer> layers;
   final int? selectedLayerIndex;
   final ValueChanged<int> onLayerSelected;
-  final ValueChanged<bool> onLayerVisibilityChanged;
+  final LayerVisibilityCallback onLayerVisibilityChanged;
   final LayerOpacityCallback onLayerOpacityChanged;
   final VoidCallback onAddLayer;
   final ValueChanged<String> onLayerRemoved;
@@ -81,6 +82,7 @@ class _LayerPanelState extends State<LayerPanel> {
           child: Padding(
             padding: const EdgeInsets.all(6),
             child: Row(
+              mainAxisSize: MainAxisSize.max,
               children: [
                 const Text(
                   'Calques',
@@ -89,7 +91,10 @@ class _LayerPanelState extends State<LayerPanel> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Spacer(),
+                const Flexible(
+                  fit: FlexFit.loose,
+                  child: SizedBox(),
+                ),
                 IconButton(
                   icon: const Icon(Icons.add, size: 18),
                   onPressed: widget.onAddLayer,
@@ -121,15 +126,22 @@ class _LayerPanelState extends State<LayerPanel> {
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: ListView.builder(
+                primary: false,
                 itemCount: widget.layers.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (context, displayIndex) {
+                  // widget.layers est ordonné du plus bas (index 0) au plus
+                  // haut (dernier index) de la pile. Le panneau doit afficher
+                  // le calque le plus haut EN PREMIER (convention standard :
+                  // le calque en haut de la liste est au-dessus des autres
+                  // sur la carte) — on affiche donc la liste inversée.
+                  final index = widget.layers.length - 1 - displayIndex;
                   final layer = widget.layers[index];
                   return LayerItem(
                     layer: layer,
                     isSelected: widget.selectedLayerIndex == index,
                     onTap: () => widget.onLayerSelected(index),
                     onVisibilityChanged: (visible) =>
-                        widget.onLayerVisibilityChanged(visible),
+                        widget.onLayerVisibilityChanged(layer.id, visible),
                     onOpacityChanged: (opacity) =>
                         widget.onLayerOpacityChanged(layer.id, opacity),
                     onMoveUp: () => widget.onLayerMoveUp(layer.id),

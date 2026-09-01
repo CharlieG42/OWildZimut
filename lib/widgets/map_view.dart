@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import '../models/layer.dart';
 import '../models/symbol.dart' as symbol_model;
+
 
 /// Widget pour afficher et interagir avec la carte
 ///
@@ -26,7 +28,7 @@ class MapView extends StatefulWidget {
   final ValueChanged<Offset>? onTap;
   final ValueChanged<String>? onSymbolSelected;
   final ValueChanged<Set<String>>? onSymbolsSelected;
-  final Function(MapSymbol)? onSymbolAdded;
+  final Function(symbol_model.MapSymbol)? onSymbolAdded;    //foncion dans model/symbol.dart
   final Function(String, Offset)? onSymbolMoved;
   final Function(Set<String>, Offset)? onSymbolsMoved;
   final Function(String)? onSymbolDeleted;
@@ -61,6 +63,8 @@ class _MapViewState extends State<MapView> {
   Offset? _dragStart;
   Offset? _dragCurrent;
   Offset _lastFocalPoint = Offset.zero;
+  bool _isPanningView = false;
+  PointerDeviceKind? _lastPointerKind;
   List<Offset> _currentPoints = [];
   bool _isDrawing = false;
   Rect? _selectionRect;
@@ -89,6 +93,8 @@ class _MapViewState extends State<MapView> {
         child: GestureDetector(
           onScaleStart: (details) {
             _lastFocalPoint = details.focalPoint;
+            if (details.pointerCount >= 2) return;
+            _handleGestureStart(details.localFocalPoint);
           },
           onScaleUpdate: (details) {
             if (details.scale != 1.0) {
@@ -99,10 +105,14 @@ class _MapViewState extends State<MapView> {
               final delta = details.focalPoint - _lastFocalPoint;
               widget.onPanUpdate?.call(widget.panOffset + delta);
               _lastFocalPoint = details.focalPoint;
+              return;
             }
+
+            _handleGestureUpdate(details.focalPoint, details.localFocalPoint);
           },
           onScaleEnd: (details) {
             _lastFocalPoint = Offset.zero;
+            _handleGestureEnd();
           },
           onTapDown: (details) {
             final localPosition = _getLocalPosition(details.localPosition);
@@ -128,18 +138,10 @@ class _MapViewState extends State<MapView> {
           onLongPressEnd: (details) {
             _finalizeSelectionRect();
           },
-          onPanStart: (details) {
-            _handlePanStart(details);
-          },
-          onPanUpdate: (details) {
-            _handlePanUpdate(details, sortedLayers);
-          },
-          onPanEnd: (details) {
-            _handlePanEnd(details);
-          },
           child: Listener(
             onPointerDown: (details) {
               _dragStart = details.localPosition;
+              _lastPointerKind = details.kind;
             },
             onPointerMove: (details) {
               if (details.buttons == 2) {
@@ -387,15 +389,23 @@ class _MapViewState extends State<MapView> {
     });
   }
 
-  /// Gère le début du drag
-  void _handlePanStart(DragStartDetails details) {
-    final localPosition = _getLocalPosition(details.localPosition);
-    
+  /// Gère le début du geste (1 seul point de contact ; le cas 2+ doigts est
+  /// traité directement dans onScaleStart/onScaleUpdate)
+  void _handleGestureStart(Offset localFocalPoint) {
+    final isTouch = _lastPointerKind == PointerDeviceKind.touch ||
+        _lastPointerKind == PointerDeviceKind.stylus;
+    final localPosition = _getLocalPosition(localFocalPoint);
+
     if (widget.currentTool == 'select' && widget.selectedSymbolIds.isNotEmpty) {
       // Déplacer les symboles sélectionnés
       _dragStart = localPosition;
+    } else if (widget.currentTool == 'select' && isTouch) {
+      // Écran tactile (doigt ou stylet) : un glissé simple déplace la vue,
+      // comme sur une carte. Le rectangle de sélection reste accessible via
+      // un appui long + glissé (onLongPressStart/onLongPressMoveUpdate).
+      _isPanningView = true;
     } else if (widget.currentTool == 'select') {
-      // Démarrer un rectangle de sélection
+      // Souris : démarrer un rectangle de sélection (comportement inchangé)
       setState(() {
         _dragStart = localPosition;
         _dragCurrent = localPosition;
@@ -412,10 +422,17 @@ class _MapViewState extends State<MapView> {
     }
   }
 
-  /// Gère le drag en cours
-  void _handlePanUpdate(DragUpdateDetails details, List<Layer> sortedLayers) {
-    final localPosition = _getLocalPosition(details.localPosition);
-    
+  /// Gère la mise à jour du geste (1 seul point de contact)
+  void _handleGestureUpdate(Offset focalPoint, Offset localFocalPoint) {
+    if (_isPanningView) {
+      final delta = focalPoint - _lastFocalPoint;
+      widget.onPanUpdate?.call(widget.panOffset + delta);
+      _lastFocalPoint = focalPoint;
+      return;
+    }
+
+    final localPosition = _getLocalPosition(localFocalPoint);
+
     if (widget.currentTool == 'select' && widget.selectedSymbolIds.isNotEmpty && _dragStart != null) {
       // Déplacer les symboles sélectionnés
       final delta = localPosition - _dragStart!;
@@ -433,8 +450,13 @@ class _MapViewState extends State<MapView> {
     }
   }
 
-  /// Gère la fin du drag
-  void _handlePanEnd(DragEndDetails details) {
+  /// Gère la fin du geste (1 seul point de contact)
+  void _handleGestureEnd() {
+    if (_isPanningView) {
+      _isPanningView = false;
+      return;
+    }
+
     if (_isDrawing && widget.currentTool == 'line' && _dragCurrent != null) {
       // Ajouter le point temporaire
       setState(() {
@@ -442,7 +464,7 @@ class _MapViewState extends State<MapView> {
         _dragCurrent = null;
       });
     }
-    
+
     setState(() {
       _dragStart = null;
       _dragCurrent = null;
@@ -497,7 +519,7 @@ class _MapViewState extends State<MapView> {
         id: 'symbol_${DateTime.now().millisecondsSinceEpoch}',
         points: List<Offset>.from(_currentPoints),
         isClosed: true,
-        fillColor: Colors.blue.withOpacity(0.3),
+        fillColor: Colors.blue.withValues(alpha: 0.3),
         strokeColor: Colors.blue,
         strokeWidth: 1.0,
       );
@@ -694,6 +716,24 @@ class _SymbolsPainter extends CustomPainter {
     }
   }
 
+  /// Dessine un [path] en pointillés (tiret de longueur [dashLength],
+  /// espace de longueur [gapLength]) plutôt qu'en trait continu.
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint, double dashLength, double gapLength) {
+    if (dashLength <= 0) {
+      canvas.drawPath(path, paint);
+      return;
+    }
+    final period = dashLength + (gapLength > 0 ? gapLength : 0.01);
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final end = (distance + dashLength).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, end), paint);
+        distance += period;
+      }
+    }
+  }
+
   void _drawPointSymbol(
     Canvas canvas,
     symbol_model.MapSymbol symbol,
@@ -705,7 +745,7 @@ class _SymbolsPainter extends CustomPainter {
     final radius = symbol.size / 2;
     
     // Couleur de base
-    final baseColor = symbol.color.withOpacity(opacity);
+    final baseColor = symbol.color.withValues(alpha: opacity);
     
     // Dessiner le cercle
     final paint = Paint()
@@ -727,7 +767,7 @@ class _SymbolsPainter extends CustomPainter {
     // Surbrillance au survol
     if (isHovered) {
       final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
+        ..color = Colors.yellow.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
       
       canvas.drawCircle(center, radius + 1.0, hoverPaint);
@@ -752,13 +792,17 @@ class _SymbolsPainter extends CustomPainter {
     
     // Dessiner la ligne
     final paint = Paint()
-      ..color = symbol.color.withOpacity(opacity)
+      ..color = symbol.color.withValues(alpha: opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = symbol.strokeWidth
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    
-    canvas.drawPath(path, paint);
+
+    if (symbol.isDashed) {
+      _drawDashedPath(canvas, path, paint, symbol.dashLength ?? 4.0, symbol.gapLength ?? 1.0);
+    } else {
+      canvas.drawPath(path, paint);
+    }
     
     // Contour pour la sélection
     if (isSelected) {
@@ -773,7 +817,7 @@ class _SymbolsPainter extends CustomPainter {
     // Surbrillance au survol
     if (isHovered) {
       final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
+        ..color = Colors.yellow.withValues(alpha: 0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = symbol.strokeWidth + 2.0;
       
@@ -804,7 +848,7 @@ class _SymbolsPainter extends CustomPainter {
     // Remplissage
     if (symbol.fillColor != null) {
       final fillPaint = Paint()
-        ..color = symbol.fillColor!.withOpacity(opacity)
+        ..color = symbol.fillColor!.withValues(alpha: opacity)
         ..style = PaintingStyle.fill;
       
       canvas.drawPath(path, fillPaint);
@@ -813,7 +857,7 @@ class _SymbolsPainter extends CustomPainter {
     // Contour
     if (symbol.strokeColor != null && symbol.strokeWidth > 0) {
       final strokePaint = Paint()
-        ..color = symbol.strokeColor!.withOpacity(opacity)
+        ..color = symbol.strokeColor!.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = symbol.strokeWidth
         ..strokeCap = StrokeCap.round
@@ -837,7 +881,7 @@ class _SymbolsPainter extends CustomPainter {
     // Surbrillance au survol
     if (isHovered) {
       final hoverPaint = Paint()
-        ..color = Colors.yellow.withOpacity(0.3)
+        ..color = Colors.yellow.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
       
       canvas.drawPath(path, hoverPaint);
@@ -857,7 +901,7 @@ class _SymbolsPainter extends CustomPainter {
       text: TextSpan(
         text: symbol.text,
         style: TextStyle(
-          color: symbol.color.withOpacity(opacity),
+          color: symbol.color.withValues(alpha: opacity),
           fontSize: symbol.fontSize ?? 12.0,
           fontFamily: symbol.fontFamily,
         ),
@@ -905,7 +949,7 @@ class _SelectionRectPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Rectangle semi-transparent
     final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.15)
+      ..color = Colors.blue.withValues(alpha: 0.15)
       ..style = PaintingStyle.fill;
     
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), fillPaint);

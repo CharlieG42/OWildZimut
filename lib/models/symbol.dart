@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../extensions/offset_extensions.dart';
 
 /// Type de symbole IOF (International Orienteering Federation)
 enum MapSymbolType {
@@ -83,6 +84,18 @@ class MapSymbol {
   /// Alignement horizontal du texte
   final TextAlign? textAlign;
 
+  /// Vrai si la ligne doit être dessinée en pointillés (ex. sentier peu
+  /// marqué). Sans effet sur les points/surfaces.
+  final bool isDashed;
+
+  /// Longueur d'un tiret, en unités de coordonnées (mm) — utilisé seulement
+  /// si [isDashed] est vrai.
+  final double? dashLength;
+
+  /// Longueur d'un espace entre deux tirets, en unités de coordonnées (mm)
+  /// — utilisé seulement si [isDashed] est vrai.
+  final double? gapLength;
+
   const MapSymbol({
     required this.id,
     required this.type,
@@ -105,6 +118,9 @@ class MapSymbol {
     this.fontFamily,
     this.fontSize,
     this.textAlign,
+    this.isDashed = false,
+    this.dashLength,
+    this.gapLength,
   });
 
   /// Crée un symbole ponctuel
@@ -179,7 +195,7 @@ class MapSymbol {
       description: description ?? '',
       position: points.isNotEmpty ? points.first : Offset.zero,
       points: points,
-      color: fillColor ?? Colors.blue.withOpacity(0.3),
+      color: fillColor ?? Colors.blue.withValues(alpha: 0.3),
       fillColor: fillColor,
       strokeColor: strokeColor ?? Colors.blue,
       strokeWidth: strokeWidth ?? 1.0,
@@ -319,7 +335,7 @@ class MapSymbol {
       case MapSymbolType.line:
         return _pointOnLine(point, points, strokeWidth + 2);
       case MapSymbolType.area:
-        return _pointInPolygon(point, points);
+        return pointInPolygon(point, points);
       case MapSymbolType.text:
         return boundingBox.contains(point);
     }
@@ -356,7 +372,7 @@ class MapSymbol {
 
   /// Vérifie si un point est à l'intérieur d'un polygone
   /// (algorithme du rayon)
-  static bool _pointInPolygon(Offset point, List<Offset> polygonPoints) {
+  static bool pointInPolygon(Offset point, List<Offset> polygonPoints) {
     if (polygonPoints.length < 3) return false;
     
     bool inside = false;

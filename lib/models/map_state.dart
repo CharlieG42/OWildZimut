@@ -189,38 +189,40 @@ class MapState {
     );
   }
 
-  /// Déplace un calque vers le haut
+  /// Déplace un calque vers le haut de la pile (zIndex plus élevé — il
+  /// s'affichera plus haut dans la liste des calques, au-dessus des autres
+  /// sur la carte).
   MapState moveLayerUp(String layerId) {
     final index = layers.indexWhere((layer) => layer.id == layerId);
-    if (index <= 0 || index >= layers.length) return this;
+    if (index < 0 || index >= layers.length - 1) return this; // déjà tout en haut
 
     final newLayers = List<Layer>.from(layers);
-    final layer = newLayers.removeAt(index);
-    newLayers.insert(index + 1, layer.copyWith(zIndex: index + 2));
+    final temp = newLayers[index];
+    newLayers[index] = newLayers[index + 1];
+    newLayers[index + 1] = temp;
 
-    // Recalculer les zIndex
-    for (var i = 0; i < newLayers.length; i++) {
-      newLayers[i] = newLayers[i].copyWith(zIndex: i + 1);
-    }
-
-    return copyWith(layers: newLayers);
+    return copyWith(layers: _reassignZIndex(newLayers));
   }
 
-  /// Déplace un calque vers le bas
+  /// Déplace un calque vers le bas de la pile (zIndex plus bas).
   MapState moveLayerDown(String layerId) {
     final index = layers.indexWhere((layer) => layer.id == layerId);
-    if (index < 0 || index >= layers.length - 1) return this;
+    if (index <= 0) return this; // déjà tout en bas
 
     final newLayers = List<Layer>.from(layers);
-    final layer = newLayers.removeAt(index);
-    newLayers.insert(index - 1, layer.copyWith(zIndex: index));
+    final temp = newLayers[index];
+    newLayers[index] = newLayers[index - 1];
+    newLayers[index - 1] = temp;
 
-    // Recalculer les zIndex
-    for (var i = 0; i < newLayers.length; i++) {
-      newLayers[i] = newLayers[i].copyWith(zIndex: i + 1);
+    return copyWith(layers: _reassignZIndex(newLayers));
+  }
+
+  static List<Layer> _reassignZIndex(List<Layer> list) {
+    final result = <Layer>[];
+    for (var i = 0; i < list.length; i++) {
+      result.add(list[i].copyWith(zIndex: i + 1));
     }
-
-    return copyWith(layers: newLayers);
+    return result;
   }
 
   // ============================================================================

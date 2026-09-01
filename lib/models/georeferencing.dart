@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 /// Classe pour gérer le géoréférencement des cartes
 /// 
@@ -328,9 +329,9 @@ class AffineTransformation {
     final dyp = p2.realPoint.dy - p1.realPoint.dy;
 
     // Calculer l'échelle et la rotation
-    final scale = (dxp * dxp + dyp * dyp).sqrt() / (dx * dx + dy * dy).sqrt();
-    final cosTheta = (dx * dxp + dy * dyp) / ((dx * dx + dy * dy).sqrt() * (dxp * dxp + dyp * dyp).sqrt());
-    final sinTheta = (dx * dyp - dy * dxp) / ((dx * dx + dy * dy).sqrt() * (dxp * dxp + dyp * dyp).sqrt());
+    final scale = math.sqrt(dxp * dxp + dyp * dyp) / math.sqrt(dx * dx + dy * dy);
+    final cosTheta = (dx * dxp + dy * dyp) / (math.sqrt(dx * dx + dy * dy) * math.sqrt(dxp * dxp + dyp * dyp));
+    final sinTheta = (dx * dyp - dy * dxp) / (math.sqrt(dx * dx + dy * dy) * math.sqrt(dxp * dxp + dyp * dyp));
 
     // Coefficients de la transformation
     final a = scale * cosTheta;
@@ -372,9 +373,9 @@ class AffineTransformation {
   /// Échelle moyenne de la transformation
   double get scale {
     // Échelle dans la direction x
-    final scaleX = (a * a + d * d).sqrt();
+    final scaleX = math.sqrt(a * a + d * d);
     // Échelle dans la direction y
-    final scaleY = (b * b + e * e).sqrt();
+    final scaleY = math.sqrt(b * b + e * e);
     // Échelle moyenne
     return (scaleX + scaleY) / 2;
   }
@@ -382,6 +383,6 @@ class AffineTransformation {
   /// Rotation moyenne de la transformation (en radians)
   double get rotation {
     // Utiliser l'atan2 de la matrice de rotation
-    return atan2(d, a);
+    return math.atan2(d, a);
   }
 }

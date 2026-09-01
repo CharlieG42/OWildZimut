@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'models/map_state.dart';
 import 'models/layer.dart';
 import 'models/symbol.dart' as symbol_model;
-import 'models/iof_symbols.dart';
 import 'models/omap_file.dart';
-import 'models/georeferencing.dart';
-import 'services/undo_manager.dart';
+import 'services/undo_manager.dart' as undo_service;
 import 'widgets/map_view.dart';
 import 'widgets/layer_panel.dart';
 import 'widgets/tool_bar.dart';
-import 'widgets/symbol_selector.dart';
 import 'widgets/file_loader.dart';
 import 'widgets/background_image_picker.dart';
+import 'widgets/recenter_controls.dart';
 import 'screens/about_dialog.dart' as app_about;
 import 'formatters/omap_exporter.dart';
-import 'dart:io';
 
 void main() {
   runApp(const OWildZimutApp());
@@ -76,11 +72,11 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   late MapState _mapState;
   String _currentTool = 'select';
-  bool _toolBarExpanded = true;
+  final bool _toolBarExpanded = true;
   bool _advancedMode = false;
   
   // Gestion de l'historique
-  final UndoManager _undoManager = UndoManager(maxHistoryLength: 50);
+  final undo_service.UndoManager _undoManager = undo_service.UndoManager(maxHistoryLength: 50);
   
   // Clipboard pour copier/coller
   List<symbol_model.MapSymbol> _clipboard = [];
@@ -356,13 +352,13 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _loadImage() async {
     try {
-      final imagePath = await BackgroundImagePicker.pickImage();
+      final imagePath = await pickBackgroundImage();
       if (imagePath == null) return;
       
       setState(() {
         _mapState = _mapState.addImageBackgroundLayer(
           'Image ${_mapState.layers.length + 1}',
-          imagePath,
+          imagePath.path,
         );
         _pushStateToHistory();
       });
@@ -426,7 +422,10 @@ class _MainScreenState extends State<MainScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.info_outline),
-              onPressed: () => app_about.showAboutDialog(context),
+              onPressed: () => showDialog(
+                context: context,
+                builder: (context) => app_about.AboutDialog(appVersion: '1.0.0'),
+              ),
               tooltip: 'À propos',
             ),
             IconButton(
@@ -440,7 +439,7 @@ class _MainScreenState extends State<MainScreen> {
               tooltip: 'Ouvrir',
             ),
             IconButton(
-              icon: const Icon(Icons.export_rounded),
+              icon: const Icon(Icons.upload),
               onPressed: _exportOmapFile,
               tooltip: 'Exporter OMAP',
             ),
@@ -505,7 +504,7 @@ class _MainScreenState extends State<MainScreen> {
         // Barre d'outils (gauche)
         ToolBar(
           currentTool: _currentTool,
-          selectedLayerIndex: _mapState.selectedLayerIndex,
+          selectedLayerIndex: _mapState.selectedLayerIndex ?? 0,
           selectedSymbolIds: _mapState.selectedSymbolIds,
           canUndo: _undoManager.canUndo,
           canRedo: _undoManager.canRedo,
@@ -526,48 +525,63 @@ class _MainScreenState extends State<MainScreen> {
         
         // Zone de carte (centre)
         Expanded(
-          child: MapView(
-            key: _mapViewKey,
-            layers: _mapState.layers,
-            zoomLevel: _mapState.zoomLevel,
-            panOffset: _mapState.panOffset,
-            selectedLayerIndex: _mapState.selectedLayerIndex,
-            currentTool: _currentTool,
-            selectedSymbolIds: _mapState.selectedSymbolIds,
-            onPanUpdate: _setPanOffset,
-            onZoomChanged: _setZoomLevel,
-            onSelectionRectChanged: (rect) {
-              // Sélectionner les symboles dans le rectangle
-              setState(() {
-                _mapState = _mapState.selectSymbolsInRect(rect);
-              });
-            },
-            onSymbolAdded: _addSymbol,
-            onSymbolSelected: (symbolId) {
-              _selectSymbol(symbolId, multiSelect: false);
-            },
-            onSymbolsSelected: _selectSymbols,
-            onSymbolsMoved: _moveSymbols,
-            onSymbolsDeleted: (symbolIds) {
-              setState(() {
-                _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
-                _deleteSelectedSymbols();
-              });
-            },
+          child: Stack(
+            children: [
+              MapView(
+                key: _mapViewKey,
+                layers: _mapState.layers,
+                zoomLevel: _mapState.zoomLevel,
+                panOffset: _mapState.panOffset,
+                selectedLayerIndex: _mapState.selectedLayerIndex,
+                currentTool: _currentTool,
+                selectedSymbolIds: _mapState.selectedSymbolIds,
+                onPanUpdate: _setPanOffset,
+                onZoomChanged: _setZoomLevel,
+                onSelectionRectChanged: (rect) {
+                  // Sélectionner les symboles dans le rectangle
+                  setState(() {
+                    _mapState = _mapState.selectSymbolsInRect(rect);
+                  });
+                },
+                onSymbolAdded: _addSymbol,
+                onSymbolSelected: (symbolId) {
+                  _selectSymbol(symbolId, multiSelect: false);
+                },
+                onSymbolsSelected: _selectSymbols,
+                onSymbolsMoved: _moveSymbols,
+                onSymbolsDeleted: (symbolIds) {
+                  setState(() {
+                    _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
+                    _deleteSelectedSymbols();
+                  });
+                },
+              ),
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: RecenterControls(
+                  onPanBy: _panBy,
+                  onResetView: _resetView,
+                ),
+              ),
+            ],
           ),
         ),
         
         // Panneau des calques (droite)
-        LayerPanel(
-          layers: _mapState.layers,
-          selectedLayerIndex: _mapState.selectedLayerIndex,
-          onLayerAdded: _addLayer,
-          onLayerRemoved: _removeLayer,
-          onLayerSelected: _selectLayer,
-          onLayerVisibilityChanged: _setLayerVisibility,
-          onLayerOpacityChanged: _setLayerOpacity,
-          onLayerMovedUp: _moveLayerUp,
-          onLayerMovedDown: _moveLayerDown,
+        SizedBox(
+          width: 250,
+          child: LayerPanel(
+            layers: _mapState.layers,
+            selectedLayerIndex: _mapState.selectedLayerIndex,
+            onAddLayer: _addLayer,
+            onLayerRemoved: _removeLayer,
+            onLayerSelected: _selectLayer,
+            onLayerVisibilityChanged: _setLayerVisibility,
+            onLayerOpacityChanged: _setLayerOpacity,
+            onLayerMoveUp: _moveLayerUp,
+            onLayerMoveDown: _moveLayerDown,
+          ),
         ),
       ],
     );
@@ -579,33 +593,45 @@ class _MainScreenState extends State<MainScreen> {
       children: [
         // Zone de carte (prend tout l'espace)
         Expanded(
-          child: MapView(
-            key: _mapViewKey,
-            layers: _mapState.layers,
-            zoomLevel: _mapState.zoomLevel,
-            panOffset: _mapState.panOffset,
-            selectedLayerIndex: _mapState.selectedLayerIndex,
-            currentTool: _currentTool,
-            selectedSymbolIds: _mapState.selectedSymbolIds,
-            onPanUpdate: _setPanOffset,
-            onZoomChanged: _setZoomLevel,
-            onSelectionRectChanged: (rect) {
-              setState(() {
-                _mapState = _mapState.selectSymbolsInRect(rect);
-              });
-            },
-            onSymbolAdded: _addSymbol,
-            onSymbolSelected: (symbolId) {
-              _selectSymbol(symbolId, multiSelect: false);
-            },
-            onSymbolsSelected: _selectSymbols,
-            onSymbolsMoved: _moveSymbols,
-            onSymbolsDeleted: (symbolIds) {
-              setState(() {
-                _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
-                _deleteSelectedSymbols();
-              });
-            },
+          child: Stack(
+            children: [
+              MapView(
+                key: _mapViewKey,
+                layers: _mapState.layers,
+                zoomLevel: _mapState.zoomLevel,
+                panOffset: _mapState.panOffset,
+                selectedLayerIndex: _mapState.selectedLayerIndex,
+                currentTool: _currentTool,
+                selectedSymbolIds: _mapState.selectedSymbolIds,
+                onPanUpdate: _setPanOffset,
+                onZoomChanged: _setZoomLevel,
+                onSelectionRectChanged: (rect) {
+                  setState(() {
+                    _mapState = _mapState.selectSymbolsInRect(rect);
+                  });
+                },
+                onSymbolAdded: _addSymbol,
+                onSymbolSelected: (symbolId) {
+                  _selectSymbol(symbolId, multiSelect: false);
+                },
+                onSymbolsSelected: _selectSymbols,
+                onSymbolsMoved: _moveSymbols,
+                onSymbolsDeleted: (symbolIds) {
+                  setState(() {
+                    _mapState = _mapState.copyWith(selectedSymbolIds: symbolIds);
+                    _deleteSelectedSymbols();
+                  });
+                },
+              ),
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: RecenterControls(
+                  onPanBy: _panBy,
+                  onResetView: _resetView,
+                ),
+              ),
+            ],
           ),
         ),
       ],

@@ -396,6 +396,10 @@ Ce projet est sous licence **MIT**. Voir le fichier LICENSE pour plus de détail
 - ✅ **Feedback visuel** : Animations et survol pour une meilleure UX
 - ✅ **Barre d'outils améliorée** : Icônes, infobulles et mode avancé
 - ✅ **Mode mobile optimisé** : Barre d'outils compacte pour les petits écrans
+- ✅ **Navigation avancée** : Boutons de défilement (4 flèches + centrer)
+- 🟡 **Contrôle clavier** : Touches flèches pour le défilement (en cours)
+- ✅ **Système de coordonnées corrigé** : Séparation explicite des coordonnées écran et locales, résolution du conflit GestureDetector/Listener
+- ✅ **Grille visible** : Correction de l'affichage de la grille avec adaptation au zoom
 
 ### Version 0.0.006
 - ✅ Interface adaptée mobile (tiroirs, barre compacte)
