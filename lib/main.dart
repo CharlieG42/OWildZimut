@@ -12,6 +12,7 @@ import 'widgets/background_image_picker.dart';
 import 'widgets/recenter_controls.dart';
 import 'screens/about_dialog.dart' as app_about;
 import 'formatters/omap_exporter.dart';
+import 'widgets/iof_symbols_viewer.dart';
 
 void main() {
   runApp(const OWildZimutApp());
@@ -384,6 +385,10 @@ class _MainScreenState extends State<MainScreen> {
     await _loadOmapFile();
   }
 
+  void _showIOFSymbolsViewer() {
+    showIOFSymbolsViewer(context);
+  }
+
   // ============================================================================
   // GESTION DU MODE AVANCÉ
   // ============================================================================
@@ -462,6 +467,14 @@ class _MainScreenState extends State<MainScreen> {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
+                const PopupMenuItem(
+                  value: 'iof_symbols',
+                  child: ListTile(
+                    leading: Icon(Icons.list),
+                    title: Text('Voir les symboles IOF'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               ],
               onSelected: (value) {
                 switch (value) {
@@ -470,6 +483,9 @@ class _MainScreenState extends State<MainScreen> {
                     break;
                   case 'omap':
                     _loadOmapFile();
+                    break;
+                  case 'iof_symbols':
+                    _showIOFSymbolsViewer();
                     break;
                 }
               },
