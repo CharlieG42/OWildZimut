@@ -160,7 +160,7 @@ class UndoManager with ChangeNotifier {
 /// Cette classe représente une action qui peut être annulée et rétablie.
 /// Elle est utilisée pour implémenter un système d'undo/redo plus avancé
 /// basé sur les actions plutôt que sur les états.
-class UndoableAction {
+abstract class UndoableAction {
   /// Description de l'action (pour l'interface utilisateur)
   String get description;
   
@@ -233,7 +233,7 @@ class ActionUndoManager with ChangeNotifier {
 /// Actions prédéfinies
 
 /// Action pour ajouter un symbole
-class AddSymbolAction implements UndoableAction {
+class AddSymbolAction extends UndoableAction {
   final symbol_model.MapSymbol symbol;
   final int layerIndex;
 
@@ -257,7 +257,7 @@ class AddSymbolAction implements UndoableAction {
 }
 
 /// Action pour supprimer un symbole
-class RemoveSymbolAction implements UndoableAction {
+class RemoveSymbolAction extends UndoableAction {
   final String symbolId;
   final symbol_model.MapSymbol symbol;
   final int layerIndex;
@@ -279,7 +279,7 @@ class RemoveSymbolAction implements UndoableAction {
 }
 
 /// Action pour déplacer un symbole
-class MoveSymbolAction implements UndoableAction {
+class MoveSymbolAction extends UndoableAction {
   final String symbolId;
   final Offset oldPosition;
   final Offset newPosition;
@@ -301,7 +301,7 @@ class MoveSymbolAction implements UndoableAction {
 }
 
 /// Action pour modifier les propriétés d'un symbole
-class UpdateSymbolAction implements UndoableAction {
+class UpdateSymbolAction extends UndoableAction {
   final String symbolId;
   final symbol_model.MapSymbol oldSymbol;
   final symbol_model.MapSymbol newSymbol;
@@ -312,4 +312,62 @@ class UpdateSymbolAction implements UndoableAction {
   String get description => 'Modifier symbole';
 
   @override
-  MapState apply(MapState stat
+  MapState apply(MapState state) {
+    return state.updateSymbol(symbolId, newSymbol);
+  }
+
+  @override
+  MapState undo(MapState state) {
+    return state.updateSymbol(symbolId, oldSymbol);
+  }
+}
+
+/// Action pour ajouter un calque
+class AddLayerAction extends UndoableAction {
+  final Layer layer;
+
+  AddLayerAction(this.layer);
+
+  @override
+  String get description => 'Ajouter calque';
+
+  @override
+  MapState apply(MapState state) {
+    return state.copyWith(
+      layers: [...state.layers, layer],
+      selectedLayerIndex: state.layers.length,
+    );
+  }
+
+  @override
+  MapState undo(MapState state) {
+    return state.removeLayer(layer.id);
+  }
+}
+
+/// Action pour supprimer un calque
+class RemoveLayerAction extends UndoableAction {
+  final String layerId;
+  final Layer layer;
+  final int layerIndex;
+
+  RemoveLayerAction(this.layerId, this.layer, this.layerIndex);
+
+  @override
+  String get description => 'Supprimer calque';
+
+  @override
+  MapState apply(MapState state) {
+    return state.removeLayer(layerId);
+  }
+
+  @override
+  MapState undo(MapState state) {
+    final newLayers = List<Layer>.from(state.layers);
+    newLayers.insert(layerIndex, layer);
+    return state.copyWith(
+      layers: newLayers,
+      selectedLayerIndex: layerIndex,
+    );
+  }
+}

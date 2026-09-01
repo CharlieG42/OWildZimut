@@ -29,13 +29,13 @@ class _SymbolSelectorState extends State<SymbolSelector> {
   IOFSymbolCategory? _selectedCategory;
   String _searchQuery = '';
   IOFSymbolDefinition? _selectedSymbolDef;
-  Color _selectedColor = const Color(0xFF000000);
+  Color _selectedColor = Colors.black;
   double _selectedSize = 1.0;
 
   @override
   void initState() {
     super.initState();
-    _selectedColor = widget.selectedColor ?? const Color(0xFF000000);
+    _selectedColor = widget.selectedColor ?? Colors.black;
     _selectedSize = widget.selectedSize ?? 1.0;
   }
 
@@ -164,7 +164,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF000000), width: 0.5),
+            border: Border.all(color: Colors.black, width: 0.5),
           ),
         );
       case symbol_model.MapSymbolType.line:
@@ -173,7 +173,7 @@ class _SymbolSelectorState extends State<SymbolSelector> {
           height: size,
           decoration: BoxDecoration(
             color: color,
-            border: Border.all(color: const Color(0xFF000000), width: 0.5),
+            border: Border.all(color: Colors.black, width: 0.5),
           ),
         );
       case symbol_model.MapSymbolType.area:

@@ -6,8 +6,8 @@ class LayerItem extends StatelessWidget {
   final Layer layer;
   final bool isSelected;
   final VoidCallback? onTap;
-  final void Function(bool)? onVisibilityChanged;
-  final void Function(double)? onOpacityChanged;
+  final ValueChanged<bool>? onVisibilityChanged;
+  final ValueChanged<double>? onOpacityChanged;
   final VoidCallback? onMoveUp;
   final VoidCallback? onMoveDown;
   final VoidCallback? onRemove;
@@ -42,7 +42,7 @@ class LayerItem extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   layer.visible ? Icons.visibility : Icons.visibility_off,
-                  color: layer.visible ? const Color(0xFF4CAF50) : const Color(0xFF9E9E9E),
+                  color: layer.visible ? Colors.green : Colors.grey,
                   size: 16,
                 ),
                 onPressed: () => onVisibilityChanged?.call(!layer.visible),
@@ -53,7 +53,7 @@ class LayerItem extends StatelessWidget {
               Icon(
                 layer.isImageBackground ? Icons.image_outlined : Icons.layers_outlined,
                 size: 14,
-                color: const Color(0xFF757575),
+                color: Colors.grey[600],
               ),
               Expanded(
                 child: Padding(
@@ -94,7 +94,7 @@ class LayerItem extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 20, maxWidth: 20),
               ),
               IconButton(
-                icon: const Icon(Icons.delete, color: Color(0xFFF44336), size: 14),
+                icon: const Icon(Icons.delete, color: Colors.red, size: 14),
                 onPressed: onRemove,
                 tooltip: 'Supprimer',
                 padding: EdgeInsets.zero,

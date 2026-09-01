@@ -144,7 +144,7 @@ class MapFileColor {
   MapFileColor({
     required this.number,
     this.name = '',
-    this.color = const Color(0xFF000000),
+    this.color = Colors.black,
     this.spotColor = false,
     this.separation = 0.0,
     this.angle = 0.0,
@@ -170,7 +170,7 @@ class MapFileMapSymbol {
   MapFileMapSymbol({
     required this.number,
     this.name = '',
-    this.name = '',
+    this.description = '',
     this.colorNumber = 0,
     this.type = symbol_model.MapSymbolType.point,
     this.elements = const [],
@@ -194,8 +194,10 @@ class MapFileMapSymbol {
     return symbol_model.MapSymbol(
       id: id ?? 'symbol_${DateTime.now().millisecondsSinceEpoch}',
       type: type,
-      name: iofSymbol?.name ?? description,
-      strokeColor: iofSymbol?.defaultColor ?? const Color(0xFF000000),
+      code: iofSymbol?.code ?? number.toString(),
+      position: position ?? Offset.zero,
+      description: iofSymbol?.description ?? description,
+      color: iofSymbol?.defaultColor ?? Colors.black,
       size: (iofSymbol?.defaultSize ?? 1.0) * scale,
     );
   }
@@ -229,8 +231,11 @@ class MapFileMapElement {
   symbol_model.MapSymbol toMapSymbol({String? id}) {
     return symbol_model.MapSymbol(
       id: id ?? 'symbol_${DateTime.now().millisecondsSinceEpoch}',
-      name: "Élément OCAD $symbolNumber",
-      strokeColor: const Color(0xFF000000),
+      type: type,
+      code: symbolNumber.toString(),
+      position: position,
+      description: 'Élément OCAD $symbolNumber',
+      color: Colors.black,
       size: 1.0,
       rotation: rotation,
       points: points,

@@ -3,7 +3,6 @@ import 'layer_item.dart';
 import '../models/layer.dart';
 
 /// Panneau de gestion des calques
-typedef LayerVisibilityCallback = void Function(String layerId, bool visible);
 typedef LayerOpacityCallback = void Function(String layerId, double opacity);
 typedef LayerVisibilityCallback = void Function(String layerId, bool visible);
 
