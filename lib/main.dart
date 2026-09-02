@@ -13,6 +13,7 @@ import 'widgets/recenter_controls.dart';
 import 'screens/about_dialog.dart' as app_about;
 import 'formatters/omap_exporter.dart';
 import 'widgets/iof_symbols_viewer.dart';
+import 'constants.dart';
 
 void main() {
   runApp(const OWildZimutApp());
@@ -429,7 +430,7 @@ class _MainScreenState extends State<MainScreen> {
               icon: const Icon(Icons.info_outline),
               onPressed: () => showDialog(
                 context: context,
-                builder: (context) => app_about.AboutDialog(appVersion: '1.0.0'),
+                builder: (context) => app_about.AboutDialog(appVersion: AppConstants.version),
               ),
               tooltip: 'À propos',
             ),

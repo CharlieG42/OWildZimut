@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'layer.dart';
 import 'symbol.dart' as symbol_model;
 import 'georeferencing.dart';
+import '../constants.dart';
 
 /// État global de la carte (géré par un StateNotifier ou Riverpod)
 /// 
@@ -23,7 +24,7 @@ class MapState {
     this.selectedLayerIndex,
     this.zoomLevel = 1.0,
     this.panOffset = Offset.zero,
-    this.appVersion = '0.0.007',
+    this.appVersion = AppConstants.version,
     this.currentFile,
     this.fileName,
     this.selectedSymbolIds = const {},
@@ -33,10 +34,11 @@ class MapState {
   /// Crée un MapState initial avec des calques par défaut
   factory MapState.initial() {
     return const MapState(
-      appVersion: '0.0.007',
+      appVersion: AppConstants.version,
     ).addLayer('Carte de base', LayerType.vector)
-      .addLayer('Végétation', LayerType.vector)
-      .addLayer('Chemins', LayerType.vector);
+      //.addLayer('Végétation', LayerType.vector)
+      //.addLayer('Chemins', LayerType.vector)
+  ;
   }
 
   /// Couleur par défaut selon le type de calque
@@ -536,7 +538,7 @@ class MapState {
         (json['view']?['pan_x'] as num?)?.toDouble() ?? 0.0,
         (json['view']?['pan_y'] as num?)?.toDouble() ?? 0.0,
       ),
-      appVersion: json['metadata']?['version'] as String? ?? '0.0.007',
+      appVersion: json['metadata']?['version'] as String? ?? AppConstants.version,
       fileName: json['metadata']?['name'] as String?,
       selectedSymbolIds: (json['selection'] as List<dynamic>?)
           ?.map((id) => id.toString())
