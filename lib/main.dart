@@ -94,7 +94,7 @@ class _MainScreenState extends State<MainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final screenSize = MediaQuery.of(context).size;
       setState(() {
-        _mapState = _mapState.centerView(screenSize);
+        _mapState = _mapState.centerOnSymbols(screenSize);
       });
     });
     
@@ -261,8 +261,9 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _resetView() {
+    final screenSize = MediaQuery.of(context).size;
     setState(() {
-      _mapState = _mapState.resetView();
+      _mapState = _mapState.centerOnSymbols(screenSize);
     });
   }
 
@@ -332,7 +333,7 @@ class _MainScreenState extends State<MainScreen> {
       final screenSize = MediaQuery.of(context).size;
       setState(() {
         _mapState = OmapFileLoader.mergeIntoState(_mapState, omapDocument);
-        _mapState = _mapState.centerView(screenSize);
+        _mapState = _mapState.centerOnSymbols(screenSize);
         _pushStateToHistory();
       });
       

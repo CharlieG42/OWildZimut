@@ -261,6 +261,46 @@ class MapState {
     );
   }
 
+  /// Centre la vue sur les symboles (nécessite la taille de l'écran)
+  MapState centerOnSymbols(Size screenSize) {
+    // Calculer le centre des symboles
+    if (layers.isEmpty) {
+      return centerView(screenSize);
+    }
+    
+    final allSymbols = layers.expand((layer) => layer.symbols).toList();
+    if (allSymbols.isEmpty) {
+      return centerView(screenSize);
+    }
+    
+    // Calculer les limites des symboles
+    double minX = double.infinity;
+    double maxX = -double.infinity;
+    double minY = double.infinity;
+    double maxY = -double.infinity;
+    
+    for (final symbol in allSymbols) {
+      minX = symbol.position.dx < minX ? symbol.position.dx : minX;
+      maxX = symbol.position.dx > maxX ? symbol.position.dx : maxX;
+      minY = symbol.position.dy < minY ? symbol.position.dy : minY;
+      maxY = symbol.position.dy > maxY ? symbol.position.dy : maxY;
+    }
+    
+    final symbolsWidth = maxX - minX;
+    final symbolsHeight = maxY - minY;
+    final centerX = (minX + maxX) / 2;
+    final centerY = (minY + maxY) / 2;
+    
+    // Calculer le panOffset pour centrer les symboles
+    final panOffsetX = screenSize.width / 2 - centerX;
+    final panOffsetY = screenSize.height / 2 - centerY;
+    
+    return copyWith(
+      zoomLevel: 1.0,
+      panOffset: Offset(panOffsetX, panOffsetY),
+    );
+  }
+
   /// Applique un zoom relatif
   MapState zoomBy(double factor, Offset focalPoint) {
     final newZoom = (zoomLevel * factor).clamp(0.1, 10.0);
