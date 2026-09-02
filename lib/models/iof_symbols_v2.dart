@@ -200,10 +200,10 @@ class IOFSymbolGeometry {
 
   /// Get the color reference (returns priority index as string)
   String? get colorReference {
-    if (symbolType == 'line') return properties['color'];
-    if (symbolType == 'point') return properties['inner_color'];
-    if (symbolType == 'area') return properties['inner_color'];
-    if (symbolType == 'text') return properties['color'];
+    if (symbolType == 'line') return properties['color']?.toString();
+    if (symbolType == 'point') return properties['inner_color']?.toString();
+    if (symbolType == 'area') return properties['inner_color']?.toString();
+    if (symbolType == 'text') return properties['color']?.toString();
     return null;
   }
 
