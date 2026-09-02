@@ -89,6 +89,15 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _mapState = MapState.initial();
+    
+    // Centre la vue au démarrage (après le premier rendu)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final screenSize = MediaQuery.of(context).size;
+      setState(() {
+        _mapState = _mapState.centerView(screenSize);
+      });
+    });
+    
     _undoManager.pushState(_mapState);
   }
 
