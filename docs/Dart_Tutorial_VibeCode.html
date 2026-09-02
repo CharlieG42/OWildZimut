@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutoriel Dart - Guide Condensé</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --bg-color: #f8f9fa;
+            --code-bg: #f4f4f4;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2em;
+            background-color: var(--bg-color);
+        }
+        
+        h1 {
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.5em;
+            font-size: 2.2em;
+        }
+        
+        h2 {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.3em;
+            font-size: 1.6em;
+            margin-top: 2em;
+        }
+        
+        h3 {
+            color: var(--secondary-color);
+            font-size: 1.3em;
+            margin-top: 1.5em;
+        }
+        
+        h4 {
+            color: var(--secondary-color);
+            font-size: 1.1em;
+        }
+        
+        p {
+            margin: 0.8em 0;
+            text-align: justify;
+        }
+        
+        code {
+            background: var(--code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9em;
+            color: #c0392b;
+        }
+        
+        pre {
+            background: var(--code-bg);
+            padding: 1em;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 4px solid var(--primary-color);
+            margin: 1em 0;
+        }
+        
+        pre code {
+            background: transparent;
+            padding: 0;
+            font-size: 0.9em;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5em 0;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.75em;
+            text-align: left;
+        }
+        
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        blockquote {
+            border-left: 4px solid var(--primary-color);
+            margin: 1em 0;
+            padding: 0.5em 1em;
+            background: #f0f8ff;
+            font-style: italic;
+        }
+        
+        .good {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .bad {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 0.75em 1em;
+            margin: 1em 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 0.75em 1em;
+            margin: 1em 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        ul, ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+        
+        li {
+            margin: 0.5em 0;
+        }
+        
+        hr {
+            border: none;
+            height: 2px;
+            background: #ddd;
+            margin: 2em 0;
+        }
+        
+        .toc {
+            background: white;
+            padding: 1.5em;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 2em 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            padding: 0.3em 0;
+            border-left: 2px solid var(--primary-color);
+            padding-left: 1em;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1em;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            h2 {
+                font-size: 1.4em;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+            
+            th, td {
+                padding: 0.5em;
+            }
+        }
+        
+        @media print {
+            body {
+                max-width: none;
+                padding: 0;
+            }
+            
+            pre {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+<hr />
+<p>title: Tutoriel Dart - Guide Condensé pour Développeurs
+author: Vibe Code (Mistral AI)
+date: Septembre 2026
+version: 1.0</p>
+<hr />
+<h1>📚 Tutoriel Dart - Guide Condensé</h1>
+<h2><em>De Débutant à Avancé en 4 Semaines</em></h2>
+<hr />
+<h2>🎯 Table des Matières</h2>
+<ol>
+<li><a href="#-introduction">Introduction</a></li>
+<li><a href="#-semaine-1--fondamentaux-de-dart">Semaine 1 : Fondamentaux de Dart</a></li>
+<li><a href="#-semaine-2--classes-et-null-safety">Semaine 2 : Classes et Null Safety</a></li>
+<li><a href="#-semaine-3--collections-et-fonctions-avancées">Semaine 3 : Collections et Fonctions Avancées</a></li>
+<li><a href="#-semaine-4--asynchrone-et-outils">Semaine 4 : Asynchrone et Outils</a></li>
+<li><a href="#-annexes">Annexes</a></li>
+<li><a href="#-erreurs-fréquentes-et-corrections">Erreurs Fréquentes et Corrections</a></li>
+<li><a href="#-bonnes-pratiques">Bonnes Pratiques</a></li>
+<li><a href="#-ressources-utiles">Ressources Utiles</a></li>
+</ol>
+<hr />
+<h2>🌟 Introduction</h2>
+<h3>Pourquoi ce tutoriel ?</h3>
+<p>Ce guide est né d'une <strong>expérience concrète</strong> : après avoir généré du code Dart à partir de données XML (fichier ISOM 2017-2), j'ai commis <strong>614 erreurs</strong> principalement dues à :
+- Confusion entre syntaxe Python et Dart
+- Méconnaissance des subtilités de Dart
+- Oubli des bonnes pratiques</p>
+<p>Ce tutoriel <strong>condensé</strong> vous permettra d'éviter ces pièges.</p>
+<h3>Public Cible</h3>
+<ul>
+<li>Développeurs <strong>Flutter</strong> qui veulent maîtriser Dart</li>
+<li>Développeurs <strong>venant d'autres langages</strong> (Python, JavaScript, etc.)</li>
+<li>Toute personne voulant <strong>écrire du Dart propre et efficace</strong></li>
+</ul>
+<h3>Prérequis</h3>
+<ul>
+<li>Connaissances basiques en programmation</li>
+<li>Environnement Dart/Flutter installé</li>
+</ul>
+<hr />
+<h2>📅 Semaine 1 : Fondamentaux de Dart</h2>
+<h3>🎯 Objectifs</h3>
+<ul>
+<li>Maîtriser la syntaxe de base</li>
+<li>Éviter les erreurs de syntaxe élémentaires</li>
+<li>Comprendre le typage fort</li>
+</ul>
+<hr />
+<h3>1.1 Variables et Types</h3>
+<h4>📌 Syntaxe de Base</h4>
+<pre><code class="language-dart">// Déclaration de variables
+var name = 'Dart';          // Type inféré
+String language = 'Dart';   // Typage explicite
+final version = '3.13';     // Constante (valeur fixée)
+const maxItems = 100;       // Constante compile-time
+
+// Types de base
+int age = 25;
+double price = 19.99;
+bool isActive = true;       // ⚠️ Toujours true/false (pas True/False !)
+num value = 42;            // int ou double
+</code></pre>
+<h4>✅ Bonnes Pratiques</h4>
+<ul>
+<li><strong>Préférer le typage explicite</strong> pour la lisibilité</li>
+<li><strong>Utiliser <code>final</code></strong> pour les variables immuables</li>
+<li><strong>Utiliser <code>const</code></strong> pour les constantes connues à la compilation</li>
+</ul>
+<h4>❌ Erreurs Fréquentes</h4>
+<pre><code class="language-dart">// ❌ MAUVAIS
+var isEnabled = True;   // True/False = syntaxe Python !
+var count = null;      // null sans typage nullable
+
+// ✅ BON
+bool isEnabled = true; // true/false en minuscules
+int? count = null;     // Typage nullable
+</code></pre>
+<hr />
+<h3>1.2 Opérateurs</h3>
+<h4>📌 Opérateurs Arithmétiques</h4>
+<pre><code class="language-dart">int a = 10, b = 3;
+print(a + b);   // 13
+print(a - b);   // 7
+print(a * b);   // 30
+print(a / b);   // 3.333...
+print(a ~/ b);  // 3 (division entière)
+print(a % b);   // 1 (modulo)
+</code></pre>
+<h4>📌 Opérateurs de Comparaison</h4>
+<pre><code class="language-dart">print(a == b);   // false
+print(a != b);   // true
+print(a &gt; b);    // true
+print(a &gt;= b);   // true
+print(a is int); // true (test de type)
+print(a is! int); // false (négation)
+</code></pre>
+<h4>📌 Opérateurs Logiques</h4>
+<pre><code class="language-dart">bool x = true, y = false;
+print(x &amp;&amp; y); // false (ET)
+print(x || y); // true  (OU)
+print(!x);     // false (NON)
+</code></pre>
+<h4>📌 Opérateurs Null-Aware (Très Important !)</h4>
+<pre><code class="language-dart">String? name; // Variable nullable
+
+// Accès conditionnel
+print(name?.length); // null si name est null (au lieu de lancer une exception)
+
+// Opérateur de coalescence null
+print(name ?? 'Unknown'); // 'Unknown' si name est null
+
+// Assertion non-null
+print(name!.length); // Lance une exception si name est null
+</code></pre>
+<hr />
+<h3>1.3 Structures de Contrôle</h3>
+<h4>📌 Conditionnelles</h4>
+<pre><code class="language-dart">// if-else
+if (age &gt;= 18) {
+  print('Adulte');
+} else if (age &gt;= 13) {
+  print('Adolescent');
+} else {
+  print('Enfant');
+}
+
+// Ternaire
+String status = (age &gt;= 18) ? 'Adulte' : 'Mineur';
+
+// switch-case
+switch (status) {
+  case 'Adulte':
+    print('Bienvenue');
+    break;
+  case 'Mineur':
+    print('Accès refusé');
+    break;
+  default:
+    print('Statut inconnu');
+}
+</code></pre>
+<h4>📌 Boucles</h4>
+<pre><code class="language-dart">// for classique
+for (int i = 0; i &lt; 5; i++) {
+  print(i);
+}
+
+// for-in (pour les collections)
+List&lt;int&gt; numbers = [1, 2, 3];
+for (int num in numbers) {
+  print(num);
+}
+
+// while
+int i = 0;
+while (i &lt; 5) {
+  print(i);
+  i++;
+}
+
+// do-while
+do {
+  print(i);
+  i++;
+} while (i &lt; 5);
+</code></pre>
+<hr />
+<h3>1.4 Fonctions</h3>
+<h4>📌 Déclaration de Fonctions</h4>
+<pre><code class="language-dart">// Fonction simple
+int add(int a, int b) {
+  return a + b;
+}
+
+// Fonction avec syntaxe raccourcie (=&gt;)
+int add(int a, int b) =&gt; a + b;
+
+// Fonction sans retour (void)
+void greet(String name) {
+  print('Hello, $name!');
+}
+
+// Fonction asynchrone
+Future&lt;int&gt; fetchData() async {
+  await Future.delayed(Duration(seconds: 1));
+  return 42;
+}
+</code></pre>
+<h4>📌 Paramètres</h4>
+<pre><code class="language-dart">// Paramètres positionnels obligatoires
+void greet(String name, int age) {}
+
+// Paramètres nommés
+void greet({String name = 'User', int age = 0}) {
+  print('Hello $name, age $age');
+}
+greet(name: 'Alice', age: 25); // Appel avec paramètres nommés
+
+// Paramètres optionnels positionnels
+void greet([String name = 'User', int age = 0]) {}
+greet('Bob'); // age prendra la valeur par défaut
+
+// Paramètres nommés obligatoires
+void greet({required String name, int age = 0}) {}
+greet(name: 'Charlie'); // age est optionnel, name est obligatoire
+</code></pre>
+<hr />
+<h3>1.5 Exercices Pratiques</h3>
+<h4>📌 Exercice 1 : Calculatrice</h4>
+<pre><code class="language-dart">// Créez une fonction qui prend deux nombres et une opération (+, -, *, /)
+// et retourne le résultat
+double calculate(double a, double b, String operation) {
+  switch (operation) {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/': return a / b;
+    default: throw ArgumentError('Opération invalide');
+  }
+}
+</code></pre>
+<h4>📌 Exercice 2 : Vérification d'Âge</h4>
+<pre><code class="language-dart">// Créez une fonction qui vérifie si une personne est majeure
+// et retourne un message approprié
+String checkAge(int age) {
+  return age &gt;= 18 ? 'Adulte' : 'Mineur';
+}
+</code></pre>
+<hr />
+<h2>📅 Semaine 2 : Classes et Null Safety</h2>
+<h3>🎯 Objectifs</h3>
+<ul>
+<li>Maîtriser la création de classes</li>
+<li>Comprendre la null safety</li>
+<li>Éviter les erreurs de conception</li>
+</ul>
+<hr />
+<h3>2.1 Classes de Base</h3>
+<h4>📌 Déclaration de Classe</h4>
+<pre><code class="language-dart">class Person {
+  // Champs (attributs)
+  String name;
+  int age;
+
+  // Constructeur
+  Person(this.name, this.age);
+
+  // Méthode
+  void introduce() {
+    print('Je m\'appelle $name et j\'ai $age ans.');
+  }
+}
+
+// Utilisation
+var person = Person('Alice', 25);
+person.introduce();
+</code></pre>
+<h4>✅ Bonnes Pratiques</h4>
+<ul>
+<li><strong>Nommez les classes en PascalCase</strong> (<code>Person</code>, <code>UserManager</code>)</li>
+<li><strong>Utilisez <code>this.</code></strong> pour référencer les champs dans le constructeur</li>
+<li><strong>Rendez les champs <code>final</code></strong> si immuables</li>
+</ul>
+<hr />
+<h3>2.2 Constructeurs</h3>
+<h4>📌 Constructeurs Primaires</h4>
+<pre><code class="language-dart">// Syntaxe courte (recommandée)
+class Person {
+  final String name;
+  final int age;
+
+  Person(this.name, this.age);
+}
+
+// Syntaxe longue
+class Person {
+  final String name;
+  final int age;
+
+  Person(String name, int age) {
+    this.name = name;
+    this.age = age;
+  }
+}
+</code></pre>
+<h4>📌 Constructeurs Nommés</h4>
+<pre><code class="language-dart">class Person {
+  final String name;
+  final int age;
+
+  Person(this.name, this.age);
+
+  // Constructeur nommé
+  Person.fromJson(Map&lt;String, dynamic&gt; json)
+    : name = json['name'],
+      age = json['age'];
+
+  // Constructeur nommé avec logique
+  Person.baby(String name) : this(name, 0);
+}
+
+// Utilisation
+var person1 = Person('Alice', 25);
+var person2 = Person.fromJson({'name': 'Bob', 'age': 30});
+var person3 = Person.baby('Charlie');
+</code></pre>
+<h4>❌ Erreur Fréquente : Syntaxe Invalide</h4>
+<pre><code class="language-dart">// ❌ MAUVAIS - Cette syntaxe n'existe pas en Dart !
+static const Person.fromJson(Map&lt;String, dynamic&gt; json)
+  : name = json['name'],
+    age = json['age'];
+
+// ✅ BON - Utiliser factory si nécessaire, ou un constructeur classique
+Person.fromJson(Map&lt;String, dynamic&gt; json)
+  : name = json['name'],
+    age = json['age'];
+
+// Ou avec factory (si création conditionnelle)
+factory Person.fromJson(Map&lt;String, dynamic&gt; json) {
+  return Person(json['name'], json['age']);
+}
+</code></pre>
+<hr />
+<h3>2.3 Factory Constructors</h3>
+<h4>📌 Quand utiliser <code>factory</code> ?</h4>
+<ul>
+<li><strong>Retourner une instance existante</strong> (cache)</li>
+<li><strong>Retourner un sous-type</strong></li>
+<li><strong>Logique complexe de création</strong></li>
+</ul>
+<h4>📌 Exemples</h4>
+<pre><code class="language-dart">class Logger {
+  static final _instance = Logger._internal();
+
+  // Factory pour singleton
+  factory Logger() =&gt; _instance;
+
+  // Constructeur privé
+  Logger._internal();
+}
+
+class Animal {
+  final String type;
+
+  Animal(this.type);
+
+  // Factory pour retourner des sous-types
+  factory Animal.fromType(String type) {
+    switch (type) {
+      case 'dog': return Dog();
+      case 'cat': return Cat();
+      default: return Animal(type);
+    }
+  }
+}
+
+class Dog extends Animal {
+  Dog() : super('dog');
+}
+
+class Cat extends Animal {
+  Cat() : super('cat');
+}
+</code></pre>
+<hr />
+<h3>2.4 Null Safety (TRÈS IMPORTANT !)</h3>
+<h4>📌 Concepts Clés</h4>
+<p>Dart a un <strong>système de null safety</strong> strict :
+- <strong><code>Type</code></strong> : Non-nullable (ne peut pas être <code>null</code>)
+- <strong><code>Type?</code></strong> : Nullable (peut être <code>null</code>)</p>
+<h4>📌 Exemples</h4>
+<pre><code class="language-dart">// ❌ MAUVAIS - Erreur de compilation
+String name = null;
+
+// ✅ BON - Nullable
+String? name = null;
+
+// Accès conditionnel
+name?.length; // Retourne null si name est null
+
+// Opérateur de coalescence
+String displayName = name ?? 'Unknown';
+
+// Assertion non-null (à utiliser avec prudence !)
+print(name!.length); // Lance une exception si name est null
+</code></pre>
+<h4>📌 Constructeurs et Null Safety</h4>
+<pre><code class="language-dart">class Person {
+  final String name;
+  final int? age; // Nullable
+
+  // ❌ MAUVAIS - age est obligatoire mais peut être null
+  Person(this.name, this.age);
+
+  // ✅ BON - age est optionnel
+  Person(this.name, [this.age]);
+
+  // ✅ BON - age est nullable et optionnel
+  Person(this.name, {this.age});
+}
+</code></pre>
+<hr />
+<h3>2.5 Getters, Setters, et Méthodes</h3>
+<h4>📌 Getters</h4>
+<pre><code class="language-dart">class Rectangle {
+  final double width;
+  final double height;
+
+  Rectangle(this.width, this.height);
+
+  // Getter
+  double get area =&gt; width * height;
+
+  // Getter calculé
+  double get perimeter =&gt; 2 * (width + height);
+}
+
+var rect = Rectangle(10, 20);
+print(rect.area); // 200
+</code></pre>
+<h4>📌 Setters</h4>
+<pre><code class="language-dart">class Temperature {
+  double _celsius = 0;
+
+  // Getter
+  double get celsius =&gt; _celsius;
+
+  // Setter avec validation
+  set celsius(double value) {
+    if (value &lt; -273.15) {
+      throw ArgumentError('Température trop basse');
+    }
+    _celsius = value;
+  }
+
+  // Getter calculé
+  double get fahrenheit =&gt; _celsius * 9/5 + 32;
+
+  // Setter calculé
+  set fahrenheit(double value) {
+    _celsius = (value - 32) * 5/9;
+  }
+}
+</code></pre>
+<hr />
+<h3>2.6 <code>toString()</code>, <code>==</code>, et <code>hashCode</code></h3>
+<h4>📌 Méthodes Spéciales</h4>
+<pre><code class="language-dart">class Person {
+  final String name;
+  final int age;
+
+  Person(this.name, this.age);
+
+  // toString() pour l'affichage
+  @override
+  String toString() =&gt; 'Person(name: $name, age: $age)';
+
+  // == pour la comparaison
+  @override
+  bool operator ==(Object other) =&gt;
+    identical(this, other) ||
+    other is Person &amp;&amp;
+    other.name == name &amp;&amp;
+    other.age == age;
+
+  // hashCode pour les collections (Set, Map)
+  @override
+  int get hashCode =&gt; Object.hash(name, age);
+}
+
+// Utilisation
+var p1 = Person('Alice', 25);
+var p2 = Person('Alice', 25);
+print(p1 == p2); // true (grâce à operator ==)
+print(p1); // Person(name: Alice, age: 25) (grâce à toString)
+</code></pre>
+<hr />
+<h3>2.7 Exercices Pratiques</h3>
+<h4>📌 Exercice 1 : Classe <code>BankAccount</code></h4>
+<pre><code class="language-dart">class BankAccount {
+  final String owner;
+  double _balance;
+
+  BankAccount(this.owner, [double initialBalance = 0]) : _balance = initialBalance;
+
+  // Getter
+  double get balance =&gt; _balance;
+
+  // Méthodes
+  void deposit(double amount) {
+    if (amount &lt;= 0) throw ArgumentError('Montant invalide');
+    _balance += amount;
+  }
+
+  void withdraw(double amount) {
+    if (amount &lt;= 0) throw ArgumentError('Montant invalide');
+    if (amount &gt; _balance) throw Exception('Solde insuffisant');
+    _balance -= amount;
+  }
+
+  @override
+  String toString() =&gt; 'BankAccount(owner: $owner, balance: $_balance)';
+}
+</code></pre>
+<h4>📌 Exercice 2 : Classe <code>Point</code> avec Null Safety</h4>
+<pre><code class="language-dart">class Point {
+  final double x;
+  final double y;
+
+  Point(this.x, this.y);
+
+  // Factory pour créer depuis un Map
+  factory Point.fromJson(Map&lt;String, dynamic&gt; json) {
+    return Point(
+      json['x']?.toDouble() ?? 0.0,
+      json['y']?.toDouble() ?? 0.0,
+    );
+  }
+
+  // Distance entre deux points
+  double distanceTo(Point other) {
+    final dx = x - other.x;
+    final dy = y - other.y;
+    return sqrt(dx * dx + dy * dy);
+  }
+
+  @override
+  bool operator ==(Object other) =&gt;
+    identical(this, other) ||
+    other is Point &amp;&amp;
+    other.x == x &amp;&amp;
+    other.y == y;
+
+  @override
+  int get hashCode =&gt; Object.hash(x, y);
+
+  @override
+  String toString() =&gt; 'Point($x, $y)';
+}
+</code></pre>
+<hr />
+<h2>📅 Semaine 3 : Collections et Fonctions Avancées</h2>
+<h3>🎯 Objectifs</h3>
+<ul>
+<li>Maîtriser les collections (List, Map, Set)</li>
+<li>Utiliser les méthodes fonctionnelles</li>
+<li>Comprendre les générics</li>
+</ul>
+<hr />
+<h3>3.1 Listes</h3>
+<h4>📌 Déclaration et Utilisation</h4>
+<pre><code class="language-dart">// Déclaration
+List&lt;int&gt; numbers = [1, 2, 3];
+var names = ['Alice', 'Bob', 'Charlie']; // Type inféré
+
+// Accès
+print(numbers[0]); // 1
+print(numbers.length); // 3
+
+// Ajout/Suppression
+numbers.add(4);        // [1, 2, 3, 4]
+numbers.remove(2);     // [1, 3, 4]
+numbers.removeAt(0);   // [3, 4]
+
+// Itération
+for (int num in numbers) {
+  print(num);
+}
+
+// forEach
+numbers.forEach((num) =&gt; print(num));
+</code></pre>
+<h4>📌 Méthodes Fonctionnelles</h4>
+<pre><code class="language-dart">List&lt;int&gt; numbers = [1, 2, 3, 4, 5];
+
+// map - Transformer chaque élément
+List&lt;int&gt; squares = numbers.map((n) =&gt; n * n).toList(); // [1, 4, 9, 16, 25]
+
+// where - Filtrer
+List&lt;int&gt; evens = numbers.where((n) =&gt; n % 2 == 0).toList(); // [2, 4]
+
+// reduce - Réduire à une seule valeur
+int sum = numbers.reduce((a, b) =&gt; a + b); // 15
+
+// firstWhere - Trouver le premier élément correspondant
+int? firstEven = numbers.firstWhere((n) =&gt; n % 2 == 0); // 2
+
+// any/all - Vérification
+bool hasEven = numbers.any((n) =&gt; n % 2 == 0); // true
+bool allEven = numbers.every((n) =&gt; n % 2 == 0); // false
+</code></pre>
+<hr />
+<h3>3.2 Maps (Dictionnaires)</h3>
+<h4>📌 Déclaration et Utilisation</h4>
+<pre><code class="language-dart">// Déclaration
+Map&lt;String, int&gt; ages = {
+  'Alice': 25,
+  'Bob': 30,
+  'Charlie': 20,
+};
+
+// Accès
+print(ages['Alice']); // 25
+print(ages.length); // 3
+
+// Ajout/Modification
+ages['David'] = 28;    // Ajout
+ages['Alice'] = 26;    // Modification
+
+// Suppression
+ages.remove('Charlie');
+
+// Itération
+for (var entry in ages.entries) {
+  print('${entry.key}: ${entry.value}');
+}
+
+// Vérification
+print(ages.containsKey('Bob')); // true
+print(ages.containsValue(25)); // false (après modification)
+</code></pre>
+<h4>📌 Méthodes Utiles</h4>
+<pre><code class="language-dart">Map&lt;String, int&gt; ages = {'Alice': 25, 'Bob': 30};
+
+// Récupérer toutes les clés
+List&lt;String&gt; keys = ages.keys.toList();
+
+// Récupérer toutes les valeurs
+List&lt;int&gt; values = ages.values.toList();
+
+// Appliquer une transformation
+Map&lt;String, int&gt; nextYearAges = ages.map(
+  (key, value) =&gt; MapEntry(key, value + 1)
+);
+
+// Filtrer
+Map&lt;String, int&gt; adults = ages..removeWhere((key, value) =&gt; value &lt; 18);
+</code></pre>
+<hr />
+<h3>3.3 Sets</h3>
+<h4>📌 Déclaration et Utilisation</h4>
+<pre><code class="language-dart">// Déclaration
+Set&lt;String&gt; uniqueNames = {'Alice', 'Bob', 'Charlie'};
+
+// Ajout
+uniqueNames.add('David');
+uniqueNames.add('Alice'); // Pas de doublon
+
+// Suppression
+uniqueNames.remove('Bob');
+
+// Opérations ensemblistes
+Set&lt;String&gt; otherNames = {'Charlie', 'Eve'};
+print(uniqueNames.union(otherNames));    // Union
+print(uniqueNames.intersection(otherNames)); // Intersection
+print(uniqueNames.difference(otherNames));   // Différence
+</code></pre>
+<hr />
+<h3>3.4 Génériques</h3>
+<h4>📌 Classes Génériques</h4>
+<pre><code class="language-dart">// Sans génériques
+class Box {
+  dynamic value;
+  Box(this.value);
+}
+
+// Avec génériques
+class Box&lt;T&gt; {
+  T value;
+  Box(this.value);
+
+  T getValue() =&gt; value;
+}
+
+// Utilisation
+Box&lt;int&gt; intBox = Box(42);
+Box&lt;String&gt; stringBox = Box('Hello');
+
+// Avec contraintes
+class NumericBox&lt;T extends num&gt; {
+  T value;
+  NumericBox(this.value);
+}
+
+NumericBox&lt;int&gt; intBox = NumericBox(42);
+NumericBox&lt;double&gt; doubleBox = NumericBox(3.14);
+// NumericBox&lt;String&gt; stringBox = NumericBox('Hello'); // ❌ Erreur de compilation
+</code></pre>
+<h4>📌 Fonctions Génériques</h4>
+<pre><code class="language-dart">T first&lt;T&gt;(List&lt;T&gt; list) {
+  return list.first;
+}
+
+// Utilisation
+int firstInt = first&lt;int&gt;([1, 2, 3]);
+String firstString = first&lt;String&gt;(['a', 'b', 'c']);
+</code></pre>
+<hr />
+<h3>3.5 Formatage de Strings</h3>
+<h4>📌 String Interpolation</h4>
+<pre><code class="language-dart">String name = 'Alice';
+int age = 25;
+
+// Interpolation simple
+print('Hello, $name!'); // Hello, Alice!
+
+// Interpolation avec expression
+print('In 5 years, ${name} will be ${age + 5}'); // In 5 years, Alice will be 30
+</code></pre>
+<h4>❌ Erreur Fréquente : Formatage Numérique</h4>
+<pre><code class="language-dart">// ❌ MAUVAIS - Syntaxe Python !
+double value = 3.14159;
+print('${value:.2f}'); // ERREUR DE SYNTAXE
+
+// ✅ BON - Méthode Dart
+print('${value.toStringAsFixed(2)}'); // 3.14
+
+// Autres méthodes de formatage
+double bigNumber = 1234567.89;
+print(bigNumber.toStringAsFixed(2));      // 1234567.89
+print(bigNumber.toStringAsExponential(2)); // 1.23e+6
+print(bigNumber.toStringAsPrecision(3));  // 1.23e+6
+</code></pre>
+<hr />
+<h3>3.6 Exercices Pratiques</h3>
+<h4>📌 Exercice 1 : Statistiques sur une Liste</h4>
+<pre><code class="language-dart">List&lt;double&gt; calculateStats(List&lt;double&gt; numbers) {
+  if (numbers.isEmpty) return [0, 0, 0];
+
+  double sum = numbers.reduce((a, b) =&gt; a + b);
+  double average = sum / numbers.length;
+  double max = numbers.reduce((a, b) =&gt; a &gt; b ? a : b);
+  double min = numbers.reduce((a, b) =&gt; a &lt; b ? a : b);
+
+  return [average, max, min];
+}
+</code></pre>
+<h4>📌 Exercice 2 : Compter les Mots</h4>
+<pre><code class="language-dart">Map&lt;String, int&gt; countWords(List&lt;String&gt; words) {
+  Map&lt;String, int&gt; counts = {};
+
+  for (String word in words) {
+    counts[word] = (counts[word] ?? 0) + 1;
+  }
+
+  return counts;
+}
+
+// Utilisation
+var counts = countWords(['a', 'b', 'a', 'c', 'b', 'a']);
+print(counts); // {a: 3, b: 2, c: 1}
+</code></pre>
+<hr />
+<h2>📅 Semaine 4 : Asynchrone et Outils</h2>
+<h3>🎯 Objectifs</h3>
+<ul>
+<li>Maîtriser la programmation asynchrone</li>
+<li>Utiliser les outils Dart/Flutter</li>
+<li>Appliquer les bonnes pratiques</li>
+</ul>
+<hr />
+<h3>4.1 Futures</h3>
+<h4>📌 Concepts de Base</h4>
+<pre><code class="language-dart">// Créer un Future
+Future&lt;String&gt; fetchData() {
+  return Future.delayed(Duration(seconds: 2), () =&gt; 'Données reçues');
+}
+
+// Utiliser un Future avec then
+fetchData().then((data) {
+  print(data); // 'Données reçues' après 2 secondes
+});
+
+// Utiliser async/await (recommandé)
+Future&lt;void&gt; processData() async {
+  String data = await fetchData();
+  print(data);
+}
+</code></pre>
+<h4>📌 Gestion des Erreurs</h4>
+<pre><code class="language-dart">Future&lt;String&gt; fetchData() async {
+  try {
+    // Simulation d'une erreur
+    if (DateTime.now().second % 2 == 0) {
+      return 'Données reçues';
+    } else {
+      throw Exception('Erreur de réseau');
+    }
+  } catch (e) {
+    print('Erreur: $e');
+    rethrow; // Relancer l'exception
+  }
+}
+
+// Utilisation avec catch
+Future&lt;void&gt; useData() async {
+  try {
+    String data = await fetchData();
+    print(data);
+  } catch (e) {
+    print('Erreur capturée: $e');
+  }
+}
+</code></pre>
+<hr />
+<h3>4.2 Streams</h3>
+<h4>📌 Concepts de Base</h4>
+<pre><code class="language-dart">// Créer un Stream
+Stream&lt;int&gt; countStream(int max) async* {
+  for (int i = 1; i &lt;= max; i++) {
+    await Future.delayed(Duration(seconds: 1));
+    yield i;
+  }
+}
+
+// Utiliser un Stream
+Future&lt;void&gt; listenToStream() async {
+  await for (int value in countStream(5)) {
+    print(value); // 1, 2, 3, 4, 5 (une valeur par seconde)
+  }
+}
+</code></pre>
+<h4>📌 Méthodes des Streams</h4>
+<pre><code class="language-dart">Stream&lt;int&gt; numbers = Stream.fromIterable([1, 2, 3, 4, 5]);
+
+// map - Transformer
+Stream&lt;int&gt; squares = numbers.map((n) =&gt; n * n);
+
+// where - Filtrer
+Stream&lt;int&gt; evens = numbers.where((n) =&gt; n % 2 == 0);
+
+// listen - Écouter
+numbers.listen((value) {
+  print('Valeur: $value');
+});
+</code></pre>
+<hr />
+<h3>4.3 Outils Indispensables</h3>
+<h4>📌 <code>dart analyze</code></h4>
+<pre><code class="language-bash"># Analyser un fichier spécifique
+dart analyze lib/my_file.dart
+
+# Analyser tout le projet
+dart analyze
+</code></pre>
+<p><strong>Ce qu'il vérifie</strong> :
+- Erreurs de syntaxe
+- Problèmes de typage
+- Variables non utilisées
+- etc.</p>
+<h4>📌 <code>dart format</code></h4>
+<pre><code class="language-bash"># Formater un fichier
+dart format lib/my_file.dart
+
+# Formater tout le projet
+dart format .
+</code></pre>
+<p><strong>Ce qu'il fait</strong> :
+- Indentation standard (2 espaces)
+- Placement des accolades
+- Espacement cohérent</p>
+<h4>📌 <code>dart test</code></h4>
+<pre><code class="language-bash"># Exécuter les tests
+dart test
+
+# Exécuter un test spécifique
+dart test test/my_test.dart
+</code></pre>
+<h4>📌 <code>dart fix</code></h4>
+<pre><code class="language-bash"># Corriger automatiquement certaines erreurs
+dart fix
+</code></pre>
+<hr />
+<h3>4.4 Configuration du Projet</h3>
+<h4>📌 <code>analysis_options.yaml</code></h4>
+<pre><code class="language-yaml">analyzer:
+  errors:
+    # Traiter les avertissements comme des erreurs
+    unused_local_variable: error
+    dead_code: error
+
+  exclude:
+    - path: lib/generated/**
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_print
+    - prefer_final_locals
+    - prefer_const_constructors
+</code></pre>
+<hr />
+<h3>4.5 Exercices Pratiques</h3>
+<h4>📌 Exercice 1 : Fetch API avec Retry</h4>
+<pre><code class="language-dart">Future&lt;String&gt; fetchWithRetry(String url, {int maxRetries = 3}) async {
+  for (int i = 0; i &lt; maxRetries; i++) {
+    try {
+      // Simulation de fetch
+      await Future.delayed(Duration(seconds: 1));
+      if (i &lt; maxRetries - 1) {
+        throw Exception('Échec temporaire');
+      }
+      return 'Données de $url';
+    } catch (e) {
+      print('Tentative $i échouée: $e');
+      if (i == maxRetries - 1) rethrow;
+    }
+  }
+  throw Exception('Toutes les tentatives ont échoué');
+}
+
+// Utilisation
+Future&lt;void&gt; main() async {
+  try {
+    String data = await fetchWithRetry('https://api.example.com');
+    print(data);
+  } catch (e) {
+    print('Erreur finale: $e');
+  }
+}
+</code></pre>
+<hr />
+<h2>❌ Erreurs Fréquentes et Corrections</h2>
+<h3>📌 Tableau Récapitulatif</h3>
+<table>
+<thead>
+<tr>
+<th><strong>Erreur</strong></th>
+<th><strong>Mauvais</strong></th>
+<th><strong>Bon</strong></th>
+<th><strong>Explication</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Booléens Python</strong></td>
+<td><code>True</code>, <code>False</code></td>
+<td><code>true</code>, <code>false</code></td>
+<td>Dart utilise des minuscules</td>
+</tr>
+<tr>
+<td><strong>Constructeur factory</strong></td>
+<td><code>static const X.nom() : ...</code></td>
+<td><code>factory X.nom() { return ...; }</code></td>
+<td>Syntaxe Dart pour les constructeurs factory</td>
+</tr>
+<tr>
+<td><strong>Champ non-nullable</strong></td>
+<td><code>required this.x</code> (si x peut être null)</td>
+<td><code>this.x</code> (nullable)</td>
+<td>Vérifier si le champ est toujours présent</td>
+</tr>
+<tr>
+<td><strong>Formatage numérique</strong></td>
+<td><code>${x:.2f}</code></td>
+<td><code>${x.toStringAsFixed(2)}</code></td>
+<td>Méthode Dart pour le formatage</td>
+</tr>
+<tr>
+<td><strong>Null safety</strong></td>
+<td><code>String x = null;</code></td>
+<td><code>String? x = null;</code></td>
+<td>Dart exige le typage nullable</td>
+</tr>
+<tr>
+<td><strong>Accès conditionnel</strong></td>
+<td><code>x.length</code> (si x peut être null)</td>
+<td><code>x?.length</code></td>
+<td>Évite les exceptions</td>
+</tr>
+<tr>
+<td><strong>Opérateur de coalescence</strong></td>
+<td><code>x != null ? x : 'default'</code></td>
+<td><code>x ?? 'default'</code></td>
+<td>Plus concis</td>
+</tr>
+<tr>
+<td><strong>Constructeur constant</strong></td>
+<td><code>const X(this.x)</code> avec x non-final</td>
+<td><code>const X(this.x)</code> avec x final</td>
+<td>Tous les champs doivent être final</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>✅ Bonnes Pratiques</h2>
+<h3>📌 Nommage</h3>
+<ul>
+<li><strong>Classes</strong> : PascalCase (<code>Person</code>, <code>UserManager</code>)</li>
+<li><strong>Variables</strong> : camelCase (<code>userName</code>, <code>maxCount</code>)</li>
+<li><strong>Constantes</strong> : UPPER_CASE (<code>MAX_COUNT</code>, <code>DEFAULT_TIMEOUT</code>)</li>
+<li><strong>Fonctions</strong> : camelCase (<code>calculateTotal</code>, <code>fetchData</code>)</li>
+<li><strong>Paramètres</strong> : camelCase (<code>userName</code>, <code>maxRetries</code>)</li>
+</ul>
+<h3>📌 Organisation du Code</h3>
+<ul>
+<li><strong>Un fichier = une classe principale</strong> (si possible)</li>
+<li><strong>Grouper les classes liées</strong> dans un dossier</li>
+<li><strong>Utiliser des barrel files</strong> (<code>export</code> dans <code>lib/models.dart</code>)</li>
+<li><strong>Documenter avec <code>///</code></strong> (pour la génération de docs)</li>
+</ul>
+<h3>📌 Typage</h3>
+<ul>
+<li><strong>Préférer le typage explicite</strong> pour la lisibilité</li>
+<li><strong>Utiliser <code>final</code></strong> pour les variables immuables</li>
+<li><strong>Utiliser <code>const</code></strong> pour les constantes connues à la compilation</li>
+<li><strong>Éviter <code>dynamic</code></strong> sauf si absolument nécessaire</li>
+<li><strong>Utiliser les génériques</strong> pour le typage fort</li>
+</ul>
+<h3>📌 Null Safety</h3>
+<ul>
+<li><strong>Toujours spécifier</strong> si une variable peut être null (<code>Type?</code>)</li>
+<li><strong>Utiliser <code>?.</code></strong> pour l'accès conditionnel</li>
+<li><strong>Utiliser <code>??</code></strong> pour les valeurs par défaut</li>
+<li><strong>Éviter <code>!</code></strong> sauf si vous êtes sûr que la valeur n'est pas null</li>
+<li><strong>Vérifier avec <code>is null</code>/<code>is! null</code></strong> si nécessaire</li>
+</ul>
+<h3>📌 Constructeurs</h3>
+<ul>
+<li><strong>Utiliser la syntaxe courte</strong> (<code>ClassName(this.x, this.y)</code>)</li>
+<li><strong>Utiliser <code>factory</code></strong> pour les constructeurs qui ne créent pas directement une instance</li>
+<li><strong>Valider les paramètres</strong> dans le constructeur</li>
+<li><strong>Utiliser des constructeurs nommés</strong> pour plus de clarté</li>
+<li><strong>Documenter les constructeurs</strong> avec <code>///</code></li>
+</ul>
+<h3>📌 Collections</h3>
+<ul>
+<li><strong>Préférer les listes immuables</strong> (<code>const [...]</code>, <code>List.unmodifiable</code>)</li>
+<li><strong>Utiliser <code>map</code>, <code>where</code>, <code>reduce</code></strong> pour un code fonctionnel</li>
+<li><strong>Éviter les boucles <code>for</code></strong> quand une méthode fonctionnelle existe</li>
+<li><strong>Utiliser <code>Set</code></strong> pour éviter les doublons</li>
+<li><strong>Utiliser <code>Map</code></strong> pour les associations clé-valeur</li>
+</ul>
+<h3>📌 Asynchrone</h3>
+<ul>
+<li><strong>Toujours utiliser <code>async/await</code></strong> pour la lisibilité</li>
+<li><strong>Gérer les erreurs</strong> avec <code>try/catch</code></li>
+<li><strong>Utiliser <code>Future.wait</code></strong> pour exécuter plusieurs Futures en parallèle</li>
+<li><strong>Éviter les callbacks imbriqués</strong> (callback hell)</li>
+<li><strong>Utiliser <code>Stream</code></strong> pour les données en temps réel</li>
+</ul>
+<hr />
+<h2>📚 Ressources Utiles</h2>
+<h3>📌 Documentation Officielle</h3>
+<ul>
+<li><strong><a href="https://dart.dev/guides/language/language-tour">Dart Language Tour</a></strong> - Guide complet de la syntaxe</li>
+<li><strong><a href="https://dart.dev/guides/libraries/library-tour">Dart Library Tour</a></strong> - API des bibliothèques standard</li>
+<li><strong><a href="https://dart.dev/guides/language/effective-dart">Effective Dart</a></strong> - Bonnes pratiques</li>
+<li><strong><a href="https://dart.dev/null-safety">Null Safety Guide</a></strong> - Tout sur la null safety</li>
+<li><strong><a href="https://dart.dev/guides/language/cheatsheet">Dart Cheatsheet</a></strong> - Référence rapide</li>
+</ul>
+<h3>📌 Outils</h3>
+<ul>
+<li><strong><a href="https://dartpad.dev/">DartPad</a></strong> - Éditeur en ligne pour tester du code</li>
+<li><strong><a href="https://dart.dev/tools/dart-devtools">Dart DevTools</a></strong> - Outils de débogage</li>
+<li><strong><a href="https://pub.dev/">Pub.dev</a></strong> - Repository de packages Dart</li>
+</ul>
+<h3>📌 Communautés</h3>
+<ul>
+<li><strong><a href="https://github.com/dart-lang">Dart GitHub</a></strong> - Repository officiel</li>
+<li><strong><a href="https://discord.gg/dart">Dart Discord</a></strong> - Communauté Discord</li>
+<li><strong><a href="https://stackoverflow.com/questions/tagged/dart">Stack Overflow - Dart</a></strong> - Questions/Réponses</li>
+</ul>
+<h3>📌 Livres</h3>
+<ul>
+<li><strong><a href="https://www.manning.com/books/dart-in-action">Dart in Action</a></strong> - Livre complet sur Dart</li>
+<li><strong><a href="https://www.manning.com/books/flutter-in-action">Flutter in Action</a></strong> - Pour aller plus loin avec Flutter</li>
+</ul>
+<hr />
+<h2>🎓 Conclusion</h2>
+<p>Ce tutoriel <strong>condensé</strong> vous a permis de :</p>
+<ol>
+<li><strong>Maîtriser les fondamentaux</strong> de Dart (syntaxe, types, fonctions)</li>
+<li><strong>Comprendre les classes et la null safety</strong> (constructeurs, getters, setters)</li>
+<li><strong>Utiliser les collections</strong> efficacement (List, Map, Set)</li>
+<li><strong>Gérer l'asynchrone</strong> comme un pro (Futures, Streams)</li>
+<li><strong>Appliquer les bonnes pratiques</strong> et éviter les erreurs courantes</li>
+</ol>
+<h3>🚀 Prochaines Étapes</h3>
+<ul>
+<li><strong>Pratiquer</strong> avec DartPad</li>
+<li><strong>Lire</strong> la documentation officielle</li>
+<li><strong>Contribuer</strong> à des projets open source en Dart</li>
+<li><strong>Créer</strong> vos propres packages et les publier sur pub.dev</li>
+</ul>
+<hr />
+<h2>📜 Annexe : Mémento Rapide</h2>
+<h3>Syntaxe de Base</h3>
+<pre><code class="language-dart">// Variables
+var x = 10;          // Type inféré
+final y = 20;        // Immuable
+const z = 30;        // Constante compile-time
+
+// Booléens
+bool isTrue = true;  // ⚠️ true/false, pas True/False
+
+// Null Safety
+String? name = null;  // Nullable
+print(name?.length); // Accès conditionnel
+print(name ?? 'Unknown'); // Valeur par défaut
+
+// Fonctions
+void greet(String name) =&gt; print('Hello, $name!');
+
+// Classes
+class Person {
+  final String name;
+  final int age;
+
+  Person(this.name, this.age);
+
+  void introduce() =&gt; print('I am $name, $age years old.');
+}
+
+// Constructeurs factory
+class Logger {
+  static final _instance = Logger._internal();
+  factory Logger() =&gt; _instance;
+  Logger._internal();
+}
+
+// Collections
+List&lt;int&gt; list = [1, 2, 3];
+Map&lt;String, int&gt; map = {'a': 1, 'b': 2};
+Set&lt;int&gt; set = {1, 2, 3};
+
+// Méthodes fonctionnelles
+list.map((x) =&gt; x * 2).toList();
+list.where((x) =&gt; x % 2 == 0).toList();
+
+// Formatage
+double value = 3.14159;
+print('${value.toStringAsFixed(2)}'); // 3.14
+
+// Asynchrone
+Future&lt;void&gt; fetch() async {
+  String data = await fetchData();
+  print(data);
+}
+</code></pre>
+<hr />
+<p><em>Document généré par Vibe Code - Septembre 2026</em>
+<em>Basé sur la documentation officielle Dart et l'expérience pratique</em></p>
+
+<div class="note" style="margin-top: 3em; padding: 1.5em; text-align: center;">
+    <p><strong>© 2026 Vibe Code (Mistral AI) | Basé sur la documentation officielle Dart</strong></p>
+    <p>Ce document est généré automatiquement. Pour la version la plus récente, consultez : 
+    <a href="https://dart.dev/docs">dart.dev/docs</a></p>
+</div>
+
+</body>
+</html>
