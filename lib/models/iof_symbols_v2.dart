@@ -130,16 +130,16 @@ class IOFSymbolGeometry {
   final String? symbolType; // 'point', 'line', 'area', 'text'
   final Map<String, dynamic> properties;
 
-  const IOFSymbolGeometry(this.symbolType, this.properties);
+  IOFSymbolGeometry(this.symbolType, this.properties);
 
   /// For point symbols
-  static const IOFSymbolGeometry point({
+  IOFSymbolGeometry.point({
     required int? innerRadius,
     required String? innerColor,
     required String? outerColor,
     bool rotatable = false,
     List<IOFSymbolElement>? elements,
-  }) : IOFSymbolGeometry(
+  }) : this(
     'point',
     {
       'inner_radius': innerRadius,
@@ -151,7 +151,7 @@ class IOFSymbolGeometry {
   );
 
   /// For line symbols
-  static const IOFSymbolGeometry line({
+  IOFSymbolGeometry.line({
     required String? color,
     required int? lineWidth,
     bool dashed = false,
@@ -159,7 +159,7 @@ class IOFSymbolGeometry {
     int? breakLength,
     String? joinStyle,
     String? capStyle,
-  }) : IOFSymbolGeometry(
+  }) : this(
     'line',
     {
       'color': color,
@@ -173,10 +173,10 @@ class IOFSymbolGeometry {
   );
 
   /// For area symbols
-  static const IOFSymbolGeometry area({
+  IOFSymbolGeometry.area({
     required String? innerColor,
     bool rotatable = false,
-  }) : IOFSymbolGeometry(
+  }) : this(
     'area',
     {
       'inner_color': innerColor,
@@ -185,11 +185,11 @@ class IOFSymbolGeometry {
   );
 
   /// For text symbols
-  static const IOFSymbolGeometry text({
+  IOFSymbolGeometry.text({
     required String? color,
     required int? fontSize,
     bool rotatable = false,
-  }) : IOFSymbolGeometry(
+  }) : this(
     'text',
     {
       'color': color,
@@ -259,16 +259,16 @@ class IOFSymbol {
   final int type; // 1=point, 2=line, 4=area, 8=text
   final String? id;
   final bool isHidden;
-  final IOFSymbolGeometry geometry;
+  final IOFSymbolGeometry? geometry;
 
-  const IOFSymbol({
+  IOFSymbol({
     required this.code,
     required this.name,
     required this.description,
     required this.type,
     this.id,
     this.isHidden = false,
-    required this.geometry,
+    this.geometry,
   });
 
   // Type getters for convenience
@@ -292,11 +292,11 @@ class IOFSymbol {
   }
 
   /// Get the color used by this symbol
-  Color get color => geometry.getColor();
+  Color get color => geometry?.getColor() ?? Colors.black;
 
   /// Get the display color for UI purposes
   Color get displayColor {
-    final color = geometry.getColor();
+    final color = geometry?.getColor() ?? Colors.transparent;
     if (color == Colors.transparent) {
       // Return a default color based on type
       if (isPoint) return Colors.red;
@@ -324,7 +324,7 @@ class IOFSymbol {
 /// Contains all 202 symbols from ISOM 2017-2 specification
 class IOFSymbolsV2 {
   /// All IOF symbols from ISOM 2017-2 with geometry
-  static const List<IOFSymbol> symbols = [
+  static final List<IOFSymbol> symbols = [
     IOFSymbol(
       code: '101',
       name: r'Contour',
@@ -334,7 +334,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '2',
@@ -351,7 +351,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -363,7 +363,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '2',
@@ -377,8 +377,9 @@ class IOFSymbolsV2 {
       type: 8,
       id: '3',
       geometry: IOFSymbolGeometry.text(
+        color: null,
         fontSize: null,
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -390,7 +391,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 100,
-        dashed: True,
+        dashed: true,
         dashLength: 2000,
         breakLength: 200,
         joinStyle: '2',
@@ -407,7 +408,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -419,7 +420,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -436,7 +437,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -448,7 +449,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -464,7 +465,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -482,7 +483,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -494,7 +495,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '2',
@@ -510,7 +511,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 180,
-        dashed: True,
+        dashed: true,
         dashLength: 2000,
         breakLength: 350,
         joinStyle: '1',
@@ -526,7 +527,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '6',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '2',
@@ -542,7 +543,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 0,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -559,7 +560,7 @@ class IOFSymbolsV2 {
         innerRadius: 250,
         innerColor: '6',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -572,7 +573,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -585,7 +586,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -598,7 +599,7 @@ class IOFSymbolsV2 {
         innerRadius: 900,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -609,7 +610,7 @@ class IOFSymbolsV2 {
       id: '19',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -622,7 +623,7 @@ class IOFSymbolsV2 {
         innerRadius: 100,
         innerColor: '6',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -633,7 +634,7 @@ class IOFSymbolsV2 {
       id: '21',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -646,7 +647,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -658,7 +659,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 350,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -675,7 +676,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -687,7 +688,7 @@ class IOFSymbolsV2 {
       isHidden: true,
       geometry: IOFSymbolGeometry.area(
         innerColor: '2',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -699,7 +700,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 350,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -715,7 +716,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 120,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -733,7 +734,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -745,7 +746,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -762,7 +763,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -774,7 +775,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -791,7 +792,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -805,7 +806,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -818,7 +819,7 @@ class IOFSymbolsV2 {
         innerRadius: 900,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -831,7 +832,7 @@ class IOFSymbolsV2 {
         innerRadius: 900,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -845,7 +846,7 @@ class IOFSymbolsV2 {
         innerRadius: 900,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -858,7 +859,7 @@ class IOFSymbolsV2 {
         innerRadius: 200,
         innerColor: '2',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -871,7 +872,7 @@ class IOFSymbolsV2 {
         innerRadius: 250,
         innerColor: '2',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -884,7 +885,7 @@ class IOFSymbolsV2 {
         innerRadius: 300,
         innerColor: '2',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -895,7 +896,7 @@ class IOFSymbolsV2 {
       id: '40',
       geometry: IOFSymbolGeometry.area(
         innerColor: '2',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -908,7 +909,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -921,7 +922,7 @@ class IOFSymbolsV2 {
         innerRadius: 1250,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -932,7 +933,7 @@ class IOFSymbolsV2 {
       id: '43',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -945,7 +946,7 @@ class IOFSymbolsV2 {
         innerRadius: 640,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -958,7 +959,7 @@ class IOFSymbolsV2 {
         innerRadius: 768,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -969,7 +970,7 @@ class IOFSymbolsV2 {
       id: '46',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -980,7 +981,7 @@ class IOFSymbolsV2 {
       id: '47',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -993,7 +994,7 @@ class IOFSymbolsV2 {
         innerRadius: 100,
         innerColor: '2',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1004,7 +1005,7 @@ class IOFSymbolsV2 {
       id: '49',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1015,7 +1016,7 @@ class IOFSymbolsV2 {
       id: '50',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1026,7 +1027,7 @@ class IOFSymbolsV2 {
       id: '51',
       geometry: IOFSymbolGeometry.area(
         innerColor: '34',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1037,7 +1038,7 @@ class IOFSymbolsV2 {
       id: '52',
       geometry: IOFSymbolGeometry.area(
         innerColor: '24',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1049,7 +1050,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 100,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1071,7 +1072,7 @@ class IOFSymbolsV2 {
       id: '55',
       geometry: IOFSymbolGeometry.area(
         innerColor: '15',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1089,7 +1090,7 @@ class IOFSymbolsV2 {
       id: '57',
       geometry: IOFSymbolGeometry.area(
         innerColor: '16',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1101,7 +1102,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '0',
@@ -1123,7 +1124,7 @@ class IOFSymbolsV2 {
       id: '60',
       geometry: IOFSymbolGeometry.area(
         innerColor: '17',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1135,7 +1136,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '5',
         lineWidth: 100,
-        dashed: False,
+        dashed: false,
         dashLength: 1250,
         breakLength: 250,
         joinStyle: '1',
@@ -1151,7 +1152,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '5',
         lineWidth: 100,
-        dashed: True,
+        dashed: true,
         dashLength: 1250,
         breakLength: 250,
         joinStyle: '1',
@@ -1166,7 +1167,7 @@ class IOFSymbolsV2 {
       id: '63',
       geometry: IOFSymbolGeometry.area(
         innerColor: '15',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1179,7 +1180,7 @@ class IOFSymbolsV2 {
         innerRadius: 900,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1191,7 +1192,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '5',
         lineWidth: 300,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1207,7 +1208,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '5',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1223,7 +1224,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '5',
         lineWidth: 180,
-        dashed: True,
+        dashed: true,
         dashLength: 1250,
         breakLength: 250,
         joinStyle: '1',
@@ -1245,7 +1246,7 @@ class IOFSymbolsV2 {
       id: '69',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1257,7 +1258,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1272,7 +1273,7 @@ class IOFSymbolsV2 {
       id: '71',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1285,7 +1286,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1297,7 +1298,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 0,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1312,7 +1313,7 @@ class IOFSymbolsV2 {
       id: '74',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1325,7 +1326,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1338,7 +1339,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1351,7 +1352,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1364,7 +1365,7 @@ class IOFSymbolsV2 {
         innerRadius: 1048,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1375,7 +1376,7 @@ class IOFSymbolsV2 {
       id: '79',
       geometry: IOFSymbolGeometry.area(
         innerColor: '33',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1386,7 +1387,7 @@ class IOFSymbolsV2 {
       id: '80',
       geometry: IOFSymbolGeometry.area(
         innerColor: '33',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1397,7 +1398,7 @@ class IOFSymbolsV2 {
       id: '81',
       geometry: IOFSymbolGeometry.area(
         innerColor: '33',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1408,7 +1409,7 @@ class IOFSymbolsV2 {
       id: '82',
       geometry: IOFSymbolGeometry.area(
         innerColor: '34',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1419,7 +1420,7 @@ class IOFSymbolsV2 {
       id: '83',
       geometry: IOFSymbolGeometry.area(
         innerColor: '34',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1430,7 +1431,7 @@ class IOFSymbolsV2 {
       id: '84',
       geometry: IOFSymbolGeometry.area(
         innerColor: '34',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1441,7 +1442,7 @@ class IOFSymbolsV2 {
       id: '85',
       geometry: IOFSymbolGeometry.area(
         innerColor: '22',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1452,7 +1453,7 @@ class IOFSymbolsV2 {
       id: '86',
       geometry: IOFSymbolGeometry.area(
         innerColor: '28',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1463,7 +1464,7 @@ class IOFSymbolsV2 {
       id: '87',
       geometry: IOFSymbolGeometry.area(
         innerColor: '28',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1474,7 +1475,7 @@ class IOFSymbolsV2 {
       id: '88',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1485,7 +1486,7 @@ class IOFSymbolsV2 {
       id: '89',
       geometry: IOFSymbolGeometry.area(
         innerColor: '27',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1496,7 +1497,7 @@ class IOFSymbolsV2 {
       id: '90',
       geometry: IOFSymbolGeometry.area(
         innerColor: '27',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1507,7 +1508,7 @@ class IOFSymbolsV2 {
       id: '91',
       geometry: IOFSymbolGeometry.area(
         innerColor: '28',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1518,7 +1519,7 @@ class IOFSymbolsV2 {
       id: '92',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1529,7 +1530,7 @@ class IOFSymbolsV2 {
       id: '93',
       geometry: IOFSymbolGeometry.area(
         innerColor: '26',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1540,7 +1541,7 @@ class IOFSymbolsV2 {
       id: '94',
       geometry: IOFSymbolGeometry.area(
         innerColor: '26',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1551,7 +1552,7 @@ class IOFSymbolsV2 {
       id: '95',
       geometry: IOFSymbolGeometry.area(
         innerColor: '28',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1562,7 +1563,7 @@ class IOFSymbolsV2 {
       id: '96',
       geometry: IOFSymbolGeometry.area(
         innerColor: '27',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1574,7 +1575,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '26',
         lineWidth: 350,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1590,7 +1591,7 @@ class IOFSymbolsV2 {
       isHidden: true,
       geometry: IOFSymbolGeometry.area(
         innerColor: '26',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1608,7 +1609,7 @@ class IOFSymbolsV2 {
       id: '100',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1619,7 +1620,7 @@ class IOFSymbolsV2 {
       id: '101',
       geometry: IOFSymbolGeometry.area(
         innerColor: '33',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1630,7 +1631,7 @@ class IOFSymbolsV2 {
       id: '102',
       geometry: IOFSymbolGeometry.area(
         innerColor: '34',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1641,7 +1642,7 @@ class IOFSymbolsV2 {
       id: '103',
       geometry: IOFSymbolGeometry.area(
         innerColor: '33',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1652,7 +1653,7 @@ class IOFSymbolsV2 {
       id: '104',
       geometry: IOFSymbolGeometry.area(
         innerColor: '34',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -1664,7 +1665,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1680,7 +1681,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 0,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1696,7 +1697,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '25',
         lineWidth: 140,
-        dashed: True,
+        dashed: true,
         dashLength: 300,
         breakLength: 200,
         joinStyle: '1',
@@ -1713,7 +1714,7 @@ class IOFSymbolsV2 {
         innerRadius: 270,
         innerColor: '-1',
         outerColor: '3',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1726,7 +1727,7 @@ class IOFSymbolsV2 {
         innerRadius: 50,
         innerColor: '22',
         outerColor: '3',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1739,7 +1740,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1756,7 +1757,7 @@ class IOFSymbolsV2 {
       type: 4,
       geometry: IOFSymbolGeometry.area(
         innerColor: '13',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1767,7 +1768,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '12',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1782,7 +1783,7 @@ class IOFSymbolsV2 {
       id: '112',
       geometry: IOFSymbolGeometry.area(
         innerColor: '11',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -1794,7 +1795,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '8',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1810,7 +1811,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '11',
         lineWidth: 300,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1827,7 +1828,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '11',
         lineWidth: 500,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1849,7 +1850,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '13',
         lineWidth: 780,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1864,7 +1865,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '12',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1880,7 +1881,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 350,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -1896,7 +1897,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 350,
-        dashed: True,
+        dashed: true,
         dashLength: 3000,
         breakLength: 250,
         joinStyle: '1',
@@ -1912,7 +1913,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 250,
-        dashed: True,
+        dashed: true,
         dashLength: 2000,
         breakLength: 250,
         joinStyle: '1',
@@ -1928,7 +1929,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 180,
-        dashed: True,
+        dashed: true,
         dashLength: 1000,
         breakLength: 250,
         joinStyle: '1',
@@ -1944,7 +1945,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 180,
-        dashed: True,
+        dashed: true,
         dashLength: 1000,
         breakLength: 800,
         joinStyle: '1',
@@ -1960,7 +1961,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: True,
+        dashed: true,
         dashLength: 2000,
         breakLength: 250,
         joinStyle: '1',
@@ -1982,7 +1983,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '19',
         lineWidth: 450,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2004,7 +2005,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '22',
         lineWidth: 450,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2026,7 +2027,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '21',
         lineWidth: 450,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2048,7 +2049,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '20',
         lineWidth: 450,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2070,7 +2071,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 350,
-        dashed: True,
+        dashed: true,
         dashLength: 1500,
         breakLength: 1000,
         joinStyle: '1',
@@ -2085,7 +2086,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '4',
         lineWidth: 350,
-        dashed: False,
+        dashed: false,
         dashLength: 1500,
         breakLength: 1000,
         joinStyle: '1',
@@ -2101,7 +2102,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2117,7 +2118,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 400,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2133,7 +2134,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 1340,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2155,7 +2156,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 0,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2171,7 +2172,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2188,7 +2189,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2201,7 +2202,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2213,7 +2214,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2229,7 +2230,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: True,
+        dashed: true,
         dashLength: 2000,
         breakLength: 350,
         joinStyle: '1',
@@ -2245,7 +2246,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2261,7 +2262,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2277,7 +2278,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: True,
+        dashed: true,
         dashLength: 2000,
         breakLength: 350,
         joinStyle: '1',
@@ -2293,7 +2294,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2310,7 +2311,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2321,7 +2322,7 @@ class IOFSymbolsV2 {
       id: '142',
       geometry: IOFSymbolGeometry.area(
         innerColor: '23',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2333,7 +2334,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2348,7 +2349,7 @@ class IOFSymbolsV2 {
       id: '144',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2360,7 +2361,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 350,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2375,7 +2376,7 @@ class IOFSymbolsV2 {
       id: '146',
       geometry: IOFSymbolGeometry.area(
         innerColor: '8',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2388,7 +2389,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2406,7 +2407,7 @@ class IOFSymbolsV2 {
       id: '149',
       geometry: IOFSymbolGeometry.area(
         innerColor: '9',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2418,7 +2419,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 200,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2440,7 +2441,7 @@ class IOFSymbolsV2 {
       id: '152',
       geometry: IOFSymbolGeometry.area(
         innerColor: '10',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2452,7 +2453,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 100,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2468,7 +2469,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 160,
-        dashed: True,
+        dashed: true,
         dashLength: 500,
         breakLength: 250,
         joinStyle: '1',
@@ -2485,7 +2486,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2498,7 +2499,7 @@ class IOFSymbolsV2 {
         innerRadius: 400,
         innerColor: '2',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2511,7 +2512,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2524,7 +2525,7 @@ class IOFSymbolsV2 {
         innerRadius: 70,
         innerColor: '2',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2537,7 +2538,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2549,7 +2550,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 140,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2565,7 +2566,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2582,7 +2583,7 @@ class IOFSymbolsV2 {
         innerRadius: 240,
         innerColor: '-1',
         outerColor: '2',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2595,7 +2596,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2607,7 +2608,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '22',
         lineWidth: 400,
-        dashed: False,
+        dashed: false,
         dashLength: 1067,
         breakLength: 267,
         joinStyle: '1',
@@ -2623,7 +2624,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '22',
         lineWidth: 400,
-        dashed: False,
+        dashed: false,
         dashLength: 1067,
         breakLength: 267,
         joinStyle: '1',
@@ -2639,7 +2640,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '2',
         lineWidth: 100,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2654,7 +2655,7 @@ class IOFSymbolsV2 {
       id: '167',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2666,7 +2667,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '5',
         lineWidth: 180,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2681,7 +2682,7 @@ class IOFSymbolsV2 {
       id: '169',
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2694,7 +2695,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2707,7 +2708,7 @@ class IOFSymbolsV2 {
         innerRadius: 150,
         innerColor: '2',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2717,8 +2718,9 @@ class IOFSymbolsV2 {
       type: 8,
       id: '172',
       geometry: IOFSymbolGeometry.text(
+        color: null,
         fontSize: null,
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2732,7 +2734,7 @@ class IOFSymbolsV2 {
         innerRadius: 857,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2746,7 +2748,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2760,7 +2762,7 @@ class IOFSymbolsV2 {
         innerRadius: 2325,
         innerColor: '-1',
         outerColor: '7',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2770,8 +2772,9 @@ class IOFSymbolsV2 {
       type: 8,
       id: '176',
       geometry: IOFSymbolGeometry.text(
+        color: null,
         fontSize: null,
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2784,7 +2787,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '7',
         lineWidth: 350,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2802,7 +2805,7 @@ class IOFSymbolsV2 {
         innerRadius: 1825,
         innerColor: '-1',
         outerColor: '7',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2815,7 +2818,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '0',
         lineWidth: 350,
-        dashed: True,
+        dashed: true,
         dashLength: 2000,
         breakLength: 500,
         joinStyle: '1',
@@ -2832,7 +2835,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '7',
         lineWidth: 700,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2848,7 +2851,7 @@ class IOFSymbolsV2 {
       isHidden: true,
       geometry: IOFSymbolGeometry.area(
         innerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2861,7 +2864,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '0',
         lineWidth: 250,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2878,7 +2881,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '0',
         lineWidth: 250,
-        dashed: True,
+        dashed: true,
         dashLength: 3000,
         breakLength: 500,
         joinStyle: '1',
@@ -2896,7 +2899,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2909,7 +2912,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 0,
-        dashed: False,
+        dashed: false,
         dashLength: 4000,
         breakLength: 1000,
         joinStyle: '1',
@@ -2927,7 +2930,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: True,
+        rotatable: true,
       ),
     ),
     IOFSymbol(
@@ -2941,7 +2944,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2955,7 +2958,7 @@ class IOFSymbolsV2 {
         innerRadius: 1000,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
     IOFSymbol(
@@ -2967,7 +2970,7 @@ class IOFSymbolsV2 {
       geometry: IOFSymbolGeometry.line(
         color: '-1',
         lineWidth: 0,
-        dashed: False,
+        dashed: false,
         dashLength: 1000,
         breakLength: 1450,
         joinStyle: '1',
@@ -2984,7 +2987,7 @@ class IOFSymbolsV2 {
         innerRadius: 250,
         innerColor: '-1',
         outerColor: '-1',
-        rotatable: False,
+        rotatable: false,
       ),
     ),
   ];
@@ -3023,7 +3026,7 @@ class IOFSymbolsV2 {
 
   // Get symbols by color reference
   static List<IOFSymbol> getByColor(String colorRef) {
-    return symbols.where((s) => s.geometry.colorReference == colorRef).toList();
+    return symbols.where((s) => s.geometry?.colorReference == colorRef).toList();
   }
 
   // Get a sample symbol for preview

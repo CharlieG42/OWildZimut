@@ -220,7 +220,7 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           shape: BoxShape.circle,
           border: Border.all(color: color, width: 1.5),
         ),
@@ -240,7 +240,7 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Center(
@@ -256,7 +256,7 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: color, width: 1),
         ),
@@ -266,7 +266,7 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(4),
         ),
         child: const Center(
@@ -381,14 +381,14 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
         ),
         const SizedBox(height: 4),
         if (geomType == 'point') ...[
-          Text('Inner Radius: ${geom.properties['inner_radius']} (${(int.tryParse(geom.properties['inner_radius']?.toString() ?? '0') ?? 0) / 1000.0:.2f}mm)'),
+          Text('Inner Radius: ${geom.properties['inner_radius']} (${((int.tryParse(geom.properties['inner_radius']?.toString() ?? '0') ?? 0) / 1000.0).toStringAsFixed(2)}mm)'),
           Text('Inner Color: ${geom.properties['inner_color']}'),
           Text('Outer Color: ${geom.properties['outer_color']}'),
           Text('Rotatable: ${geom.properties['rotatable']}'),
         ],
         if (geomType == 'line') ...[
           Text('Color: ${geom.properties['color']}'),
-          Text('Line Width: ${geom.properties['line_width']} (${(int.tryParse(geom.properties['line_width']?.toString() ?? '0') ?? 0) / 1000.0:.2f}mm)'),
+          Text('Line Width: ${geom.properties['line_width']} (${((int.tryParse(geom.properties['line_width']?.toString() ?? '0') ?? 0) / 1000.0).toStringAsFixed(2)}mm)'),
           Text('Dashed: ${geom.properties['dashed']}'),
           if (geom.properties['dash_length'] != null) Text('Dash Length: ${geom.properties['dash_length']}'),
           if (geom.properties['break_length'] != null) Text('Break Length: ${geom.properties['break_length']}'),
@@ -451,7 +451,7 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
             ],
           ),
           Text(
-            'CMYK: (${iofColor.c:.2f}, ${iofColor.m:.2f}, ${iofColor.y:.2f}, ${iofColor.k:.2f})',
+            'CMYK: (${iofColor.c.toStringAsFixed(2)}, ${iofColor.m.toStringAsFixed(2)}, ${iofColor.y.toStringAsFixed(2)}, ${iofColor.k.toStringAsFixed(2)})',
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],
