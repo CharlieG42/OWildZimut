@@ -9,5 +9,6 @@ class AppConstants {
   /// Version actuelle de l'application
   /// Modifier cette valeur unique pour mettre à jour la version partout dans l'application
   static const String version = '0.0.007';
-  static const Offset defaultPanOffset = Offset(200,200);
+  static const String appName = 'OWildZimut';
+  static const Offset defaultPanOffset = Offset(0, 0);
 }
