@@ -35,7 +35,7 @@ class MapState {
   factory MapState.initial() {
     return const MapState(
       appVersion: AppConstants.version,
-    ).addLayer('Carte de base', LayerType.vector)
+    )//.addLayer('Carte de base', LayerType.vector)
       //.addLayer('Végétation', LayerType.vector)
       //.addLayer('Chemins', LayerType.vector)
   ;
@@ -246,6 +246,18 @@ class MapState {
     return copyWith(
       zoomLevel: 1.0,
       panOffset: Offset.zero,
+    );
+  }
+
+  /// Centre la vue sur l'écran (nécessite la taille de l'écran)
+  MapState centerView(Size screenSize) {
+    final centerOffset = Offset(
+      screenSize.width / 2,
+      screenSize.height / 2,
+    );
+    return copyWith(
+      zoomLevel: 1.0,
+      panOffset: centerOffset,
     );
   }
 

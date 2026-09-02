@@ -320,9 +320,10 @@ class _MainScreenState extends State<MainScreen> {
       
       final omapDocument = OmapFileLoader.parse(fileContent);
       
+      final screenSize = MediaQuery.of(context).size;
       setState(() {
         _mapState = OmapFileLoader.mergeIntoState(_mapState, omapDocument);
-        _mapState = _mapState.resetView();
+        _mapState = _mapState.centerView(screenSize);
         _pushStateToHistory();
       });
       
