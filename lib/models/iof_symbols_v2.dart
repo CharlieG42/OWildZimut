@@ -221,7 +221,10 @@ class IOFSymbolGeometry {
     if (symbolType == 'line') {
       final width = properties['line_width'];
       if (width != null) {
-        return (int.tryParse(width) ?? 0) / 1000.0;
+        final widthInt = width is int ? width : int.tryParse(width.toString());
+        if (widthInt != null) {
+          return widthInt / 1000.0;
+        }
       }
     }
     return null;
@@ -232,7 +235,10 @@ class IOFSymbolGeometry {
     if (symbolType == 'point') {
       final radius = properties['inner_radius'];
       if (radius != null) {
-        return (int.tryParse(radius) ?? 0) / 1000.0;
+        final radiusInt = radius is int ? radius : int.tryParse(radius.toString());
+        if (radiusInt != null) {
+          return radiusInt / 1000.0;
+        }
       }
     }
     return null;
