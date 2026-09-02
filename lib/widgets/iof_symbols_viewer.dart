@@ -215,7 +215,7 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
     
     // Build preview based on geometry
     if (symbol.isPoint) {
-      final radius = symbol.geometry.pointRadius ?? size / 2;
+      final radius = symbol.geometry?.pointRadius ?? size / 2;
       return Container(
         width: size,
         height: size,
@@ -291,7 +291,6 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
     if (_selectedSymbol == null) return const SizedBox();
     
     final symbol = _selectedSymbol!;
-    final geom = symbol.geometry;
     
     return Column(
       children: [
@@ -365,9 +364,11 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
 
   Widget _buildGeometryDetails(IOFSymbol symbol) {
     final geom = symbol.geometry;
-    final geomType = geom.symbolType;
+    final geomType = geom?.symbolType;
     
-    if (geomType == null) return const SizedBox();
+    if (geom == null || geomType == null) return const SizedBox();
+    
+    final props = geom.properties;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,35 +382,35 @@ class _IOFSymbolsViewerState extends State<IOFSymbolsViewer> {
         ),
         const SizedBox(height: 4),
         if (geomType == 'point') ...[
-          Text('Inner Radius: ${geom.properties['inner_radius']} (${((int.tryParse(geom.properties['inner_radius']?.toString() ?? '0') ?? 0) / 1000.0).toStringAsFixed(2)}mm)'),
-          Text('Inner Color: ${geom.properties['inner_color']}'),
-          Text('Outer Color: ${geom.properties['outer_color']}'),
-          Text('Rotatable: ${geom.properties['rotatable']}'),
+          Text('Inner Radius: ${props['inner_radius']} (${((int.tryParse(props['inner_radius']?.toString() ?? '0') ?? 0) / 1000.0).toStringAsFixed(2)}mm)'),
+          Text('Inner Color: ${props['inner_color']}'),
+          Text('Outer Color: ${props['outer_color']}'),
+          Text('Rotatable: ${props['rotatable']}'),
         ],
         if (geomType == 'line') ...[
-          Text('Color: ${geom.properties['color']}'),
-          Text('Line Width: ${geom.properties['line_width']} (${((int.tryParse(geom.properties['line_width']?.toString() ?? '0') ?? 0) / 1000.0).toStringAsFixed(2)}mm)'),
-          Text('Dashed: ${geom.properties['dashed']}'),
-          if (geom.properties['dash_length'] != null) Text('Dash Length: ${geom.properties['dash_length']}'),
-          if (geom.properties['break_length'] != null) Text('Break Length: ${geom.properties['break_length']}'),
-          if (geom.properties['join_style'] != null) Text('Join Style: ${geom.properties['join_style']}'),
-          if (geom.properties['cap_style'] != null) Text('Cap Style: ${geom.properties['cap_style']}'),
+          Text('Color: ${props['color']}'),
+          Text('Line Width: ${props['line_width']} (${((int.tryParse(props['line_width']?.toString() ?? '0') ?? 0) / 1000.0).toStringAsFixed(2)}mm)'),
+          Text('Dashed: ${props['dashed']}'),
+          if (props['dash_length'] != null) Text('Dash Length: ${props['dash_length']}'),
+          if (props['break_length'] != null) Text('Break Length: ${props['break_length']}'),
+          if (props['join_style'] != null) Text('Join Style: ${props['join_style']}'),
+          if (props['cap_style'] != null) Text('Cap Style: ${props['cap_style']}'),
         ],
         if (geomType == 'area') ...[
-          Text('Inner Color: ${geom.properties['inner_color']}'),
-          Text('Rotatable: ${geom.properties['rotatable']}'),
+          Text('Inner Color: ${props['inner_color']}'),
+          Text('Rotatable: ${props['rotatable']}'),
         ],
         if (geomType == 'text') ...[
-          Text('Color: ${geom.properties['color']}'),
-          Text('Font Size: ${geom.properties['font_size']}'),
-          Text('Rotatable: ${geom.properties['rotatable']}'),
+          Text('Color: ${props['color']}'),
+          Text('Font Size: ${props['font_size']}'),
+          Text('Rotatable: ${props['rotatable']}'),
         ],
       ],
     );
   }
 
   Widget _buildColorDetails(IOFSymbol symbol) {
-    final colorRef = symbol.geometry.colorReference;
+    final colorRef = symbol.geometry?.colorReference;
     
     if (colorRef == null || colorRef == '-1') {
       return const Text(
