@@ -322,6 +322,7 @@ class _MainScreenState extends State<MainScreen> {
       
       setState(() {
         _mapState = OmapFileLoader.mergeIntoState(_mapState, omapDocument);
+        _mapState = _mapState.resetView();
         _pushStateToHistory();
       });
       
