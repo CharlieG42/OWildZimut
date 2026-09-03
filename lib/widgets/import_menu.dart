@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/import_service.dart';
 
 /// Menu d'import pour OWildZimut.
@@ -93,11 +94,25 @@ class ImportMenu extends StatelessWidget {
           result = await importService.importImage();
           break;
         case 'geopdf_convert':
-          result = await importService.importGeoPdfWithConversion();
+          final file = await importService.pickFile(
+            type: FileType.custom,
+            allowedExtensions: ['pdf', 'PDF'],
+            dialogTitle: 'Sélectionner un GeoPDF à convertir',
+          );
+          if (file != null) {
+            result = await importService.importGeoPdfWithConversionFromPath(file.path);
+          }
           break;
         case 'geopdf_raster':
-          final geoPdfData = await importService.importGeoPdfAsRaster();
-          result = geoPdfData?.mapName;
+          final file = await importService.pickFile(
+            type: FileType.custom,
+            allowedExtensions: ['pdf', 'PDF'],
+            dialogTitle: 'Sélectionner un GeoPDF à importer',
+          );
+          if (file != null) {
+            final geoPdfData = await importService.importGeoPdfAsRasterFromPath(file.path);
+            result = geoPdfData?.mapName;
+          }
           break;
       }
 
@@ -221,11 +236,25 @@ class ImportButton extends StatelessWidget {
           result = await importService.importImage();
           break;
         case 'geopdf_convert':
-          result = await importService.importGeoPdfWithConversion();
+          final file = await importService.pickFile(
+            type: FileType.custom,
+            allowedExtensions: ['pdf', 'PDF'],
+            dialogTitle: 'Sélectionner un GeoPDF à convertir',
+          );
+          if (file != null) {
+            result = await importService.importGeoPdfWithConversionFromPath(file.path);
+          }
           break;
         case 'geopdf_raster':
-          final geoPdfData = await importService.importGeoPdfAsRaster();
-          result = geoPdfData?.mapName;
+          final file = await importService.pickFile(
+            type: FileType.custom,
+            allowedExtensions: ['pdf', 'PDF'],
+            dialogTitle: 'Sélectionner un GeoPDF à importer',
+          );
+          if (file != null) {
+            final geoPdfData = await importService.importGeoPdfAsRasterFromPath(file.path);
+            result = geoPdfData?.mapName;
+          }
           break;
       }
 
