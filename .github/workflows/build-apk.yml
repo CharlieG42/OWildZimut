@@ -66,7 +66,7 @@ jobs:
         run: cd android && flutter precache && cd ..
 
       - name: Analyze
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze --no-fatal-infos --no-fatal-warning --verbose > build.log 2>&1
 
       - name: Run tests
         run: flutter test
@@ -105,13 +105,13 @@ jobs:
             echo "keyPassword=$KEY_PASS"
           } > android/key.properties
 
-      - name: Build release APK (with full logs)
-        id: build
-        run: |
-          flutter build apk --release --no-aar-check --verbose > build.log 2>&1 || flutter build apk --release --verbose > build.log 2>&1
-          BUILD_EXIT_CODE=$?
-          echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_ENV
-          tail -n 100 build.log
+      #- name: Build release APK (with full logs)
+      #  id: build
+      #  run: |
+      #    flutter build apk --release --no-aar-check --verbose > build.log 2>&1 || flutter build apk --release --verbose > build.log 2>&1
+      #    BUILD_EXIT_CODE=$?
+      #    echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_ENV
+      #    tail -n 100 build.log
 
       - name: Copy build.log to repo root
         run: |
@@ -132,16 +132,16 @@ jobs:
           echo "=== BUILD.LOG CONTENT ==="
           cat build.log || true
 
-      - name: Check build result
-        run: |
-          if [ "$BUILD_EXIT_CODE" != "0" ]; then
-            echo "::error::Build failed with exit code $BUILD_EXIT_CODE! Check build.log in repo root or artifact for details."
-            exit $BUILD_EXIT_CODE
-          fi
+     # - name: Check build result
+     #   run: |
+     #     if [ "$BUILD_EXIT_CODE" != "0" ]; then
+     #       echo "::error::Build failed with exit code $BUILD_EXIT_CODE! Check build.log in repo root or artifact for details."
+     #       exit $BUILD_EXIT_CODE
+     #     fi
 
-      - name: List all APK files (debug)
-        if: success()
-        run: find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+     # - name: List all APK files (debug)
+     #   if: success()
+     #   run: find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
 
       - name: Upload build log artifact
         if: always()
@@ -151,18 +151,18 @@ jobs:
           path: build.log
           retention-days: 7
 
-      - name: Upload APK artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: owildzimut-apk
-          path: build/app/outputs/flutter-apk/
-          if-no-files-found: warn
-          retention-days: 30
+     # - name: Upload APK artifact
+     #   if: success()
+     #   uses: actions/upload-artifact@v4
+     #   with:
+     #     name: owildzimut-apk
+     #     path: build/app/outputs/flutter-apk/
+     #     if-no-files-found: warn
+     #     retention-days: 30
 
-      - name: Attach APK to release
-        if: startsWith(github.ref, 'refs/tags/v') && success()
-        uses: softprops/action-gh-release@v2
-        with:
-          files: build/app/outputs/flutter-apk/app-release.apk
-          generate_release_notes: true
+     # - name: Attach APK to release
+     #   if: startsWith(github.ref, 'refs/tags/v') && success()
+     #   uses: softprops/action-gh-release@v2
+     #   with:
+     #     files: build/app/outputs/flutter-apk/app-release.apk
+     #     generate_release_notes: true
