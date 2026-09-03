@@ -242,7 +242,7 @@ flutter run -d chrome
 - **flutter** : SDK Flutter
 - **cupertino_icons** : icônes iOS
 - **flutter_lints** : recommandations de linting
-- **file_picker** : sélection de fichiers (import OMAP, import d'image de fond)
+- **file_selector** : sélection de fichiers (import OMAP, import d'image de fond)
 - **path_provider** : accès à des répertoires standards
 - **path** : manipulation de chemins de fichiers
 - **xml** : analyse des fichiers OMAP (format XML)

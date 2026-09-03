@@ -21,7 +21,6 @@ dependencies:
 
   # Selection de fichiers multiplateforme (import OMAP, import d'images de fond)
   file_selector: ^1.0.3
-  file_picker: ^8.0.0
 
   # Acces a des repertoires standards (sauvegardes de projets)
   path_provider: ^2.1.1

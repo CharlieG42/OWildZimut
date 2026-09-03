@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../services/import_service.dart';
 import 'import_dialog.dart';
 
@@ -212,7 +211,6 @@ class ImportButton extends StatelessWidget {
           final file = await importService.pickFile(
             type: FileType.custom,
             allowedExtensions: ['pdf', 'PDF'],
-            dialogTitle: 'Sélectionner un GeoPDF à convertir',
           );
           if (file != null) {
             result = await importService.importGeoPdfWithConversionFromPath(file.path);
@@ -222,7 +220,6 @@ class ImportButton extends StatelessWidget {
           final file = await importService.pickFile(
             type: FileType.custom,
             allowedExtensions: ['pdf', 'PDF'],
-            dialogTitle: 'Sélectionner un GeoPDF à importer',
           );
           if (file != null) {
             final geoPdfData = await importService.importGeoPdfAsRasterFromPath(file.path);

@@ -1,12 +1,18 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import '../models/map_metadata.dart';
-import '../models/georeferencing_data.dart';
 import '../models/geo_pdf_data.dart';
 import 'geo_pdf_service.dart';
+
+/// Type de fichier pour la sélection
+enum FileType {
+  custom,
+  image,
+  video,
+  audio,
+  media,
+}
 
 /// Service pour gérer l'import de différents types de fichiers dans OWildZimut.
 /// Ce service propose 4 options d'import :
@@ -42,7 +48,6 @@ class ImportService {
     final file = await pickFile(
       type: FileType.custom,
       allowedExtensions: ['omap'],
-      dialogTitle: 'Importer un fichier OMAP',
     );
     
     if (file != null) {
@@ -67,7 +72,6 @@ class ImportService {
   Future<String?> importImage() async {
     final file = await pickFile(
       type: FileType.image,
-      dialogTitle: 'Importer une image',
     );
     
     if (file != null) {
@@ -95,7 +99,6 @@ class ImportService {
     final file = await pickFile(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'PDF'],
-      dialogTitle: 'Sélectionner un GeoPDF à convertir',
     );
     
     if (file != null) {
@@ -135,7 +138,6 @@ class ImportService {
     final file = await pickFile(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'PDF'],
-      dialogTitle: 'Sélectionner un GeoPDF à importer',
     );
     
     if (file != null) {
@@ -183,18 +185,48 @@ class ImportService {
   Future<File?> pickFile({
     required FileType type,
     List<String>? allowedExtensions,
-    String? dialogTitle,
   }) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: type,
-        allowedExtensions: allowedExtensions,
-        dialogTitle: dialogTitle,
-        allowMultiple: false,
+      List<XTypeGroup> typeGroups = [];
+      
+      if (type == FileType.image) {
+        typeGroups.add(
+          XTypeGroup(
+            extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'],
+          ),
+        );
+      } else if (type == FileType.custom && allowedExtensions != null) {
+        typeGroups.add(
+          XTypeGroup(
+            extensions: allowedExtensions,
+          ),
+        );
+      } else if (type == FileType.media) {
+        typeGroups.add(
+          XTypeGroup(
+            mimeTypes: ['image/*', 'video/*'],
+          ),
+        );
+      } else if (type == FileType.video) {
+        typeGroups.add(
+          XTypeGroup(
+            mimeTypes: ['video/*'],
+          ),
+        );
+      } else if (type == FileType.audio) {
+        typeGroups.add(
+          XTypeGroup(
+            mimeTypes: ['audio/*'],
+          ),
+        );
+      }
+      
+      final file = await openFile(
+        acceptedTypeGroups: typeGroups,
       );
       
-      if (result != null && result.files.isNotEmpty) {
-        return File(result.files.first.path!);
+      if (file != null) {
+        return File(file.path);
       }
     } catch (e) {
       print('Erreur lors de la sélection du fichier: $e');

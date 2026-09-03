@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../services/import_service.dart';
 
 /// Dialogue pour l'import avec prévisualisation des informations
@@ -127,7 +126,6 @@ class _ImportDialogState extends State<ImportDialog> {
       final file = await widget.importService.pickFile(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'PDF', 'png', 'jpg', 'jpeg', 'omap'],
-        dialogTitle: 'Sélectionner un fichier à importer',
       );
 
       if (file != null) {

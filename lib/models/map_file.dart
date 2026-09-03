@@ -374,7 +374,7 @@ class MapFileLoader {
     try {
       // Lecture du fichier
       // Note: Dans Flutter, l'accès au système de fichiers nécessite des permissions
-      // et l'utilisation de packages comme path_provider ou file_picker
+      // et l'utilisation de packages comme path_provider ou file_selector
       // Pour l'instant, on simule le chargement
       
       // final file = File(filePath);
