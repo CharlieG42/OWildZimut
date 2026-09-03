@@ -22,7 +22,7 @@ class IOFColorV3 {
   const IOFColorV3(this.priority, this.name, this.color, this.c, this.m, this.y, this.k, this.opacity);
 
   @override
-  String toString() => 'IOFColorV3(priority: ${priority}, name: ${name})';
+  String toString() => 'IOFColorV3(priority: $priority, name: $name)';
 }
 
 /// Palette des couleurs du jeu de symboles IOF (index = priorite 0..N-1).
@@ -166,7 +166,7 @@ class IOFSymbolGeometryV3 {
       (properties['elements'] as List<IOFSymbolElementV3>?) ?? const [];
 
   @override
-  String toString() => 'IOFSymbolGeometryV3(type: ${symbolType})';
+  String toString() => 'IOFSymbolGeometryV3(type: $symbolType)';
 }
 
 /// Un sous-element d'un symbole ponctuel composite (ex. les deux tirets
@@ -342,7 +342,7 @@ class IOFSymbolV3 {
   }
 
   @override
-  String toString() => 'IOFSymbolV3(code: ${code}, name: ${name})';
+  String toString() => 'IOFSymbolV3(code: $code, name: $name)';
 
   @override
   bool operator ==(Object other) => identical(this, other) || (other is IOFSymbolV3 && other.code == code);
