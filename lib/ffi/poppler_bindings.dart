@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
@@ -59,15 +60,7 @@ class PopplerBindings {
   /// Structure pour stocker les métadonnées du PDF (C-compatible)
   static const int kMaxMetadataLength = 1024;
 
-  /// Alloue un buffer pour les métadonnées
-  static Pointer<Utf8> _allocateMetadataBuffer() {
-    return malloc.call<Pointer<Utf8>>().cast<Utf8>();
-  }
 
-  /// Libère un buffer
-  static void _freeBuffer(Pointer<Utf8> buffer) {
-    malloc.free(buffer);
-  }
 
   // ============================================================================
   // Déclarations des fonctions C++
@@ -152,7 +145,7 @@ class PopplerBindings {
     try {
       return _pdfDocOpen(pathPtr);
     } finally {
-      malloc.free(pathPtr);
+      free(pathPtr.cast<Void>());
     }
   }
 
@@ -170,11 +163,11 @@ class PopplerBindings {
       final keyPtr = key.toNativeUtf8();
       try {
         final valuePtr = _pdfDocGetMetadata(doc, keyPtr);
-        if (valuePtr != nullptr) {
+        if (valuePtr != nullptr.cast<Utf8>()) {
           result[key] = valuePtr.toDartString();
         }
       } finally {
-        malloc.free(keyPtr);
+        free(keyPtr.cast<Void>());
       }
     }
     return result;
@@ -192,15 +185,15 @@ class PopplerBindings {
 
   /// Récupère la taille de la page
   static (double width, double height) getPageSize(Pointer<Void> page) {
-    final widthPtr = malloc.call<Pointer<Double>>().cast<Double>();
-    final heightPtr = malloc.call<Pointer<Double>>().cast<Double>();
+    final widthPtr = malloc(sizeOf<Double>()).cast<Double>();
+    final heightPtr = malloc(sizeOf<Double>()).cast<Double>();
     
     try {
       _pdfPageGetSize(page, widthPtr, heightPtr);
       return (widthPtr.value, heightPtr.value);
     } finally {
-      malloc.free(widthPtr);
-      malloc.free(heightPtr);
+      free(widthPtr.cast<Void>());
+      free(heightPtr.cast<Void>());
     }
   }
 
@@ -219,7 +212,7 @@ class PopplerBindings {
       rowStride,
     );
     
-    if (imagePtr == nullptr) {
+    if (imagePtr == nullptr.cast<Uint8>()) {
       throw Exception('Failed to render page to image');
     }
     
@@ -240,7 +233,7 @@ class PopplerBindings {
     final result = <String, dynamic>{};
     final geoDataPtr = _pdfPageGetGeoData(page);
     
-    if (geoDataPtr != nullptr) {
+    if (geoDataPtr != nullptr.cast<Utf8>()) {
       final geoData = geoDataPtr.toDartString();
       // Parser le format: "EPSG:3857|minLon,minLat,maxLon,maxLat|gpts|lpts"
       final parts = geoData.split('|');
@@ -272,13 +265,14 @@ class PopplerBindings {
   // Fonctions utilitaires
   // ============================================================================
 
-  /// Charge la librairie
-  static final DynamicLibrary _lib = DynamicLibrary.open('poppler');
-  static final malloc = _lib.lookupFunction<
+  /// Alloue de la mémoire
+  static final malloc = _libSafe.lookupFunction<
     Pointer<Void> Function(Int64),
     Pointer<Void> Function(int)
   >('malloc');
-  static final free = _lib.lookupFunction<
+  
+  /// Libère de la mémoire
+  static final free = _libSafe.lookupFunction<
     Void Function(Pointer<Void>),
     void Function(Pointer<Void>)
   >('free');

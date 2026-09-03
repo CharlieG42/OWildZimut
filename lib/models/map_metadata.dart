@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:collection/collection.dart';
 
 /// Modèle pour stocker les métadonnées d'une carte (OMAP, GeoPDF, Image).
 /// Ces métadonnées sont conservées pour information et peuvent être ajoutées
@@ -249,7 +249,7 @@ class MapMetadata {
       dpi: json['dpi'] as String?,
       rotation: json['rotation'] as double?,
       customFields: (json['customFields'] as Map<String, dynamic>?)
-          ?.map((key, value) => MapEntry(key, value.toString())),
+          ?.map((key, value) => MapEntry(key, value.toString())) ?? {},
       crs: json['crs'] as String?,
       geographicBounds: (json['geographicBounds'] as List<dynamic>?)
           ?.map((e) => (e as num).toDouble())

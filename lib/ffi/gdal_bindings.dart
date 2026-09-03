@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
@@ -59,7 +60,12 @@ class GdalBindings {
   // Déclarations des fonctions C++ GDAL
   // ============================================================================
 
-  static final DynamicLibrary _libSafe = _lib ?? (throw Exception('GDAL library not loaded'));
+  static DynamicLibrary get _libSafe {
+    if (_lib == null) {
+      throw Exception('GDAL library not loaded. Call init() first.');
+    }
+    return _lib!;
+  }
 
   /// Initialise tous les drivers GDAL
   static final _gdalAllRegister = _libSafe.lookupFunction<
@@ -165,7 +171,7 @@ class GdalBindings {
     try {
       return _gdalOpen(pathPtr);
     } finally {
-      malloc.free(pathPtr);
+      free(pathPtr.cast<Void>());
     }
   }
 
@@ -185,7 +191,7 @@ class GdalBindings {
   /// Récupère la transformation géométrique (GeoTransform)
   /// Retourne [minX, pixelWidth, rotationX, maxY, rotationY, pixelHeight]
   static List<double> getGeoTransform(Pointer<Void> dataset) {
-    final transformPtr = malloc.call<Pointer<Double>>().cast<Double>()
+    final transformPtr = malloc(6 * sizeOf<Double>()).cast<Double>()
       ..asTypedList(6);
     
     try {
@@ -195,14 +201,14 @@ class GdalBindings {
       }
       return transformPtr.asTypedList(6).toList();
     } finally {
-      malloc.free(transformPtr);
+      free(transformPtr.cast<Void>());
     }
   }
 
   /// Récupère le système de coordonnées (WKT)
   static String? getProjection(Pointer<Void> dataset) {
     final projPtr = _gdalGetProjectionRef(dataset);
-    if (projPtr == nullptr) {
+    if (projPtr == nullptr.cast<Utf8>()) {
       return null;
     }
     try {
@@ -216,9 +222,9 @@ class GdalBindings {
   /// Récupère les métadonnées du dataset
   static Map<String, String> getMetadata(Pointer<Void> dataset) {
     final result = <String, String>{};
-    final metadataPtr = _gdalGetMetadata(dataset, nullptr);
+    final metadataPtr = _gdalGetMetadata(dataset, nullptr.cast<Utf8>());
     
-    if (metadataPtr != nullptr) {
+    if (metadataPtr != nullptr.cast<Utf8>()) {
       // Parser les métadonnées (format: "KEY=VALUE\0KEY=VALUE\0...")
       final metadataStr = metadataPtr.toDartString();
       for (final pair in metadataStr.split('\0')) {
@@ -240,7 +246,7 @@ class GdalBindings {
     
     // Allouer un buffer pour les données
     final bufferSize = width * height;
-    final bufferPtr = malloc.call<Pointer<Uint8>>().cast<Uint8>()
+    final bufferPtr = malloc(bufferSize * sizeOf<Uint8>()).cast<Uint8>()
       ..asTypedList(bufferSize);
     
     try {
@@ -251,7 +257,7 @@ class GdalBindings {
         0, // nYOff
         width,
         height,
-        bufferPtr,
+        bufferPtr.cast<Void>(),
         width,
         height,
         1, // nPixelSpace
@@ -264,7 +270,7 @@ class GdalBindings {
       
       return bufferPtr.asTypedList(bufferSize);
     } finally {
-      malloc.free(bufferPtr);
+      free(bufferPtr.cast<Void>());
     }
   }
 
@@ -316,13 +322,14 @@ class GdalBindings {
   // Fonctions utilitaires
   // ============================================================================
 
-  /// Charge la librairie
-  static final DynamicLibrary _lib = DynamicLibrary.open('gdal');
-  static final malloc = _lib.lookupFunction<
+  /// Alloue de la mémoire
+  static final malloc = _libSafe.lookupFunction<
     Pointer<Void> Function(Int64),
     Pointer<Void> Function(int)
   >('malloc');
-  static final free = _lib.lookupFunction<
+  
+  /// Libère de la mémoire
+  static final free = _libSafe.lookupFunction<
     Void Function(Pointer<Void>),
     void Function(Pointer<Void>)
   >('free');

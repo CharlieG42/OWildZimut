@@ -32,6 +32,9 @@ dependencies:
   # Parseur XML utilise pour lire les fichiers .omap (OpenOrienteering Mapper)
   xml: ^6.5.0
 
+  # Utilitaires de collection (DeepCollectionEquality)
+  collection: ^1.18.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

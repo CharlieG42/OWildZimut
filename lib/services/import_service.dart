@@ -39,7 +39,7 @@ class ImportService {
 
   /// Importe un fichier OMAP existant
   Future<String?> importOmap() async {
-    final file = await _pickFile(
+    final file = await pickFile(
       type: FileType.custom,
       allowedExtensions: ['omap'],
       dialogTitle: 'Importer un fichier OMAP',
@@ -60,20 +60,25 @@ class ImportService {
 
   /// Importe une image et propose une calibration manuelle
   Future<String?> importImage() async {
-    final file = await _pickFile(
+    final file = await pickFile(
       type: FileType.image,
       dialogTitle: 'Importer une image',
     );
     
     if (file != null) {
-      // TODO: Ouvrir un dialogue de calibration pour géoréférencer l'image
-      // Pour l'instant, on retourne le chemin de l'image
-      // Dans une implémentation complète, on créerait un fichier OMAP avec
-      // l'image et les données de géoréférencement saisies par l'utilisateur
-      return file.path;
+      return await importImageFromPath(file.path);
     }
     
     return null;
+  }
+
+  /// Importe une image à partir d'un chemin de fichier
+  Future<String?> importImageFromPath(String filePath) async {
+    // TODO: Ouvrir un dialogue de calibration pour géoréférencer l'image
+    // Pour l'instant, on retourne le chemin de l'image
+    // Dans une implémentation complète, on créerait un fichier OMAP avec
+    // l'image et les données de géoréférencement saisies par l'utilisateur
+    return filePath;
   }
 
   // ============================================================================
@@ -82,33 +87,38 @@ class ImportService {
 
   /// Convertit un GeoPDF en OMAP + image de fond et importe le résultat
   Future<String?> importGeoPdfWithConversion() async {
-    final file = await _pickFile(
+    final file = await pickFile(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'PDF'],
       dialogTitle: 'Sélectionner un GeoPDF à convertir',
     );
     
     if (file != null) {
-      try {
-        // Vérifier que c'est bien un GeoPDF
-        final isGeoPdf = await _geoPdfService.isGeoPdf(file.path);
-        if (!isGeoPdf) {
-          // TODO: Afficher un message d'erreur
-          return null;
-        }
-
-        // Convertir le GeoPDF en OMAP
-        final mapDir = await _geoPdfService.convertGeoPdfToOmap(file.path);
-        
-        return mapDir;
-      } catch (e) {
-        // TODO: Gérer l'erreur
-        print('Erreur lors de la conversion GeoPDF → OMAP: $e');
-        return null;
-      }
+      return await importGeoPdfWithConversionFromPath(file.path);
     }
     
     return null;
+  }
+
+  /// Convertit un GeoPDF en OMAP à partir d'un chemin de fichier
+  Future<String?> importGeoPdfWithConversionFromPath(String filePath) async {
+    try {
+      // Vérifier que c'est bien un GeoPDF
+      final isGeoPdf = await _geoPdfService.isGeoPdf(filePath);
+      if (!isGeoPdf) {
+        // TODO: Afficher un message d'erreur
+        return null;
+      }
+
+      // Convertir le GeoPDF en OMAP
+      final mapDir = await _geoPdfService.convertGeoPdfToOmap(filePath);
+      
+      return mapDir;
+    } catch (e) {
+      // TODO: Gérer l'erreur
+      print('Erreur lors de la conversion GeoPDF → OMAP: $e');
+      return null;
+    }
   }
 
   // ============================================================================
@@ -117,42 +127,47 @@ class ImportService {
 
   /// Importe un GeoPDF directement comme image de fond géoréférencée
   Future<GeoPdfData?> importGeoPdfAsRaster() async {
-    final file = await _pickFile(
+    final file = await pickFile(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'PDF'],
       dialogTitle: 'Sélectionner un GeoPDF à importer',
     );
     
     if (file != null) {
-      try {
-        // Vérifier que c'est bien un GeoPDF
-        final isGeoPdf = await _geoPdfService.isGeoPdf(file.path);
-        if (!isGeoPdf) {
-          // TODO: Afficher un message d'erreur
-          return null;
-        }
-
-        // Charger le GeoPDF comme raster
-        final geoPdfData = await _geoPdfService.loadGeoPdfAsRaster(file.path);
-        
-        // Générer un nom de dossier unique
-        final mapDir = GeoPdfData.generateMapDirectory(
-          _mapsDir.path,
-          GeoPdfData.generateMapName(file.path, geoPdfData.metadata.title),
-        );
-
-        // Sauvegarder les données dans le dossier
-        await geoPdfData.saveToDirectory(mapDir);
-        
-        return geoPdfData;
-      } catch (e) {
-        // TODO: Gérer l'erreur
-        print('Erreur lors de l\'import GeoPDF: $e');
-        return null;
-      }
+      return await importGeoPdfAsRasterFromPath(file.path);
     }
     
     return null;
+  }
+
+  /// Importe un GeoPDF comme raster à partir d'un chemin de fichier
+  Future<GeoPdfData?> importGeoPdfAsRasterFromPath(String filePath) async {
+    try {
+      // Vérifier que c'est bien un GeoPDF
+      final isGeoPdf = await _geoPdfService.isGeoPdf(filePath);
+      if (!isGeoPdf) {
+        // TODO: Afficher un message d'erreur
+        return null;
+      }
+
+      // Charger le GeoPDF comme raster
+      final geoPdfData = await _geoPdfService.loadGeoPdfAsRaster(filePath);
+      
+      // Générer un nom de dossier unique
+      final mapDir = GeoPdfData.generateMapDirectory(
+        _mapsDir.path,
+        GeoPdfData.generateMapName(filePath, geoPdfData.metadata.title),
+      );
+
+      // Sauvegarder les données dans le dossier
+      await geoPdfData.saveToDirectory(mapDir);
+      
+      return geoPdfData;
+    } catch (e) {
+      // TODO: Gérer l'erreur
+      print('Erreur lors de l\'import GeoPDF: $e');
+      return null;
+    }
   }
 
   // ============================================================================
@@ -160,7 +175,7 @@ class ImportService {
   // ============================================================================
 
   /// Ouvre un dialogue pour sélectionner un fichier
-  Future<File?> _pickFile({
+  Future<File?> pickFile({
     required FileType type,
     List<String>? allowedExtensions,
     String? dialogTitle,

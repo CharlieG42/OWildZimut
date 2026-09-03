@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'dart:io';
+import 'dart:convert';
 import 'map_metadata.dart';
 import 'georeferencing_data.dart';
 
@@ -33,8 +35,8 @@ class GeoPdfData {
     // Extraire le nom du fichier sans extension
     final fileName = pdfPath.split('/').last.split('.').first;
     
-    // Utiliser le titre si disponible, sinon le nom du fichier
-    final baseName = title?.isNotEmpty == true ? title : fileName;
+    // Utiliser le titre si disponible et non vide, sinon le nom du fichier
+    final baseName = (title?.isNotEmpty == true) ? title! : fileName;
     
     // Remplacer les caractères spéciaux
     return baseName

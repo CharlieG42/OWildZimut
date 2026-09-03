@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/import_service.dart';
-import '../models/geo_pdf_data.dart';
 
 /// Dialogue pour l'import avec prévisualisation des informations
 class ImportDialog extends StatefulWidget {
@@ -109,7 +109,7 @@ class _ImportDialogState extends State<ImportDialog> {
     });
 
     try {
-      final file = await widget.importService.importService._pickFile(
+      final file = await widget.importService.pickFile(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'PDF', 'png', 'jpg', 'jpeg', 'omap'],
         dialogTitle: 'Sélectionner un fichier à importer',
@@ -277,7 +277,7 @@ class _ImportDialogState extends State<ImportDialog> {
     });
 
     try {
-      final result = await widget.importService.importGeoPdfWithConversion();
+      final result = await widget.importService.importGeoPdfWithConversionFromPath(_selectedFile!);
       if (result != null) {
         widget.onImportCompleted(result);
         if (context.mounted) Navigator.pop(context);
@@ -303,7 +303,7 @@ class _ImportDialogState extends State<ImportDialog> {
     });
 
     try {
-      final geoPdfData = await widget.importService.importGeoPdfAsRaster();
+      final geoPdfData = await widget.importService.importGeoPdfAsRasterFromPath(_selectedFile!);
       if (geoPdfData != null) {
         widget.onImportCompleted(geoPdfData.mapName);
         if (context.mounted) Navigator.pop(context);
@@ -329,7 +329,7 @@ class _ImportDialogState extends State<ImportDialog> {
     });
 
     try {
-      final result = await widget.importService.importImage();
+      final result = await widget.importService.importImageFromPath(_selectedFile!);
       if (result != null) {
         widget.onImportCompleted(result);
         if (context.mounted) Navigator.pop(context);
