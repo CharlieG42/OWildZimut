@@ -227,7 +227,7 @@ class GdalBindings {
     if (metadataPtr != nullptr.cast<Utf8>()) {
       // Parser les métadonnées (format: "KEY=VALUE\0KEY=VALUE\0...")
       final metadataStr = metadataPtr.toDartString();
-      for (final pair in metadataStr.split('\0')) {
+      for (final pair in metadataStr.split('0')) {
         if (pair.isEmpty) continue;
         final parts = pair.split('=');
         if (parts.length == 2) {
