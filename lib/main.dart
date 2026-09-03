@@ -13,6 +13,7 @@ import 'widgets/recenter_controls.dart';
 import 'screens/about_dialog.dart' as app_about;
 import 'formatters/omap_exporter.dart';
 import 'widgets/iof_symbols_viewer.dart';
+import 'widgets/iof_symbols_viewer_v3.dart';
 import 'constants.dart';
 
 void main() {
@@ -402,6 +403,14 @@ class _MainScreenState extends State<MainScreen> {
     showIOFSymbolsViewer(context);
   }
 
+  /// Variante V3 : bibliothèque de symboles générée directement depuis le
+  /// fichier .omap officiel (voir models/iof_symbols_v3.dart), avec un rendu
+  /// fidèle à la géométrie réelle des symboles composites. Coexiste avec la
+  /// visionneuse v1/v2 ci-dessus pour permettre de comparer les deux.
+  void _showIOFSymbolsViewerV3() {
+    showIOFSymbolsViewerV3(context);
+  }
+
   // ============================================================================
   // GESTION DU MODE AVANCÉ
   // ============================================================================
@@ -484,7 +493,15 @@ class _MainScreenState extends State<MainScreen> {
                   value: 'iof_symbols',
                   child: ListTile(
                     leading: Icon(Icons.list),
-                    title: Text('Voir les symboles IOF'),
+                    title: Text('Voir les symboles IOF (v1/v2)'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'iof_symbols_v3',
+                  child: ListTile(
+                    leading: Icon(Icons.fact_check_outlined),
+                    title: Text('Voir les symboles IOF (v3 — ISOM fidèle)'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -499,6 +516,9 @@ class _MainScreenState extends State<MainScreen> {
                     break;
                   case 'iof_symbols':
                     _showIOFSymbolsViewer();
+                    break;
+                  case 'iof_symbols_v3':
+                    _showIOFSymbolsViewerV3();
                     break;
                 }
               },
