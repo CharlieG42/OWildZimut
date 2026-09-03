@@ -39,7 +39,16 @@ class _ImportDialogState extends State<ImportDialog> {
               icon: const Icon(Icons.attach_file),
               label: const Text('Sélectionner un fichier'),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            // Afficher les formats acceptés
+            Text(
+              'Formats acceptés: OMAP, PDF, PNG, JPG, JPEG',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
             
             // Afficher le fichier sélectionné
             if (_selectedFile != null) ...[
@@ -80,6 +89,12 @@ class _ImportDialogState extends State<ImportDialog> {
                   onPressed: _isLoading ? null : _importAsRaster,
                   icon: const Icon(Icons.layers),
                   label: const Text('Importer comme raster'),
+                ),
+              ] else if (_fileInfo!['type'] == 'omap') ...[
+                ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _importAsOmapFile,
+                  icon: const Icon(Icons.map),
+                  label: const Text('Importer OMAP'),
                 ),
               ] else ...[
                 ElevatedButton.icon(
@@ -144,7 +159,7 @@ class _ImportDialogState extends State<ImportDialog> {
     });
 
     try {
-      if (filePath.endsWith('.pdf') || filePath.endsWith('.PDF')) {
+      if (filePath.toLowerCase().endsWith('.pdf')) {
         // Vérifier si c'est un GeoPDF
         final isGeoPdf = await widget.importService.isGeoPdf(filePath);
         setState(() {
@@ -162,7 +177,7 @@ class _ImportDialogState extends State<ImportDialog> {
             _fileInfo = {'type': 'pdf'};
           });
         }
-      } else if (filePath.endsWith('.omap')) {
+      } else if (filePath.endsWith('.omap') || filePath.endsWith('.OMAP')) {
         setState(() {
           _fileInfo = {'type': 'omap'};
         });
@@ -264,6 +279,32 @@ class _ImportDialogState extends State<ImportDialog> {
         return 'Image';
       default:
         return type;
+    }
+  }
+
+  /// Importe comme OMAP (fichier OMAP existant)
+  Future<void> _importAsOmapFile() async {
+    if (_selectedFile == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final result = await widget.importService.importOmapFromPath(_selectedFile!);
+      if (result != null) {
+        widget.onImportCompleted(result);
+        if (context.mounted) Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Erreur: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 

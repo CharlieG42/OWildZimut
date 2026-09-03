@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/import_service.dart';
+import 'import_dialog.dart';
 
 /// Menu d'import pour OWildZimut.
 /// Propose 4 options :
@@ -83,65 +84,37 @@ class ImportMenu extends StatelessWidget {
 
   /// Gère la sélection d'une option du menu
   Future<void> _handleSelection(BuildContext context, String value) async {
-    try {
-      String? result;
-      
-      switch (value) {
-        case 'omap':
-          result = await importService.importOmap();
-          break;
-        case 'image':
-          result = await importService.importImage();
-          break;
-        case 'geopdf_convert':
-          final file = await importService.pickFile(
-            type: FileType.custom,
-            allowedExtensions: ['pdf', 'PDF'],
-            dialogTitle: 'Sélectionner un GeoPDF à convertir',
-          );
-          if (file != null) {
-            result = await importService.importGeoPdfWithConversionFromPath(file.path);
-          }
-          break;
-        case 'geopdf_raster':
-          final file = await importService.pickFile(
-            type: FileType.custom,
-            allowedExtensions: ['pdf', 'PDF'],
-            dialogTitle: 'Sélectionner un GeoPDF à importer',
-          );
-          if (file != null) {
-            final geoPdfData = await importService.importGeoPdfAsRasterFromPath(file.path);
-            result = geoPdfData?.mapName;
-          }
-          break;
-      }
-
-      if (result != null && onImportCompleted != null) {
-        onImportCompleted!(result);
-        
-        // Afficher un message de succès
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Import réussi: $result'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (onError != null) {
-        onError!('Erreur lors de l\'import: $e');
-      }
-      
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
+    switch (value) {
+      case 'omap':
+      case 'image':
+      case 'geopdf_convert':
+      case 'geopdf_raster':
+        // Ouvrir le dialogue d'import pour tous les types
+        await showDialog(
+          context: context,
+          builder: (context) => ImportDialog(
+            importService: importService,
+            onImportCompleted: (result) {
+              if (result != null && onImportCompleted != null) {
+                onImportCompleted!(result);
+                
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Import réussi: $result'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              }
+            },
           ),
         );
-      }
+        break;
+      default:
+        if (onError != null) {
+          onError!('Option non reconnue: $value');
+        }
     }
   }
 }

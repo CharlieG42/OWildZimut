@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'models/map_state.dart';
 import 'models/layer.dart';
 import 'models/symbol.dart' as symbol_model;
@@ -14,6 +15,8 @@ import 'screens/about_dialog.dart' as app_about;
 import 'formatters/omap_exporter.dart';
 import 'widgets/iof_symbols_viewer.dart';
 import 'widgets/iof_symbols_viewer_v3.dart';
+import 'widgets/import_menu.dart';
+import 'services/import_service.dart';
 import 'constants.dart';
 
 void main() {
@@ -78,6 +81,9 @@ class _MainScreenState extends State<MainScreen> {
   final bool _toolBarExpanded = true;
   bool _advancedMode = false;
   
+  // Service d'import
+  final ImportService _importService = ImportService();
+  
   // Gestion de l'historique
   final undo_service.UndoManager _undoManager = undo_service.UndoManager(maxHistoryLength: 50);
   
@@ -90,6 +96,9 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _mapState = MapState.initial();
+    
+    // Initialiser le service d'import
+    _importService.init();
     
     // Centre la vue au démarrage (après le premier rendu)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -329,23 +338,38 @@ class _MainScreenState extends State<MainScreen> {
       final fileContent = await FileLoader.loadOmapFile();
       if (fileContent == null) return;
       
-      final omapDocument = OmapFileLoader.parse(fileContent);
-      
-      final screenSize = MediaQuery.of(context).size;
-      setState(() {
-        _mapState = OmapFileLoader.mergeIntoState(_mapState, omapDocument);
-        _mapState = _mapState.centerOnSymbols(screenSize);
-        _pushStateToHistory();
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fichier OMAP chargé (${omapDocument.layers.length} calques, ${omapDocument.objectCount} objets)')),
-      );
+      await _loadOmapFromContent(fileContent);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors du chargement: $e')),
       );
     }
+  }
+
+  Future<void> _loadOmapFromPath(String filePath) async {
+    try {
+      final fileContent = await File(filePath).readAsString();
+      await _loadOmapFromContent(fileContent);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement du fichier OMAP: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadOmapFromContent(String fileContent) async {
+    final omapDocument = OmapFileLoader.parse(fileContent);
+    
+    final screenSize = MediaQuery.of(context).size;
+    setState(() {
+      _mapState = OmapFileLoader.mergeIntoState(_mapState, omapDocument);
+      _mapState = _mapState.centerOnSymbols(screenSize);
+      _pushStateToHistory();
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Fichier OMAP chargé (${omapDocument.layers.length} calques, ${omapDocument.objectCount} objets)')),
+    );
   }
 
   Future<void> _exportOmapFile() async {
@@ -370,10 +394,20 @@ class _MainScreenState extends State<MainScreen> {
       final imagePath = await pickBackgroundImage();
       if (imagePath == null) return;
       
+      await _loadImageFromPath(imagePath.path);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement de l\'image: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadImageFromPath(String imagePath) async {
+    try {
       setState(() {
         _mapState = _mapState.addImageBackgroundLayer(
           'Image ${_mapState.layers.length + 1}',
-          imagePath.path,
+          imagePath,
         );
         _pushStateToHistory();
       });
@@ -470,25 +504,28 @@ class _MainScreenState extends State<MainScreen> {
               onPressed: _exportOmapFile,
               tooltip: 'Exporter OMAP',
             ),
+            ImportMenu(
+              importService: _importService,
+              onImportCompleted: (result) async {
+                if (result != null) {
+                  // Charger le fichier en fonction de son type
+                  if (result.endsWith('.omap') || result.toLowerCase().endsWith('.omap')) {
+                    await _loadOmapFromPath(result);
+                  } else if (result.toLowerCase().endsWith('.pdf')) {
+                    // Pour les PDF standard (non GeoPDF), on les charge comme image
+                    // Note: Les imports GeoPDF réussis retournent le nom de la carte (pas un chemin .pdf)
+                    // Donc si result se termine par .pdf, c'est un PDF standard
+                    await _loadImageFromPath(result);
+                  } else {
+                    // Image ou autre
+                    await _loadImageFromPath(result);
+                  }
+                }
+              },
+            ),
             PopupMenuButton<String>(
               tooltip: 'Plus d\'options',
               itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'image',
-                  child: ListTile(
-                    leading: Icon(Icons.image),
-                    title: Text('Importer une image'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'omap',
-                  child: ListTile(
-                    leading: Icon(Icons.map),
-                    title: Text('Importer OMAP'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
                 const PopupMenuItem(
                   value: 'iof_symbols',
                   child: ListTile(
@@ -508,12 +545,6 @@ class _MainScreenState extends State<MainScreen> {
               ],
               onSelected: (value) {
                 switch (value) {
-                  case 'image':
-                    _loadImage();
-                    break;
-                  case 'omap':
-                    _loadOmapFile();
-                    break;
                   case 'iof_symbols':
                     _showIOFSymbolsViewer();
                     break;

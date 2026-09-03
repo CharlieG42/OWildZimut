@@ -46,12 +46,17 @@ class ImportService {
     );
     
     if (file != null) {
-      // TODO: Implémenter le chargement du fichier OMAP
-      // Pour l'instant, on retourne simplement le chemin
-      return file.path;
+      return await importOmapFromPath(file.path);
     }
     
     return null;
+  }
+
+  /// Importe un fichier OMAP à partir d'un chemin
+  Future<String?> importOmapFromPath(String filePath) async {
+    // TODO: Implémenter le chargement du fichier OMAP
+    // Pour l'instant, on retourne simplement le chemin
+    return filePath;
   }
 
   // ============================================================================

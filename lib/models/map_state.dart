@@ -233,7 +233,7 @@ class MapState {
 
   /// Modifie le niveau de zoom
   MapState setZoomLevel(double zoom) {
-    return copyWith(zoomLevel: zoom.clamp(0.1, 10.0));
+    return copyWith(zoomLevel: zoom.clamp(-10.0, 10.0));
   }
 
   /// Modifie le décalage de la vue
